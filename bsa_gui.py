@@ -89,12 +89,16 @@ class Gui():
         temp = re.compile("([a-zA-Z]+)([0-9]+)")
         res = temp.match(self.names[0]).groups() 
         self.excelName = res[0]+ res[1]
+        
+        #These is where you need to change
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
         flippedimage = cv2.flip(img, 1)
         try:
             gray = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
+            #change the below line of code to thresh you want
             thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 135, 7)
         except cv2.error:
+            #use the same number here
             thresh = cv2.adaptiveThreshold(flippedimage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 135, 7)
             
         bwFile_Name = self.excelName + "BW.png"
