@@ -3,6 +3,7 @@ import re
 from PIL import Image, ImageTk
 import os
 import xlsxwriter as excel
+import csv
 from mouse_mover import MouseMover
 from tkinter import ttk
 from tkinter import filedialog
@@ -49,7 +50,6 @@ class Gui():
         self.newWindow.geometry("{0}x{1}".format(screen_width, screen_height))
 
 
-
         for i in self.names:
             if "BSA" in i:
                 beforeA = Image.open(self.folderPath.get() + "/" + i)
@@ -93,9 +93,9 @@ class Gui():
         flippedimage = cv2.flip(img, 1)
         try:
             gray = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
-            thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 191, 11)
+            thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 135, 7)
         except cv2.error:
-            thresh = cv2.adaptiveThreshold(flippedimage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 191, 11)
+            thresh = cv2.adaptiveThreshold(flippedimage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 135, 7)
             
         bwFile_Name = self.excelName + "BW.png"
         cv2.imwrite(bwFile_Name, thresh)
@@ -161,13 +161,12 @@ class Gui():
 
         self.Rpoints = []
         self.it = 0
+        self.coords = [[[] for i in range(50)] for i in range(50)]
         
 
         #excel Sheet creation
         path = os.path.join(self.folderPath.get(), "spatial")
         os.mkdir(path)
-        self.wb = excel.Workbook(path + "/tissue_position_list.xlsx")
-        self.ws = self.wb.add_worksheet()
         
 
 
@@ -283,22 +282,34 @@ class Gui():
     def create_files(self):
         my_file = open("barcode.txt","r")
         excelC = 1
-        for i in range(50):
-            for j in range(50):
-                barcode = my_file.readline().split('\t')
-                self.ws.write('A'+str(excelC), barcode[0])
-                if self.arr[j][i] == 1:
-                    self.ws.write('B'+str(excelC), 1)
-                else:
-                    self.ws.write('B'+str(excelC), 0)
+        self.csv_file = [0,0,0,0,0,0]
+        path = os.path.join(self.folderPath.get(), "spatial")
+        with open(path + "/tissue_position_list.csv", 'w') as f:
+            writer = csv.writer(f)
 
-                self.ws.write('D'+str(excelC), i)
-                self.ws.write('C'+str(excelC), j)
 
+            for i in range(50):
+                for j in range(50):
+                    self.csv_file = [0,0,0,0,0,0]
+                    barcode = my_file.readline().split('\t')
+                    self.csv_file[0] = barcode[0]
+                    if self.arr[j][i] == 1:
+                        self.csv_file[1] = 1
+                    else:
+                        self.csv_file[1] = 0
+
+                    self.csv_file[2] = j
+                    self.csv_file[3] = i
+                    self.csv_file[4] = self.coords[j][i][0]
+                    self.csv_file[5] = self.coords[j][i][1]
+                    
+                
+                    writer.writerow(self.csv_file) 
                 excelC += 1
-        self.wb.close()
+              
         my_file.close()
         self.json_file()
+        f.close()
                 
                 
     def confirm(self):
@@ -385,8 +396,8 @@ class Gui():
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
                 centerx, centery = self.center(tL,tR,bR,bL)
-                self.ws.write('E'+str(excelC), (centerx/self.factorW))
-                self.ws.write('F'+str(excelC), (centery/self.factorH))
+                self.coords[j][i].append(centerx/self.factorW)
+                self.coords[j][i].append(centery/self.factorH)
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
