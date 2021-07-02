@@ -199,8 +199,8 @@ class Gui():
         if self.height > self.width:
             factorHigh = 2000/self.height
             factorLow = 600/self.height
-            high_res = self.refactor.resize((self.width*factorHigh, 2000), Image.ANTIALIAS)
-            low_res = self.refactor.resize((self.width*factorLow, 600), Image.ANTIALIAS)
+            high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
+            low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
             high_res.save(path+"/tissue_hires_image.png")
             low_res.save(path+"/tissue_lores_image.png")
         
