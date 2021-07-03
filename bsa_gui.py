@@ -286,29 +286,18 @@ class Gui():
     def create_files(self):
         my_file = open("barcode.txt","r")
         excelC = 1
-        self.csv_file = [0,0,0,0,0,0]
         path = os.path.join(self.folderPath.get(), "spatial")
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
 
-
             for i in range(50):
                 for j in range(50):
-                    self.csv_file = [0,0,0,0,0,0]
                     barcode = my_file.readline().split('\t')
-                    self.csv_file[0] = barcode[0]
                     if self.arr[j][i] == 1:
-                        self.csv_file[1] = 1
+                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
-                        self.csv_file[1] = 0
+                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
-                    self.csv_file[2] = j
-                    self.csv_file[3] = i
-                    self.csv_file[4] = self.coords[j][i][0]
-                    self.csv_file[5] = self.coords[j][i][1]
-                    
-                
-                    writer.writerow(self.csv_file) 
                 excelC += 1
               
         my_file.close()
