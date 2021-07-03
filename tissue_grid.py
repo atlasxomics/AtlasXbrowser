@@ -75,14 +75,16 @@ class Tissue():
 
     def calculate_avg(self,pic, points, divider, dist):
         sum = 0
+        k = 0
         w = pic.shape[1] - 1
         h = pic.shape[0] - 1
         topCoords = self.coords(points[0], points[1], dist)
         for i in topCoords:
             downCoords = self.downCoords(i, dist)
             for j in downCoords:
+                k += 1
                 sum += pic[min(h,round(j[1])), min(w,round(j[0]))]
-        return sum/divider
+        return sum/k
 
     def ratio50l(self,xc,yc,xr,yr,a):
         txp = xc + (a/(99))*(xr-xc)

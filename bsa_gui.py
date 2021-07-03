@@ -195,14 +195,14 @@ class Gui():
             high_res = self.refactor.resize((2000, int(self.height*factorHigh)), Image.ANTIALIAS)
             low_res = self.refactor.resize((600, int(self.height*factorLow)), Image.ANTIALIAS)
             high_res.save(path+"/tissue_hires_image.png")
-            low_res.save(path+"/tissue_lores_image.png")
+            low_res.save(path+"/tissue_lowres_image.png")
         if self.height > self.width:
             factorHigh = 2000/self.height
             factorLow = 600/self.height
             high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
             low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
             high_res.save(path+"/tissue_hires_image.png")
-            low_res.save(path+"/tissue_lores_image.png")
+            low_res.save(path+"/tissue_lowres_image.png")
         
         dictionary = {"spot_diameter_fullres": self.total_pixels, 
                         "tissue_hires_scalef": factorHigh, 
@@ -253,7 +253,7 @@ class Gui():
                     self.arr[int(i)][int(j)] = 0
                     
                 else:
-                    self.my_canvas.itemconfig(i, fill="green", stipple="gray50", state ="normal")
+                    self.my_canvas.itemconfig(i, fill="red", stipple="gray50", state ="normal")
                     i = where[0]
                     j = where[1]
                     self.arr[int(i)][int(j)] = 1
@@ -278,7 +278,7 @@ class Gui():
             self.arr[int(i)][int(j)] = 0
             
         else:
-            self.my_canvas.itemconfig(tag, fill="green", stipple="gray50", state ="normal")
+            self.my_canvas.itemconfig(tag, fill="red", stipple="gray50", state ="normal")
             i = where[0]
             j = where[1]
             self.arr[int(i)][int(j)] = 1
@@ -288,7 +288,7 @@ class Gui():
         excelC = 1
         self.csv_file = [0,0,0,0,0,0]
         path = os.path.join(self.folderPath.get(), "spatial")
-        with open(path + "/tissue_position_list.csv", 'w') as f:
+        with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
 
 
@@ -424,7 +424,7 @@ class Gui():
                 position = str(j) + "x" + str(i)
                 if self.arr[j][i] == 1:
                     try:
-                        self.my_canvas.itemconfig(position, fill='green', stipple="gray50", state = "normal")
+                        self.my_canvas.itemconfig(position, fill='red', stipple="gray50", state = "normal")
                     except tk.TclError:
                         pass
         
