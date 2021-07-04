@@ -28,7 +28,7 @@ class Tissue():
         distance = int(dist/99)
         p = round(self.distance(points[0], points[1], topS[0]+slope[1], topS[1]+slope[0]), 5)
         q = round(self.distance(leftS[0], leftS[1], topS[0], topS[1]), 5)
-        self.area = (p*q) / 2
+        self.area = math.sqrt(p*q)
 
         numChannels = 50
         self.arr = [[0 for i in range(50)] for i in range(50)]
@@ -61,7 +61,7 @@ class Tissue():
 
                 corners.append(tL);corners.append(tR);corners.append(bR);corners.append(bL);
                 
-                if self.calculate_avg(thresh, corners, self.area, distance) > 250:
+                if self.calculate_avg(thresh, corners, self.area, distance) > 230:
                     self.arr[j][i] = 0
                 else:
                     self.arr[j][i] = 1
