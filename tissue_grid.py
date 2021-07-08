@@ -5,7 +5,7 @@ import math
 
 
 class Tissue():
-    def __init__(self, points, wfactor, hfactor, dbit, excelName):
+    def __init__(self, points, wfactor, hfactor, dbit):
         thresh = cv2.imread(dbit, cv2.IMREAD_UNCHANGED)
 
 
@@ -61,7 +61,7 @@ class Tissue():
 
                 corners.append(tL);corners.append(tR);corners.append(bR);corners.append(bL);
                 
-                if self.calculate_avg(thresh, corners, self.area, distance) > 230:
+                if self.calculate_avg(thresh, corners, self.area, distance) > 242:
                     self.arr[j][i] = 0
                 else:
                     self.arr[j][i] = 1

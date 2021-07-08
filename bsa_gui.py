@@ -1,11 +1,10 @@
 import tkinter as tk
+from tkinter import ttk
 import re
 from PIL import Image, ImageTk
 import os
-import xlsxwriter as excel
 import csv
 from mouse_mover import MouseMover
-from tkinter import ttk
 from tkinter import filedialog
 import os
 import math
@@ -17,26 +16,48 @@ import cv2
 class Gui():
     def __init__(self, root):
         self.root = root
-        self.root.title("GUI")
-        self.root.geometry("500x200")
-        btn = tk.Button(self.root, text ="Start", command = self.second_window)
-        btn.grid(row=2, column=2)
-        self.folderPath = tk.StringVar()
-        a = tk.Label(self.root ,text="Enter name")
-        a.grid(row=0,column = 0)
-        E = tk.Entry(self.root,textvariable=self.folderPath)
-        E.grid(row=0,column=1)
-        btnFind = ttk.Button(self.root, text="Browse Folder",command=self.getFolderPath)
-        btnFind.grid(row=0,column=2)
+        self.root.title("Atlas Browser")
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width/2) - (1200/2)
+        y = (screen_height/2) - (700/2)
+        self.root.geometry('%dx%d+%d+%d' % (1200, 600, x, y))
+
+
+        background_image = Image.open("atlasbg.png")
+        resized_image = background_image.resize((1200, 600), Image.ANTIALIAS)
+        bg = ImageTk.PhotoImage(resized_image)
+        background_label = tk.Label(self.root, image=bg)
+        background_label.image = bg
+        background_label.place(x=0, y=0, relwidth=1, relheight=1)
+        
+        menu = tk.Menu(self.root)
+        self.root.config(menu=menu)
+
+        filemenu = tk.Menu(menu)
+        menu.add_cascade(label="File", menu=filemenu)
+        filemenu.add_command(label="Open...", command=self.getFolderPath)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self.root.quit)
+
+        self.startmenu = tk.Menu(menu)
+        menu.add_cascade(label="Run GUI", menu=self.startmenu)
+        self.startmenu.add_command(label="Start...", command=self.second_window)
+        
+
+        helpmenu = tk.Menu(menu)
+        menu.add_cascade(label="Help", menu=helpmenu)
+        helpmenu.add_command(label="About...", command="")
+
         self.names = []
-        self.folderPath = tk.StringVar()
-        a = tk.Label(self.root ,text="Enter name")
-        a.grid(row=0,column = 0)
-        E = tk.Entry(self.root,textvariable=self.folderPath)
-        E.grid(row=0,column=1)
-        btnFind = ttk.Button(self.root, text="Browse Folder",command= self.getFolderPath)
-        btnFind.grid(row=0,column=2)
-        self.names = []
+        self.folder_selected = None
+
+
+
+    def clean_slate(self):
+        self.newWindow.destroy()
+        self.newWindow.update()
+        self.startmenu.delete(1)
 
     def second_window(self):
         self.arr = None
@@ -44,18 +65,21 @@ class Gui():
         self.topx, self.topy, self.botx, self.boty = 0, 0, 0, 0
 
         self.newWindow = tk.Toplevel(self.root)
+        self.startmenu.add_command(label="New DBit...", command=self.clean_slate)
+        self.startmenu.add_separator()
         screen_width = self.newWindow.winfo_screenwidth()
         screen_height = self.newWindow.winfo_screenheight()
-        self.newWindow.title("Bioinformatics")
+        self.newWindow.title("Atlas Browseer")
+        
         self.newWindow.geometry("{0}x{1}".format(screen_width, screen_height))
 
 
         for i in self.names:
             if "BSA" in i:
-                beforeA = Image.open(self.folderPath.get() + "/" + i)
+                beforeA = Image.open(self.folder_selected + "/" + i)
                 a = beforeA.transpose(Image.FLIP_LEFT_RIGHT)
             else:
-                self.postB_Name = self.folderPath.get() + "/" + i
+                self.postB_Name = self.folder_selected + "/" + i
                 beforeB = Image.open(self.postB_Name)
                 b = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -63,16 +87,16 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        if w > 1200 and h > 850:
-            self.factorW = 1200/w
+        if w > 950 and h > 850:
+            self.factorW = 950/w
             self.factorH = 850/h
-            floor = a.resize((1200, 850), Image.ANTIALIAS)
-            postB = b.resize((1200, 850), Image.ANTIALIAS)
-        elif w > 1200:
-            self.factorW = 1200/w
+            floor = a.resize((950, 850), Image.ANTIALIAS)
+            postB = b.resize((950, 850), Image.ANTIALIAS)
+        elif w > 950:
+            self.factorW = 950/w
             self.factorH = 1
-            floor = a.resize((1200, h), Image.ANTIALIAS)
-            postB = b.resize((1200, h), Image.ANTIALIAS)
+            floor = a.resize((950, h), Image.ANTIALIAS)
+            postB = b.resize((950, h), Image.ANTIALIAS)
         elif h > 850:
             floor = a.resize((w, 850), Image.ANTIALIAS)
             postB = b.resize((w, 850), Image.ANTIALIAS)
@@ -90,22 +114,13 @@ class Gui():
         res = temp.match(self.names[0]).groups() 
         self.excelName = res[0]+ res[1]
         
-        #These is where you need to change
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
         flippedimage = cv2.flip(img, 1)
         try:
-            gray = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
-            #change the below line of code to thresh you want
-            thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 135, 7)
+            self.scale_image = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            #use the same number here
-            thresh = cv2.adaptiveThreshold(flippedimage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 135, 7)
-            
-        bwFile_Name = self.excelName + "BW.png"
-        cv2.imwrite(bwFile_Name, thresh)
-        bw = Image.open(bwFile_Name)
-        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        self.bw_Image = ImageTk.PhotoImage(sized_bw)
+            self.scale_image = flippedimage      
+        
 
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = floor.width, height= floor.height, highlightthickness = 0, bd=0)
@@ -118,75 +133,115 @@ class Gui():
 
         #images
         self.imgA = ImageTk.PhotoImage(floor)
-        self.createdA = self.my_canvas.create_image(0,0, anchor='nw', image = self.imgA, state="disabled")
         self.imgB = ImageTk.PhotoImage(postB)
-        picNames = [self.bw_Image,self.imgB]
+        self.picNames = [self.imgB]
 
-        #tk.Label for Coord of ROI
-        self.topLeft = tk.StringVar(); self.topLeft.set("TopLeft: x,y")
-        self.topRight = tk.StringVar(); self.topRight.set("TopRight: x,y")
-        self.bottomLeft = tk.StringVar(); self.bottomLeft.set("BottomLeft: x,y")
-        self.bottomRight = tk.StringVar(); self.bottomRight.set("BottomRight: x,y")
+        self.lmain = tk.Label(self.my_canvas)
+        self.lmain.pack()
+        self.lmain.img = self.imgA
+        self.lmain.configure(image=self.imgA)
 
-        labelframe_widget = tk.LabelFrame(frame, text="Coords of ROI")
-        labelframe_widget.place(x=0, y=20, height=220, relwidth=.8)
+        #create Scales
+        self.thresh_label = tk.Label(frame, text="Threshold Value Scale", font =("Courier", 14))
+        self.thresh_label.place(x=17,y=10)
+        self.thresh_label_value = tk.Label(frame, text="12")
+        self.thresh_label_value.place(x=17,y=60)
+        self.spot_label = tk.Label(frame, text="SpotRemover Value Scale", font =("Courier", 14))
+        self.spot_label.place(x=17,y=80)
+        self.spot_label_value = tk.Label(frame, text="0")
+        self.spot_label_value.place(x=17,y=130)
 
-        label_widgetTL = tk.Label(labelframe_widget, textvariable= self.topLeft)
-        label_widgetTL.place(x=0,y=10)
-        label_widgetTR = tk.Label(labelframe_widget, textvariable= self.topRight)
-        label_widgetTR.place(x=0,y=60)
-        label_widgetBL = tk.Label(labelframe_widget, textvariable= self.bottomLeft)
-        label_widgetBL.place(x=0,y=110)
-        label_widgetBR = tk.Label(labelframe_widget, textvariable= self.bottomRight)
-        label_widgetBR.place(x=0,y=160)
+        self.thresh_value = tk.IntVar()
+        self.spot_value = tk.IntVar()
+        self.thresh_value.set(15)
+        self.thresh_scale = ttk.Scale(frame, variable = self.thresh_value, from_ = 15, to = 252, orient = tk.HORIZONTAL, command= self.showThresh)  
+        self.thresh_scale.place(x=17,y=40, relwidth=.8)
+        self.spot_scale = ttk.Scale(frame, variable = self.spot_value, from_ = 0, to = 13, orient = tk.HORIZONTAL, command= self.showThresh)  
+        self.spot_scale.place(x=17,y=110, relwidth=.8)
 
 
         #buttons
-        self.begin_button = tk.Button(frame, text = "Begin", command = self.find_points, state=tk.ACTIVE)
-        self.begin_button.place(x=0, y= screen_height-300)
+
+        self.begin_button = tk.Button(frame, text = "Place Markers", command = self.find_points, state=tk.ACTIVE)
+        self.begin_button.place(relx=.3, y= 200)
 
         self.confirm_button = tk.Button(frame, text = "Confirm", command = self.confirm, state=tk.DISABLED)
-        self.confirm_button.place(x=0, y= screen_height-273)
+        self.confirm_button.place(relx=.3, y= 230)
 
         self.roi_button = tk.Button(frame, text = "Show Roi", command = self.roi, state=tk.DISABLED)
-        self.roi_button.place(x=0, y= screen_height-246)
+        self.roi_button.place(relx=.1, y= 260)
 
-        self.grid_button = tk.Button(frame, text = "Show Grid", command = lambda: self.grid(picNames[0]), state=tk.DISABLED)
-        self.grid_button.place(x=0, y= screen_height-219)
+        self.grid_button = tk.Button(frame, text = "Show Grid", command = lambda: self.grid(self.picNames[1]), state=tk.DISABLED)
+        self.grid_button.place(relx=.3, y= 260)
 
-        self.gridA_button = tk.Button(frame, text = "Show Grid on PostB", command = lambda: self.grid(picNames[1]), state=tk.DISABLED)
-        self.gridA_button.place(x=0, y= screen_height-192)
+        self.gridA_button = tk.Button(frame, text = "Show Grid on PostB", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button.place(relx=.5, y= 260)
 
-        self.onoff_button = tk.Button(frame, text = "On Off", command = self.sendinfo, state=tk.DISABLED)
-        self.onoff_button.place(x=100, y=screen_height-300)
+        self.onoff_button = tk.Button(frame, text = "On/Off Tissue", command = self.sendinfo, state=tk.DISABLED)
+        self.onoff_button.place(relx=.3, y= 290)
 
-        self.position_file = tk.Button(frame, text = "Create Position File", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(x=100, y=screen_height-400)
+        self.position_file = tk.Button(frame, text = "Create Spatial Folder", command = self.create_files, state=tk.DISABLED)
+        self.position_file.place(relx=.3, y= 320)
 
         self.Rpoints = []
         self.it = 0
         self.coords = [[[] for i in range(50)] for i in range(50)]
         
 
-        #excel Sheet creation
-        path = os.path.join(self.folderPath.get(), "spatial")
+        path = os.path.join(self.folder_selected, "spatial")
         os.mkdir(path)
         
 
+    def showThresh(self, value):
+        if float(value) > 11:
+            self.my_canvas.delete("all")
+            sel = int(self.thresh_value.get())
+            if sel %2 == 0:
+                sel+=1
+            sec = int(self.spot_value.get())
+
+            self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
+            self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+
+            thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
+            bw_image = Image.fromarray(thresh)
+            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(image=sized_bw) 
+            self.lmain.imgtk = imgtk
+            self.lmain.configure(image=imgtk)
+            
+        else:
+            self.my_canvas.delete("all")
+            sel = int(self.thresh_value.get())
+            if sel %2 == 0:
+                sel+=1
+            sec = int(self.spot_value.get())
+
+            self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
+            self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+
+            thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
+            bw_image = Image.fromarray(thresh)
+            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(image=sized_bw) 
+            self.lmain.imgtk = imgtk
+            self.lmain.configure(image=imgtk)
+            
+            
+    
 
 
 
     def getFolderPath(self):
-        folder_selected = filedialog.askdirectory()
-        for file in os.listdir(folder_selected):
+        self.folder_selected = filedialog.askdirectory()
+        for file in os.listdir(self.folder_selected):
             if file.startswith(".") == False:
                 self.names.append(file)
-        self.folderPath.set(folder_selected)
 
     def json_file(self):
         factorHigh = 0
         factorLow = 0
-        path = os.path.join(self.folderPath.get(), "spatial")
+        path = os.path.join(self.folder_selected, "spatial")
         
 
         if self.width > self.height:
@@ -222,6 +277,11 @@ class Gui():
 
     def find_points(self):
         self.it += 1
+        self.thresh_scale['state'] = tk.DISABLED
+        self.spot_scale['state'] = tk.DISABLED
+
+        self.lmain.destroy()
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
         mm = MouseMover(self.my_canvas)
         self.my_canvas.bind("<Button-1>", mm.find_object)
@@ -265,10 +325,10 @@ class Gui():
         self.my_canvas.coords("highlight", self.topx, self.topy, self.botx, self.boty)  # Update selection rect.
         
 
+    '''
     def on_off(self,event):
         tag = event.widget.find_closest(event.x,event.y)
         position = event.widget.gettags(tag)
-        print(position)
         where = position[0].split("x")
         state = self.my_canvas.itemcget(tag,'state')
         if state ==  "normal":
@@ -282,11 +342,13 @@ class Gui():
             i = where[0]
             j = where[1]
             self.arr[int(i)][int(j)] = 1
-        
+    '''
+
+
     def create_files(self):
         my_file = open("barcode.txt","r")
         excelC = 1
-        path = os.path.join(self.folderPath.get(), "spatial")
+        path = os.path.join(self.folder_selected, "spatial")
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
 
@@ -307,7 +369,7 @@ class Gui():
                 
     def confirm(self):
         sorter = []
-
+        
         oval1 = self.my_canvas.coords("point11")
         oval2 = self.my_canvas.coords("point12")
         oval3 = self.my_canvas.coords("point13")
@@ -339,6 +401,17 @@ class Gui():
         self.gridA_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
         self.position_file["state"] = tk.ACTIVE
+        tvalue = self.thresh_value.get()
+        svalue = self.spot_value.get()
+        if tvalue%2==0:
+            tvalue +=1
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
+        bwFile_Name = self.excelName + "BW.png"
+        cv2.imwrite(bwFile_Name, thresh)
+        bw = Image.open(bwFile_Name)
+        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        bw_Image = ImageTk.PhotoImage(sized_bw)
+        self.picNames.append(bw_Image)
 
     
     def roi(self):
@@ -348,7 +421,7 @@ class Gui():
 
     def grid(self,pic):
         self.my_canvas.delete("all")
-        self.grid_image = self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
+        self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
 
         leftS = self.ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],1)
         topS = self.ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],1)
@@ -401,12 +474,11 @@ class Gui():
             
 
     def sendinfo(self):
-        #self.my_canvas.bind("<Button-1>", self.on_off)
         self.my_canvas.bind('<Button-1>', self.get_mouse_posn)
         self.my_canvas.bind('<B1-Motion>', self.update_sel_rect)
         self.my_canvas.bind('<ButtonRelease-1>', self.release)
         dbit = self.excelName + "BW.png"
-        matta = Tissue(self.Rpoints, self.factorW, self.factorH, dbit, self.excelName)
+        matta = Tissue(self.Rpoints, self.factorW, self.factorH, dbit)
         self.arr,self.total_pixels = matta.thaanswer()
         for i in range(len(self.arr)):
             for j in range(len(self.arr)):
