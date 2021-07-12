@@ -8,7 +8,7 @@ bin-release/
 .settings/
 __pycache__
 .DS_store
-*.png
+*BW.png
 
 # Executables
 *.swf
