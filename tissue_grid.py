@@ -27,14 +27,10 @@ class Tissue():
         dist= round(self.distance(points[0], points[1], points[2], points[3]), 5)
         distance = int(dist/99)
 
-        p = round(self.distance(points[0], points[1], topS[0]+slope[1], topS[1]+slope[0]), 5)
-        q = round(self.distance(leftS[0], leftS[1], topS[0], topS[1]), 5)
-        if p > q:
-            self.spot_dia = p
-            self.fud_dia = q
-        else:
-            self.spot_dia = q
-            self.fud_dia = p
+        p = round(self.distance(leftS[0], leftS[1], topS[0], topS[1]), 5)
+        q = round(self.distance(points[0], points[1], topS[0]+slope[1], topS[1]+slope[0]), 5)
+        self.spot_dia = p
+        self.fud_dia = q
 
         numChannels = 50
         self.arr = [[0 for i in range(50)] for i in range(50)]

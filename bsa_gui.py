@@ -143,19 +143,20 @@ class Gui():
         #create Scales
         self.thresh_label = tk.Label(frame, text="Threshold Value Scale", font =("Courier", 14))
         self.thresh_label.place(x=17,y=10)
-        self.thresh_label_value = tk.Label(frame, text="12")
+        self.thresh_label_value = tk.Label(frame, text="255")
         self.thresh_label_value.place(x=17,y=60)
         self.spot_label = tk.Label(frame, text="SpotRemover Value Scale", font =("Courier", 14))
         self.spot_label.place(x=17,y=80)
-        self.spot_label_value = tk.Label(frame, text="0")
+        self.spot_label_value = tk.Label(frame, text="17")
         self.spot_label_value.place(x=17,y=130)
 
         self.thresh_value = tk.IntVar()
         self.spot_value = tk.IntVar()
-        self.thresh_value.set(15)
-        self.thresh_scale = ttk.Scale(frame, variable = self.thresh_value, from_ = 15, to = 252, orient = tk.HORIZONTAL, command= self.showThresh)  
+        self.thresh_value.set(255)
+        self.spot_value.set(17)
+        self.thresh_scale = ttk.Scale(frame, variable = self.thresh_value, from_ = 19, to = 255, orient = tk.HORIZONTAL, command= self.showThresh)  
         self.thresh_scale.place(x=17,y=40, relwidth=.8)
-        self.spot_scale = ttk.Scale(frame, variable = self.spot_value, from_ = 0, to = 13, orient = tk.HORIZONTAL, command= self.showThresh)  
+        self.spot_scale = ttk.Scale(frame, variable = self.spot_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh)  
         self.spot_scale.place(x=17,y=110, relwidth=.8)
 
 
