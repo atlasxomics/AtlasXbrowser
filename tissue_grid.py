@@ -26,9 +26,15 @@ class Tissue():
 
         dist= round(self.distance(points[0], points[1], points[2], points[3]), 5)
         distance = int(dist/99)
+
         p = round(self.distance(points[0], points[1], topS[0]+slope[1], topS[1]+slope[0]), 5)
         q = round(self.distance(leftS[0], leftS[1], topS[0], topS[1]), 5)
-        self.area = math.sqrt(p*q)
+        if p > q:
+            self.spot_dia = p
+            self.fud_dia = q
+        else:
+            self.spot_dia = q
+            self.fud_dia = p
 
         numChannels = 50
         self.arr = [[0 for i in range(50)] for i in range(50)]
@@ -61,7 +67,7 @@ class Tissue():
 
                 corners.append(tL);corners.append(tR);corners.append(bR);corners.append(bL);
                 
-                if self.calculate_avg(thresh, corners, self.area, distance) > 242:
+                if self.calculate_avg(thresh, corners, distance) > 242:
                     self.arr[j][i] = 0
                 else:
                     self.arr[j][i] = 1
@@ -73,7 +79,7 @@ class Tissue():
 
         self.thaanswer()
 
-    def calculate_avg(self,pic, points, divider, dist):
+    def calculate_avg(self,pic, points, dist):
         sum = 0
         k = 0
         w = pic.shape[1] - 1
@@ -113,7 +119,7 @@ class Tissue():
         return math.sqrt(dis)
 
     def thaanswer(self):
-        return self.arr,self.area
+        return self.arr,self.spot_dia,self.fud_dia
     
     
     

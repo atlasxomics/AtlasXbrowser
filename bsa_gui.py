@@ -61,7 +61,6 @@ class Gui():
 
     def second_window(self):
         self.arr = None
-        self.total_pixels = None
         self.topx, self.topy, self.botx, self.boty = 0, 0, 0, 0
 
         self.newWindow = tk.Toplevel(self.root)
@@ -259,9 +258,9 @@ class Gui():
             high_res.save(path+"/tissue_hires_image.png")
             low_res.save(path+"/tissue_lowres_image.png")
         
-        dictionary = {"spot_diameter_fullres": self.total_pixels, 
+        dictionary = {"spot_diameter_fullres": self.spot_dia, 
                         "tissue_hires_scalef": factorHigh, 
-                        "fiducial_diameter_fullres": 1, 
+                        "fiducial_diameter_fullres": self.fud_dia, 
                         "tissue_lowres_scalef": factorLow}
         
         json_object = json.dumps(dictionary)
@@ -479,7 +478,7 @@ class Gui():
         self.my_canvas.bind('<ButtonRelease-1>', self.release)
         dbit = self.excelName + "BW.png"
         matta = Tissue(self.Rpoints, self.factorW, self.factorH, dbit)
-        self.arr,self.total_pixels = matta.thaanswer()
+        self.arr,self.spot_dia, self.fud_dia = matta.thaanswer()
         for i in range(len(self.arr)):
             for j in range(len(self.arr)):
                 position = str(j) + "x" + str(i)
