@@ -261,7 +261,7 @@ class Gui():
         
         dictionary = {"spot_diameter_fullres": self.spot_dia, 
                         "tissue_hires_scalef": factorHigh, 
-                        "fiducial_diameter_fullres": self.fud_dia, 
+                        "fiducial_diameter_fullres": self.fud_dia*1.6153846,
                         "tissue_lowres_scalef": factorLow}
         
         json_object = json.dumps(dictionary)

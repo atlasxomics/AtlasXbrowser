@@ -67,8 +67,7 @@ class Tissue():
                     self.arr[j][i] = 0
                 else:
                     self.arr[j][i] = 1
-                #ara=[j,i, self.arr[j][i]]
-                #print(*ara, flush=True)
+
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
             prev[0] += slopeTO[1]
