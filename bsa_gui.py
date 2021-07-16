@@ -301,21 +301,18 @@ class Gui():
         self.my_canvas.create_rectangle(self.topx, self.topy, self.topx, self.topy,dash=(2,2), fill='', tag= "highlight", outline='black')
 
     def release(self,event):
-        for i in self.my_canvas.find_overlapping(self.topx, self.topy, self.botx, self.boty):
-            position = event.widget.gettags(i)
-            if len(position) > 0 and position[0]!="highlight":
+        for k in self.my_canvas.find_overlapping(self.topx, self.topy, self.botx, self.boty):
+            position = event.widget.gettags(k)
+            if len(position) > 0 and position[0] != "highlight":
                 where = position[0].split("x")
-                state = self.my_canvas.itemcget(i,'state')
-                if state ==  "normal":
-                    self.my_canvas.itemconfig(i, fill="", stipple="", state="disabled")
-                    i = where[0]
-                    j = where[1]
+                state = self.my_canvas.itemcget(k,'state')
+                i = where[0]
+                j = where[1]
+                if state == "normal":
+                    self.my_canvas.itemconfig(k, fill="", state="disabled")
                     self.arr[int(i)][int(j)] = 0
-                    
                 else:
-                    self.my_canvas.itemconfig(i, fill="red", stipple="gray50", state ="normal")
-                    i = where[0]
-                    j = where[1]
+                    self.my_canvas.itemconfig(k, fill="red", state="normal")
                     self.arr[int(i)][int(j)] = 1
         self.my_canvas.coords("highlight", 0,0,0,0)
 
@@ -480,15 +477,15 @@ class Gui():
         dbit = self.excelName + "BW.png"
         matta = Tissue(self.Rpoints, self.factorW, self.factorH, dbit)
         self.arr,self.spot_dia, self.fud_dia = matta.thaanswer()
+
         for i in range(len(self.arr)):
             for j in range(len(self.arr)):
                 position = str(j) + "x" + str(i)
                 if self.arr[j][i] == 1:
                     try:
-                        self.my_canvas.itemconfig(position, fill='red', stipple="gray50", state = "normal")
+                        self.my_canvas.itemconfig(10+i*50+j, fill='red', state="normal")
                     except tk.TclError:
                         pass
-        
 
     def center(self,tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
