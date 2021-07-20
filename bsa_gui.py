@@ -85,26 +85,15 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        if w > 950 and h > 850:
-            self.factorW = 950/w
-            self.factorH = 850/h
-            floor = a.resize((950, 850), Image.ANTIALIAS)
-            postB = b.resize((950, 850), Image.ANTIALIAS)
-        elif w > 950:
-            self.factorW = 950/w
-            self.factorH = 1
-            floor = a.resize((950, h), Image.ANTIALIAS)
-            postB = b.resize((950, h), Image.ANTIALIAS)
-        elif h > 850:
-            floor = a.resize((w, 850), Image.ANTIALIAS)
-            postB = b.resize((w, 850), Image.ANTIALIAS)
-            self.factorH = 850/h
-            self.factorW = 1
+        if h > 850:
+            self.factor = 850/h
+            newW = int(round(w*850.0/h))
+            floor = a.resize((newW, 850), Image.ANTIALIAS)
+            postB = b.resize((newW, 850), Image.ANTIALIAS)
         else:
             floor = a
             postB = b
-            self.factorW = 1
-            self.factorH = 1
+            self.factor = 1
 
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
@@ -568,8 +557,8 @@ class Gui():
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
                 centerx, centery = self.center(tL,tR,bR,bL)
-                self.coords[j][i].append(centerx/self.factorW)
-                self.coords[j][i].append(centery/self.factorH)
+                self.coords[j][i].append(centerx/self.factor)
+                self.coords[j][i].append(centery/self.factor)
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
@@ -593,7 +582,7 @@ class Gui():
         
         dbit = self.excelName + "BW.png"
         points_copy = self.Rpoints.copy()
-        matta = Tissue(points_copy, self.factorW, self.factorH, dbit)
+        matta = Tissue(points_copy, self.factor, dbit)
         self.arr,self.spot_dia, self.fud_dia = matta.thaanswer()
         for i in range(len(self.arr)):
             for j in range(len(self.arr)):
