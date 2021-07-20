@@ -5,7 +5,7 @@ from tkinter.constants import DISABLED
 from PIL import Image, ImageTk
 import os
 import csv
-from mouse_mover import MouseMover
+from draggable_quad import DrawShapes
 from tkinter import filedialog
 import os
 import math
@@ -76,7 +76,7 @@ class Gui():
             if "BSA" in i:
                 beforeA = Image.open(self.folder_selected + "/" + i)
                 a = beforeA.transpose(Image.FLIP_LEFT_RIGHT)
-            else:
+            elif "postB" in i:
                 self.postB_Name = self.folder_selected + "/" + i
                 beforeB = Image.open(self.postB_Name)
                 b = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
@@ -197,9 +197,11 @@ class Gui():
         self.it = 0
         self.coords = [[[] for i in range(50)] for i in range(50)]
         
-
-        path = os.path.join(self.folder_selected, "spatial")
-        os.mkdir(path)
+        try:
+            path = os.path.join(self.folder_selected, "spatial")
+            os.mkdir(path)
+        except FileExistsError:
+            pass
         
     '''
     def third_window(self):
@@ -405,21 +407,15 @@ class Gui():
         return [txp , typ]
 
     def find_points(self):
-        self.it += 1
         self.thresh_scale['state'] = tk.DISABLED
         self.spot_scale['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
-        mm = MouseMover(self.my_canvas)
-        self.my_canvas.bind("<Button-1>", mm.find_object)
-        self.my_canvas.bind("<B1-Motion>", mm.drag)
-        
-        self.my_canvas.create_polygon(10,10,  20,10,  20,20, 10,20,  10,10,fill="", outline="blue", width=1, tags="point"+str(self.it)+"1")
-        self.my_canvas.create_polygon(self.my_canvas.winfo_width()-20,10, self.my_canvas.winfo_width()-10,10,self.my_canvas.winfo_width()-10,20,self.my_canvas.winfo_width()-20,20,self.my_canvas.winfo_width()-20,10, fill="", outline="blue", width=1, tags="point"+str(self.it)+"2")
-        self.my_canvas.create_polygon(10,self.my_canvas.winfo_height()-20, 20,self.my_canvas.winfo_height()-20,  20,self.my_canvas.winfo_height()-10, 10,self.my_canvas.winfo_height()-10, 10,self.my_canvas.winfo_height()-20, fill="", outline="blue", width=1, tags="point"+str(self.it)+"3")
-        self.my_canvas.create_polygon(self.my_canvas.winfo_width()-20,self.my_canvas.winfo_height()-20,  self.my_canvas.winfo_width()-10,self.my_canvas.winfo_height()- 20,   self.my_canvas.winfo_width()-10,self.my_canvas.winfo_height()- 10,  self.my_canvas.winfo_width()-20,self.my_canvas.winfo_height()-10,  self.my_canvas.winfo_width()-20,self.my_canvas.winfo_height()-10, fill="", outline="blue", width=1, tags="point"+str(self.it)+"4")
+        self.c = DrawShapes(self.my_canvas)
+        self.my_canvas.bind('<Button-1>', self.c.on_click)
+        self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
 
         self.confirm_button["state"] = tk.ACTIVE
         
@@ -440,7 +436,7 @@ class Gui():
                     self.my_canvas.itemconfig(k, fill="", state="disabled")
                     
                 else:
-                    self.my_canvas.itemconfig(k, fill="red", stipple="gray50", state ="normal")
+                    self.my_canvas.itemconfig(k, fill="red", state ="normal")
                     self.arr[int(i)][int(j)] = 1
         self.my_canvas.coords("highlight", 0,0,0,0)
 
@@ -459,10 +455,10 @@ class Gui():
         i = where[0]
         j = where[1]
         if state ==  "normal":
-            self.my_canvas.itemconfig(tag, fill="", stipple="", state="disabled")
+            self.my_canvas.itemconfig(tag, fill="", state="disabled")
             self.arr[int(i)][int(j)] = 0
         else:
-            self.my_canvas.itemconfig(tag, fill="red", stipple="gray50", state ="normal")
+            self.my_canvas.itemconfig(tag, fill="red", state ="normal")
             self.arr[int(i)][int(j)] = 1
         
     def create_files(self):
@@ -500,28 +496,8 @@ class Gui():
         bw_Image = ImageTk.PhotoImage(sized_bw)
         
 
-        if len(self.picNames) > 0:
-            sorter = []
-            
-            oval1 = self.my_canvas.coords("point11")
-            oval2 = self.my_canvas.coords("point12")
-            oval3 = self.my_canvas.coords("point13")
-            oval4 = self.my_canvas.coords("point14")
-
-            sorter.append(oval1), sorter.append(oval2),sorter.append(oval3),sorter.append(oval4)
-            smallX = sorted(sorter , key=lambda x: x[0] )
-            leftSide = sorted(smallX[:2], key=lambda x: x[1])
-            rightSide = sorted(smallX[2:], key=lambda x: x[1])
-
-            tL = [leftSide[0][0], leftSide[0][1]]
-            bL = [leftSide[1][6], leftSide[1][7]]
-            tR = [rightSide[0][2], rightSide[0][3]]
-            bR = [rightSide[1][4], rightSide[1][5]]    
-
-            self.Rpoints.append(tL[0]);self.Rpoints.append(tL[1])
-            self.Rpoints.append(tR[0]);self.Rpoints.append(tR[1])
-            self.Rpoints.append(bR[0]);self.Rpoints.append(bR[1])
-            self.Rpoints.append(bL[0]);self.Rpoints.append(bL[1])
+        if self.c:
+            self.Rpoints = self.my_canvas.coords(self.c.current)
 
             self.my_canvas.delete("all")
             self.my_canvas.create_image(0,0, anchor="nw", image = self.imgB, state="normal")
@@ -588,7 +564,7 @@ class Gui():
                     tR = [top[0],top[1]]
                     bL = [tL[0]+slope[1],tL[1]+slope[0]]
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
-                position = "{0}x{1}".format(str(j),str(i))
+                position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
                 centerx, centery = self.center(tL,tR,bR,bL)
@@ -621,13 +597,13 @@ class Gui():
         self.arr,self.spot_dia, self.fud_dia = matta.thaanswer()
         for i in range(len(self.arr)):
             for j in range(len(self.arr)):
-                position = str(j) + "x" + str(i)
+                position = str(j+1) + "x" + str(i)
                 if self.arr[j][i] == 1:
                     try:
-                        self.my_canvas.itemconfig(position, fill='red', stipple="gray50", state = "normal")
-                        self.my_canvas.itemconfig(10+i*50+j, fill='red', state="normal")
-                    except tk.TclError:
-                        pass
+                        tags = self.my_canvas.find_withtag(position)
+                        self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                    except IndexError:
+                        self.my_canvas.itemconfig((50*i+5)+j, fill='red', state="normal")
 
     def loadinfo(self):
         my_file = open("barcode.txt","r")
