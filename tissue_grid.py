@@ -5,15 +5,12 @@ import math
 
 
 class Tissue():
-    def __init__(self, points, wfactor, hfactor, dbit):
+    def __init__(self, points, factor, dbit):
         thresh = cv2.imread(dbit, cv2.IMREAD_UNCHANGED)
 
 
         for i in range(len(points)):
-            if i % 2 == 0:
-                points[i] /= wfactor
-            else:
-                points[i] /= hfactor
+            points[i] /= factor
 
         #getting the slope of left * right lines
         leftS = self.ratio50l(points[0],points[1],points[6],points[7],1)
@@ -29,8 +26,8 @@ class Tissue():
 
         p = round(self.distance(leftS[0], leftS[1], topS[0], topS[1]), 5)
         q = round(self.distance(points[0], points[1], topS[0]+slope[1], topS[1]+slope[0]), 5)
-        self.spot_dia = p
-        self.fud_dia = q
+        self.spot_dia = math.sqrt(p*q)
+        self.fud_dia = self.spot_dia*1.6153846
 
         numChannels = 50
         self.arr = [[0 for i in range(50)] for i in range(50)]

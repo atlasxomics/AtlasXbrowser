@@ -1,2 +1,2 @@
 # AtlasBrowser
-Interactive browser for Atals Data
+Interactive browser for AtlasXomics Data
