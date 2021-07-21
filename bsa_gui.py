@@ -288,7 +288,8 @@ class Gui():
         res = temp.search(self.folder_selected).groups() 
         self.excelName = res[0]+ res[1]
 
-        self.postB_Name = self.excelName + ".image/" + self.excelName + "_postB.png"
+        previous = self.folder_selected[: len(self.folder_selected)-7]
+        self.postB_Name = previous + self.excelName + "_postB.png"
         beforeB = Image.open(self.postB_Name)
         a = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
 
