@@ -7,17 +7,12 @@ def distance(p1, p2):
 class DrawShapes():
     def __init__(self, my_canvas):
         self.my_canvas = my_canvas
-
-    def on_click(self, event):
-        """fires when user clicks on the background ... creates a new quadrilateral"""
-        self.points = event.x, event.y, event.x+650, event.y, event.x+650, event.y+350, event.x, event.y+350
+        self.points = 100, 50, 800, 50, 800, 800, 100, 800
         self.current = self.my_canvas.create_polygon(*self.points, outline="red", fill="", width=1)
-        self.my_canvas.unbind("<Button-1>")
-        
 
-    def on_click_quad(self, tag, event):
+    def on_click_quad(self, event):
         """fires when the user clicks on a quadrilateral ... edits the clicked on quadrilateral"""
-        self.current = tag
+        self.current = self.current
 
     def on_motion(self, event):
         """fires when the user drags the mouse ... resizes currently active quadrilateral"""

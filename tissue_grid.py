@@ -5,7 +5,7 @@ import math
 
 
 class Tissue():
-    def __init__(self, points, factor, dbit):
+    def __init__(self, points, factor, dbit, num_chan):
         thresh = cv2.imread(dbit, cv2.IMREAD_UNCHANGED)
 
 
@@ -13,8 +13,9 @@ class Tissue():
             points[i] /= factor
 
         #getting the slope of left * right lines
-        leftS = self.ratio50l(points[0],points[1],points[6],points[7],1)
-        topS = self.ratio50l(points[0],points[1],points[2],points[3],1)
+        ratioNum = (num_chan*2)-1
+        leftS = self.ratio50l(points[0],points[1],points[6],points[7],ratioNum)
+        topS = self.ratio50l(points[0],points[1],points[2],points[3],ratioNum)
         slope = [round(leftS[1]-points[1], 5), round(leftS[0]-points[0], 5)]
         slopeT = [round(topS[1]-points[1], 5), round(topS[0]-points[0], 5)]
         slopeO = [slope[0]*2, slope[1]*2]
@@ -29,8 +30,8 @@ class Tissue():
         self.spot_dia = math.sqrt(p*q)
         self.fud_dia = self.spot_dia*1.6153846
 
-        numChannels = 50
-        self.arr = [[0 for i in range(50)] for i in range(50)]
+        numChannels = num_chan
+        self.arr = [[0 for i in range(numChannels)] for i in range(numChannels)]
         top = [0,0]
         left = [0,0]
         flag = False
@@ -85,9 +86,9 @@ class Tissue():
                 sum += pic[min(h,round(j[1])), min(w,round(j[0]))]
         return sum/k
 
-    def ratio50l(self,xc,yc,xr,yr,a):
-        txp = xc + (a/(99))*(xr-xc)
-        typ = yc + (a/(99))*(yr-yc)
+    def ratio50l(self,xc,yc,xr,yr,num):
+        txp = xc + (1/(num))*(xr-xc)
+        typ = yc + (1/(num))*(yr-yc)
         return [txp , typ]
 
     def coords(self, tL,tR,dis):
@@ -114,14 +115,3 @@ class Tissue():
     def thaanswer(self):
         return self.arr,self.spot_dia,self.fud_dia
     
-    
-    
-
-
-
-        
-    
-
-
-        
-            
