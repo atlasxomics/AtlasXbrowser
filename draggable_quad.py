@@ -21,13 +21,13 @@ class DrawShapes():
               distance((event.x, event.y), (x3, y3)), distance((event.x, event.y), (x4, y4))]
         dsi = ds.index(min(ds))
         if dsi == 0:
-            self.points = event.x, event.y, x2, y2, x3, y3, x4, y4
+            self.points = max(0,event.x), max(0,event.y), x2, y2, x3, y3, x4, y4
         elif dsi == 1:
-            self.points = x1, y1, event.x,event.y, x3,y3, x4, y4
+            self.points = x1, y1, min(event.x,850),max(0, event.y), x3,y3, x4, y4
         elif dsi == 2:
-            self.points = x1, y1, x2, y2, event.x, event.y, x4, y4
+            self.points = x1, y1, x2, y2, min(850,event.x), min(850,event.y), x4, y4
         else:
-            self.points = x1, y1, x2, y2, x3, y3, event.x, event.y
+            self.points = x1, y1, x2, y2, x3, y3, max(0,event.x), min(850, event.y)
 
         self.my_canvas.coords(self.current, *self.points)
 
