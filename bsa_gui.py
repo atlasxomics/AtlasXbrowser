@@ -164,10 +164,15 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        self.factor = 850/h
-        newW = int(round(w*850.0/h))
-        floor = a.resize((newW, 850), Image.ANTIALIAS)
-        postB = b.resize((newW, 850), Image.ANTIALIAS)
+        if h > 850:
+            self.factor = 850/h
+            newW = int(round(w*850.0/h))
+            floor = a.resize((newW, 850), Image.ANTIALIAS)
+            postB = b.resize((newW, 850), Image.ANTIALIAS)
+        else:
+            floor = a
+            postB = b
+            self.factor = 1
 
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
@@ -220,7 +225,7 @@ class Gui():
             self.t_clicked = tk.StringVar()
             self.t_clicked.set("FF")
             self.tr_clicked = tk.StringVar()
-            self.tr_clicked.set("No")
+            self.tr_clicked.set("Yes")
             self.a_clicked = tk.StringVar()
             self.a_clicked.set("mRNA")
             self.n_clicked = tk.StringVar()
@@ -724,14 +729,17 @@ class Gui():
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
+                        self.num_tixels+=1
                         writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
                         writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
-              
+
         my_file.close()
         f.close()
-
-
-    
-        
+        meta = json.load(self.folder_selected+"/metadata.json")
+        meta['num_tixels'] = self.num_tixels
+        meta_json_object = json.dumps(meta, indent = 4)
+        with open(self.folder_selected+ "/metadata.json", "w") as outfile:
+            outfile.write(meta_json_object)
+            outfile.close()
