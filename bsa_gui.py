@@ -726,15 +726,14 @@ class Gui():
             factorLow = 600/self.width
             high_res = self.refactor.resize((2000, int(self.height*factorHigh)), Image.ANTIALIAS)
             low_res = self.refactor.resize((600, int(self.height*factorLow)), Image.ANTIALIAS)
-            high_res.save(path+"/tissue_hires_image.png")
-            low_res.save(path+"/tissue_lowres_image.png")
-        if self.height > self.width:
+        else:
             factorHigh = 2000/self.height
             factorLow = 600/self.height
             high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
             low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
-            high_res.save(path+"/tissue_hires_image.png")
-            low_res.save(path+"/tissue_lowres_image.png")
+
+        high_res.save(path+"/tissue_hires_image.png")
+        low_res.save(path+"/tissue_lowres_image.png")
         
         dictionary = {"spot_diameter_fullres": self.spot_dia, 
                         "tissue_hires_scalef": factorHigh, 
