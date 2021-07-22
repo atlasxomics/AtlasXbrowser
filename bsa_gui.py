@@ -164,15 +164,10 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        if h > 850:
-            self.factor = 850/h
-            newW = int(round(w*850.0/h))
-            floor = a.resize((newW, 850), Image.ANTIALIAS)
-            postB = b.resize((newW, 850), Image.ANTIALIAS)
-        else:
-            floor = a
-            postB = b
-            self.factor = 1
+        self.factor = 850/h
+        newW = int(round(w*850.0/h))
+        floor = a.resize((newW, 850), Image.ANTIALIAS)
+        postB = b.resize((newW, 850), Image.ANTIALIAS)
 
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
@@ -225,7 +220,7 @@ class Gui():
             self.t_clicked = tk.StringVar()
             self.t_clicked.set("FF")
             self.tr_clicked = tk.StringVar()
-            self.tr_clicked.set("Yes")
+            self.tr_clicked.set("No")
             self.a_clicked = tk.StringVar()
             self.a_clicked.set("mRNA")
             self.n_clicked = tk.StringVar()
