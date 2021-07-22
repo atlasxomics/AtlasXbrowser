@@ -1,5 +1,6 @@
 from tkinter import *
 from bsa_gui import Gui
+import os
 
 #There is one things that need to be done in manually within the code 
 #In the file bsa_gui in the second method (Second Window) you will see comments above code that uses the library cv2
@@ -13,5 +14,10 @@ app = Gui(root)
 
 
 root.mainloop()
-
+try:
+    app.kill
+    os.system('python run_the_app.py')
+    os._exit(0)
+except AttributeError:
+    pass
 
