@@ -8,6 +8,7 @@ import csv
 from draggable_quad import DrawShapes
 from tkinter import filedialog
 import os
+import math
 import json
 from tissue_grid import Tissue
 import cv2
@@ -32,7 +33,7 @@ class Gui():
         self.newWindow.geometry("{0}x{1}".format(screen_width, screen_height))
 
         background_image = Image.open("atlasbg.png")
-        resized_image = background_image.resize((int(background_image.width*850.0/background_image.height), 850), Image.ANTIALIAS)
+        resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
         
 
@@ -42,9 +43,8 @@ class Gui():
         menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Open Image Folder", command=self.get_folder)
         filemenu.add_command(label="Open Spatial", command=self.get_folder)
-        filemenu.add_command(label="New Instance", command=self.restart)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.destruct)
+        filemenu.add_command(label="Exit", command=self.newWindow.quit)
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command="")
@@ -94,22 +94,22 @@ class Gui():
 
         #buttons
 
-        self.begin_button = tk.Button(self.frame, text = "Place Markers", command = self.find_points, state="active")
+        self.begin_button = tk.Button(self.frame, text = "Place Markers", command = self.find_points, state=tk.ACTIVE)
         self.begin_button.place(relx=.3, y= 200)
 
-        self.confirm_button = tk.Button(self.frame, text = "Confirm", command = lambda: self.confirm(None), state="disabled")
+        self.confirm_button = tk.Button(self.frame, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
         self.confirm_button.place(relx=.3, y= 230)
 
-        self.roi_button = tk.Button(self.frame, text = "Show Roi", command = self.roi, state='disabled')
+        self.roi_button = tk.Button(self.frame, text = "Show Roi", command = self.roi, state=tk.DISABLED)
         self.roi_button.place(relx=.1, y= 260)
 
-        self.grid_button = tk.Button(self.frame, text = "Show Grid", command = lambda: self.grid(self.picNames[2]), state="disabled")
+        self.grid_button = tk.Button(self.frame, text = "Show Grid", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.place(relx=.3, y= 260)
 
-        self.gridA_button = tk.Button(self.frame, text = "Show Grid on PostB", command = lambda: self.grid(self.picNames[0]), state="disabled")
+        self.gridA_button = tk.Button(self.frame, text = "Show Grid on PostB", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.place(relx=.5, y= 260)
 
-        self.onoff_button = tk.Button(self.frame, text = "On/Off Tissue", command = lambda: self.sendinfo(self.picNames[2]), state="disabled")
+        self.onoff_button = tk.Button(self.frame, text = "On/Off Tissue", command = lambda: self.sendinfo(self.picNames[2]), state=tk.DISABLED)
         self.onoff_button.place(relx=.1, y= 290)
 
         self.labelframe = tk.LabelFrame(self.frame, text="Selection Tools")
@@ -118,19 +118,19 @@ class Gui():
         self.value_labelFrame.set(1)
         tk.Radiobutton(self.labelframe, text="One by One", variable=self.value_labelFrame, value=1, command = self.offon).pack()
         tk.Radiobutton(self.labelframe, text="Highlight", variable=self.value_labelFrame, value=2, command = self.highlit).pack()
+        tk.Radiobutton(self.labelframe, text="Highlight On", variable=self.value_labelFrame, value=3,
+                       command=self.highliton).pack()
+        tk.Radiobutton(self.labelframe, text="Highlight Off", variable=self.value_labelFrame, value=4,
+                       command=self.highlitoff).pack()
+
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
-        self.position_file = tk.Button(self.frame, text = "Create Spatial Folder", command = self.create_files, state="disabled")
+        self.position_file = tk.Button(self.frame, text = "Create Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.1, y= 350)
 
-    def restart(self):
-        self.newWindow.destroy()
-        self.kill = True
-        return self.kill
-    def destruct(self):
-        self.newWindow.destroy()
+
 
     def get_folder(self):
         self.folder_selected = filedialog.askdirectory()
@@ -164,15 +164,10 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        if h > 850:
-            self.factor = 850/h
-            newW = int(round(w*850.0/h))
-            floor = a.resize((newW, 850), Image.ANTIALIAS)
-            postB = b.resize((newW, 850), Image.ANTIALIAS)
-        else:
-            floor = a
-            postB = b
-            self.factor = 1
+        self.factor = 850/h
+        newW = int(round(w*850.0/h))
+        floor = a.resize((newW, 850), Image.ANTIALIAS)
+        postB = b.resize((newW, 850), Image.ANTIALIAS)
 
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
@@ -225,7 +220,7 @@ class Gui():
             self.t_clicked = tk.StringVar()
             self.t_clicked.set("FF")
             self.tr_clicked = tk.StringVar()
-            self.tr_clicked.set("Yes")
+            self.tr_clicked.set("No")
             self.a_clicked = tk.StringVar()
             self.a_clicked.set("mRNA")
             self.n_clicked = tk.StringVar()
@@ -293,7 +288,8 @@ class Gui():
         res = temp.search(self.folder_selected).groups() 
         self.excelName = res[0]+ res[1]
 
-        self.postB_Name = self.excelName + ".image/" + self.excelName + "_postB.png"
+        previous = self.folder_selected[: len(self.folder_selected)-7]
+        self.postB_Name = previous + self.excelName + "_postB.png"
         beforeB = Image.open(self.postB_Name)
         a = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -331,13 +327,13 @@ class Gui():
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         #Buttons
-        self.begin_button['state'] = "disabled"
-        self.confirm_button['state'] = "disabled"
-        self.thresh_scale['state'] = "disabled"
-        self.spot_scale['state'] = "disabled"
-        self.roi_button["state"] = "disabled"
-        self.grid_button["state"] = "active"
-        self.onoff_button["state"] = "active"
+        self.begin_button['state'] = tk.DISABLED
+        self.confirm_button['state'] = tk.DISABLED
+        self.thresh_scale['state'] = tk.DISABLED
+        self.spot_scale['state'] = tk.DISABLED
+        self.roi_button["state"] = tk.DISABLED
+        self.grid_button["state"] = tk.ACTIVE
+        self.onoff_button["state"] = tk.ACTIVE
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
         self.update_file.place(relx=.1, y= 380)
 
@@ -388,8 +384,8 @@ class Gui():
 
 
     def find_points(self):
-        self.thresh_scale['state'] = "disabled"
-        self.spot_scale['state'] = "disabled"
+        self.thresh_scale['state'] = tk.DISABLED
+        self.spot_scale['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
@@ -398,7 +394,7 @@ class Gui():
         self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
         self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
 
-        self.confirm_button["state"] = "active"
+        self.confirm_button["state"] = tk.ACTIVE
 
     def confirm(self, none):
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
@@ -420,12 +416,12 @@ class Gui():
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
         self.picNames.append(bw_Image)
-        self.confirm_button["state"] = "disabled"
-        self.begin_button["state"] = "disabled"
-        self.roi_button["state"] = "active"
-        self.grid_button["state"] = "active"
-        self.gridA_button["state"] = "active"
-        self.onoff_button["state"] = "active"
+        self.confirm_button["state"] = tk.DISABLED
+        self.begin_button["state"] = tk.DISABLED
+        self.roi_button["state"] = tk.ACTIVE
+        self.grid_button["state"] = tk.ACTIVE
+        self.gridA_button["state"] = tk.ACTIVE
+        self.onoff_button["state"] = tk.ACTIVE
             
             
 
@@ -548,11 +544,11 @@ class Gui():
                     child['state'] = 'active'
             self.my_canvas.bind('<Button-1>',self.on_off)
 
-            self.position_file["state"] = "active"
-            self.onoff_button["state"] = "disabled"
-            self.roi_button["state"] = "disabled"
-            self.grid_button["state"] = "disabled"
-            self.gridA_button["state"] = "disabled"
+            self.position_file["state"] = tk.ACTIVE
+            self.onoff_button["state"] = tk.DISABLED
+            self.roi_button["state"] = tk.DISABLED
+            self.grid_button["state"] = tk.DISABLED
+            self.gridA_button["state"] = tk.DISABLED
             
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
@@ -573,11 +569,11 @@ class Gui():
                     child['state'] = 'active'
             self.my_canvas.bind('<Button-1>',self.on_off)
 
-            self.update_file["state"] = "active"
-            self.onoff_button["state"] = "disabled"
-            self.roi_button["state"] = "disabled"
-            self.grid_button["state"] = "disabled"
-            self.gridA_button["state"] = "disabled"
+            self.update_file["state"] = tk.ACTIVE
+            self.onoff_button["state"] = tk.DISABLED
+            self.roi_button["state"] = tk.DISABLED
+            self.grid_button["state"] = tk.DISABLED
+            self.gridA_button["state"] = tk.DISABLED
 
             with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                 csv_reader = csv.reader(csv_file)
@@ -626,10 +622,52 @@ class Gui():
                 j = where[1]
                 if state == "normal":
                     self.my_canvas.itemconfig(k, fill="", state="disabled")
-                    self.arr[int(i)-1][int(j)] = 0
+                    self.arr[int(i)][int(j)] = 0
                 else:
                     self.my_canvas.itemconfig(k, fill="red", state ="normal")
-                    self.arr[int(i)-1][int(j)] = 1
+                    self.arr[int(i)][int(j)] = 1
+        self.my_canvas.coords("highlight", 0,0,0,0)
+    def highliton(self):
+        self.my_canvas.unbind('<Button-1>')
+        self.my_canvas.bind('<Button-1>',self.highlight)
+        self.my_canvas.bind('<B1-Motion>', self.update_sel_recton)
+    def update_sel_recton(self, event):
+        self.my_canvas.bind("<ButtonRelease-1>", self.releaseon)
+        self.botx, self.boty = event.x, event.y
+        self.my_canvas.coords("highlight", self.topx, self.topy, self.botx, self.boty)  # Update selection rect.
+    def releaseon(self,event):
+        for k in self.my_canvas.find_overlapping(self.topx, self.topy, self.botx, self.boty):
+            position = event.widget.gettags(k)
+            if len(position) > 0 and position[0]!="highlight":
+                try:
+                    where = position[0].split("x")
+                except IndexError:
+                    break
+                i = where[0]
+                j = where[1]
+                self.my_canvas.itemconfig(k, fill="red", state ="normal")
+                self.arr[int(i)][int(j)] = 1
+        self.my_canvas.coords("highlight", 0,0,0,0)
+    def highlitoff(self):
+        self.my_canvas.unbind('<Button-1>')
+        self.my_canvas.bind('<Button-1>',self.highlight)
+        self.my_canvas.bind('<B1-Motion>', self.update_sel_rectoff)
+    def update_sel_rectoff(self, event):
+        self.my_canvas.bind("<ButtonRelease-1>", self.releaseoff)
+        self.botx, self.boty = event.x, event.y
+        self.my_canvas.coords("highlight", self.topx, self.topy, self.botx, self.boty)  # Update selection rect.
+    def releaseoff(self,event):
+        for k in self.my_canvas.find_overlapping(self.topx, self.topy, self.botx, self.boty):
+            position = event.widget.gettags(k)
+            if len(position) > 0 and position[0]!="highlight":
+                try:
+                    where = position[0].split("x")
+                except IndexError:
+                    break
+                i = where[0]
+                j = where[1]
+                self.my_canvas.itemconfig(k, fill="", state="disabled")
+                self.arr[int(i)][int(j)] = 0
         self.my_canvas.coords("highlight", 0,0,0,0)
     def on_off(self, event):
         tag = event.widget.find_closest(event.x,event.y)
@@ -643,10 +681,10 @@ class Gui():
         j = where[1]
         if state ==  "normal":
             self.my_canvas.itemconfig(tag, fill="", state="disabled")
-            self.arr[int(i)-1][int(j)] = 0
+            self.arr[int(i)][int(j)] = 0
         else:
             self.my_canvas.itemconfig(tag, fill="red", state ="normal")
-            self.arr[int(i)-1][int(j)] = 1
+            self.arr[int(i)][int(j)] = 1
         
 
 
@@ -660,6 +698,7 @@ class Gui():
         barcode_file = "bc"+ str(self.num_chan)+".txt"
         
         my_file = open(barcode_file,"r")
+        excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
 
@@ -672,6 +711,7 @@ class Gui():
                     else:
                         writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
+                excelC += 1
               
         my_file.close()
         self.json_file(path)
@@ -719,27 +759,34 @@ class Gui():
             outfile.write(meta_json_object)
             outfile.close()
                 
+                
+    
+        
+        
+
+    
+    
+        
 
     def update_pos(self):
         barcode_file = "bc"+ str(self.num_chan)+".txt"
         my_file = open(barcode_file,"r")
+        excelC = 1
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
-                        self.num_tixels+=1
                         writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
                         writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
-
+                excelC += 1
+              
         my_file.close()
         f.close()
-        meta = json.load(self.folder_selected+"/metadata.json")
-        meta['num_tixels'] = self.num_tixels
-        meta_json_object = json.dumps(meta, indent = 4)
-        with open(self.folder_selected+ "/metadata.json", "w") as outfile:
-            outfile.write(meta_json_object)
-            outfile.close()
+
+
+    
+        
