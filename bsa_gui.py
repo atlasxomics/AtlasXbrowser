@@ -77,11 +77,11 @@ class Gui():
         
 
         #create Scales
-        self.thresh_label = tk.Label(self.frame, text="Threshold Value Scale", font =("Courier", 14))
+        self.thresh_label = tk.Label(self.frame, text="blockSize", font =("Courier", 14))
         self.thresh_label.place(x=17,y=10)
         self.thresh_label_value = tk.Label(self.frame, text="255")
         self.thresh_label_value.place(x=17,y=60)
-        self.spot_label = tk.Label(self.frame, text="SpotRemover Value Scale", font =("Courier", 14))
+        self.spot_label = tk.Label(self.frame, text="Mean to subtract", font =("Courier", 14))
         self.spot_label.place(x=17,y=80)
         self.spot_label_value = tk.Label(self.frame, text="17")
         self.spot_label_value.place(x=17,y=130)
@@ -97,42 +97,45 @@ class Gui():
 
 
         #buttons
+        self.thframe = tk.LabelFrame(self.frame, text="ROI")
+        self.thframe.place(relx=.1, y= 170)
+        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.ACTIVE)
+        self.begin_button.pack()
 
-        self.begin_button = tk.Button(self.frame, text = "Place Markers", command = self.find_points, state=tk.ACTIVE)
-        self.begin_button.place(relx=.3, y= 200)
+        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
+        self.confirm_button.pack()
 
-        self.confirm_button = tk.Button(self.frame, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
-        self.confirm_button.place(relx=.3, y= 230)
+        self.shframe = tk.LabelFrame(self.frame, text="Display")
+        self.shframe.place(relx=.1, y=260)
+        self.roi_button = tk.Button(self.shframe, text = "ROI", command = self.roi, state=tk.DISABLED)
+        self.roi_button.pack(anchor='w')
 
-        self.roi_button = tk.Button(self.frame, text = "Show Roi", command = self.roi, state=tk.DISABLED)
-        self.roi_button.place(relx=.1, y= 260)
+        self.grid_button = tk.Button(self.shframe, text = "Grid", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_button.pack(anchor='w')
 
-        self.grid_button = tk.Button(self.frame, text = "Show Grid", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
-        self.grid_button.place(relx=.3, y= 260)
-
-        self.gridA_button = tk.Button(self.frame, text = "Show Grid on PostB", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
-        self.gridA_button.place(relx=.5, y= 260)
+        self.gridA_button = tk.Button(self.shframe, text = "Grid on raw image", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button.pack(anchor='w')
 
         self.onoff_button = tk.Button(self.frame, text = "On/Off Tissue", command = lambda: self.sendinfo(self.picNames[2]), state=tk.DISABLED)
-        self.onoff_button.place(relx=.1, y= 290)
+        self.onoff_button.place(relx=.1, y= 370)
 
-        self.labelframe = tk.LabelFrame(self.frame, text="Selection Tools")
-        self.labelframe.place(relx=.5, y= 290)
+        self.labelframe = tk.LabelFrame(self.frame, text="Selection")
+        self.labelframe.place(relx=.11, y= 405)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
-        tk.Radiobutton(self.labelframe, text="One by One", variable=self.value_labelFrame, value=1, command = self.offon).pack()
-        tk.Radiobutton(self.labelframe, text="Highlight", variable=self.value_labelFrame, value=2, command = self.highlit).pack()
-        tk.Radiobutton(self.labelframe, text="Highlight On", variable=self.value_labelFrame, value=3,
-                       command=self.highliton).pack()
-        tk.Radiobutton(self.labelframe, text="Highlight Off", variable=self.value_labelFrame, value=4,
-                       command=self.highlitoff).pack()
+        tk.Radiobutton(self.labelframe, text="Point", variable=self.value_labelFrame, value=1, command = self.offon).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle", variable=self.value_labelFrame, value=2, command = self.highlit).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle on", variable=self.value_labelFrame, value=3,
+                       command=self.highliton).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle off", variable=self.value_labelFrame, value=4,
+                       command=self.highlitoff).pack(anchor='w')
 
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, y= 350)
+        self.position_file.place(relx=.1, y= 530)
 
     def restart(self):
         self.newWindow.destroy()
@@ -348,7 +351,7 @@ class Gui():
         self.update_file.place(relx=.1, y= 380)
 
 
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['th1']), int(self.metadata['th2']))
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
@@ -754,8 +757,8 @@ class Gui():
             sel+=1
         sec = int(self.spot_value.get())
         metaDict = {"points" : self.Rpoints,
-                    "th1": sel,
-                    "th2": sec,
+                    "blockSize": sel,
+                    "threshold": sec,
                     "numTixels": self.numTixels}
         metaDict.update(self.metadata)
         
