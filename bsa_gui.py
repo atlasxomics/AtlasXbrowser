@@ -35,7 +35,10 @@ class Gui():
         background_image = Image.open("atlasbg.png")
         resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
-        
+
+        style = ttk.Style(root)
+        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
+        style.theme_use('azure')
 
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
