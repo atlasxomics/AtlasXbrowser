@@ -32,6 +32,10 @@ class Gui():
         self.newWindow.title("Atlas Browser")
         self.newWindow.geometry("{0}x{1}".format(screen_width, screen_height))
 
+        style = ttk.Style(root)
+        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
+        style.theme_use('azure')
+
         background_image = Image.open("atlasbg.png")
         resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
@@ -50,7 +54,7 @@ class Gui():
         helpmenu.add_command(label="About...", command="")
 
         self.names = []
-        self.num_tixels = 0
+        self.numTixels = 0
         self.folder_selected = None
         self.topx, self.topy, self.botx, self.boty = 0, 0, 0, 0
         self.points = []
@@ -290,7 +294,7 @@ class Gui():
                 self.position = self.folder_selected + "/" + i
 
 
-        temp = re.compile("/([a-zA-Z]+)([0-9]+).image")
+        temp = re.compile("/([a-zA-Z]+)([0-9]+)")
         res = temp.search(self.folder_selected).groups() 
         self.excelName = res[0]+ res[1]
 
@@ -712,7 +716,7 @@ class Gui():
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
-                        self.num_tixels+=1
+                        self.numTixels+=1
                         writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
                         writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
@@ -752,7 +756,7 @@ class Gui():
         metaDict = {"points" : self.Rpoints,
                     "th1": sel,
                     "th2": sec,
-                    "num_tixels": self.num_tixels}
+                    "numTixels": self.numTixels}
         metaDict.update(self.metadata)
         
         json_object = json.dumps(dictionary, indent = 4)
@@ -786,7 +790,7 @@ class Gui():
         f.close()
         p = open(self.folder_selected + "/metadata.json")
         meta = json.load(p)
-        meta['num_tixels'] = self.num_tixels
+        meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
