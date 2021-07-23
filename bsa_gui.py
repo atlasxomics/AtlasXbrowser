@@ -36,18 +36,15 @@ class Gui():
         resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
 
-        style = ttk.Style(root)
-        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
-        style.theme_use('azure')
-
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
         filemenu = tk.Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Open Image Folder", command=self.get_folder)
         filemenu.add_command(label="Open Spatial", command=self.get_folder)
+        filemenu.add_command(label="New Instance", command=self.restart)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.newWindow.quit)
+        filemenu.add_command(label="Exit", command=self.destruct)
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command="")
@@ -133,6 +130,12 @@ class Gui():
         self.position_file = tk.Button(self.frame, text = "Create Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.1, y= 350)
 
+    def restart(self):
+        self.newWindow.destroy()
+        self.kill = True
+        return self.kill
+    def destruct(self):
+        self.newWindow.destroy()
 
 
     def get_folder(self):
@@ -625,10 +628,10 @@ class Gui():
                 j = where[1]
                 if state == "normal":
                     self.my_canvas.itemconfig(k, fill="", state="disabled")
-                    self.arr[int(i)][int(j)] = 0
+                    self.arr[int(i)-1][int(j)] = 0
                 else:
                     self.my_canvas.itemconfig(k, fill="red", state ="normal")
-                    self.arr[int(i)][int(j)] = 1
+                    self.arr[int(i)-1][int(j)] = 1
         self.my_canvas.coords("highlight", 0,0,0,0)
     def highliton(self):
         self.my_canvas.unbind('<Button-1>')
@@ -649,7 +652,7 @@ class Gui():
                 i = where[0]
                 j = where[1]
                 self.my_canvas.itemconfig(k, fill="red", state ="normal")
-                self.arr[int(i)][int(j)] = 1
+                self.arr[int(i)-1][int(j)] = 1
         self.my_canvas.coords("highlight", 0,0,0,0)
     def highlitoff(self):
         self.my_canvas.unbind('<Button-1>')
@@ -670,7 +673,7 @@ class Gui():
                 i = where[0]
                 j = where[1]
                 self.my_canvas.itemconfig(k, fill="", state="disabled")
-                self.arr[int(i)][int(j)] = 0
+                self.arr[int(i)-1][int(j)] = 0
         self.my_canvas.coords("highlight", 0,0,0,0)
     def on_off(self, event):
         tag = event.widget.find_closest(event.x,event.y)
@@ -684,10 +687,10 @@ class Gui():
         j = where[1]
         if state ==  "normal":
             self.my_canvas.itemconfig(tag, fill="", state="disabled")
-            self.arr[int(i)][int(j)] = 0
+            self.arr[int(i)-1][int(j)] = 0
         else:
             self.my_canvas.itemconfig(tag, fill="red", state ="normal")
-            self.arr[int(i)][int(j)] = 1
+            self.arr[int(i)-1][int(j)] = 1
         
 
 
@@ -761,14 +764,7 @@ class Gui():
             outfile.write(meta_json_object)
             outfile.close()
                 
-                
-    
-        
-        
 
-    
-    
-        
 
     def update_pos(self):
         barcode_file = "bc"+ str(self.num_chan)+".txt"
@@ -788,6 +784,13 @@ class Gui():
               
         my_file.close()
         f.close()
+        p = open(self.folder_selected + "/metadata.json")
+        meta = json.load(p)
+        meta['num_tixels'] = self.num_tixels
+        meta_json_object = json.dumps(meta, indent = 4)
+        with open(self.folder_selected+ "/metadata.json", "w") as outfile:
+            outfile.write(meta_json_object)
+            outfile.close()
 
 
     
