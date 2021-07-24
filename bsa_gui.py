@@ -7,6 +7,7 @@ import os
 import csv
 from draggable_quad import DrawShapes
 from tkinter import filedialog
+from tkinter import messagebox as mb
 import os
 import math
 import json
@@ -76,7 +77,7 @@ class Gui():
         self.lmain.configure(image=bg)
 
         #create Scales
-        self.adframe = tk.LabelFrame(self.frame, text="Adaptive thresholding", padx="10px", pady="10px")
+        self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, y=30)
         self.thresh_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.thresh_label.pack(anchor='w')
@@ -729,6 +730,7 @@ class Gui():
         my_file.close()
         self.json_file(path)
         f.close()
+        mb.showinfo("Congraduations!", "The spatial folder is created!")
 
     def json_file(self,path):
         factorHigh = 0
