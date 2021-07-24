@@ -85,9 +85,9 @@ class Gui():
 
         self.thresh_value = tk.IntVar()
         self.spot_value = tk.IntVar()
-        self.thresh_value.set(255)
-        self.spot_value.set(17)
-        self.thresh_scale = ttk.Scale(self.adframe, variable = self.thresh_value, from_ = 19, to = 255, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.thresh_value.set(13)
+        self.spot_value.set(11)
+        self.thresh_scale = ttk.Scale(self.adframe, variable = self.thresh_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
         self.thresh_scale.pack(anchor='w')
         self.spot_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
         self.spot_label.pack(anchor='w')
@@ -365,10 +365,9 @@ class Gui():
         if float(value) > 11:
             self.my_canvas.delete("all")
             sel = int(self.thresh_value.get())
+            sec = int(self.spot_value.get())
             if sel %2 == 0:
                 sel+=1
-            sec = int(self.spot_value.get())
-
             #self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
             #self.spot_label_value.config(text = str(sec), font =("Courier", 14))
 
