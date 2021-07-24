@@ -65,7 +65,7 @@ class Gui():
         self.my_canvas = tk.Canvas(self.newWindow, width = int(screen_width/3), height= screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
         self.my_canvas.old_coords = None
-        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height)
+        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height, highlightbackground="black", highlightthickness=1)
         self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         button_frame = tk.Frame(self.frame)
         button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
@@ -74,31 +74,32 @@ class Gui():
         self.lmain.pack()
         self.lmain.img = bg
         self.lmain.configure(image=bg)
-        
 
         #create Scales
-        self.thresh_label = tk.Label(self.frame, text="blockSize", font =("Courier", 14))
-        self.thresh_label.place(x=17,y=10)
-        self.thresh_label_value = tk.Label(self.frame, text="255")
-        self.thresh_label_value.place(x=17,y=60)
-        self.spot_label = tk.Label(self.frame, text="Mean to subtract", font =("Courier", 14))
-        self.spot_label.place(x=17,y=80)
-        self.spot_label_value = tk.Label(self.frame, text="17")
-        self.spot_label_value.place(x=17,y=130)
+        self.adframe = tk.LabelFrame(self.frame, text="Adaptive thresholding", padx="10px", pady="10px")
+        self.adframe.place(relx=.11, y=10)
+        self.thresh_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
+        self.thresh_label.pack(anchor='w')
+        #self.thresh_label_value = tk.Label(self.frame, text="255")
+        #self.thresh_label_value.place(x=17,y=60)
 
         self.thresh_value = tk.IntVar()
         self.spot_value = tk.IntVar()
         self.thresh_value.set(255)
         self.spot_value.set(17)
-        self.thresh_scale = ttk.Scale(self.frame, variable = self.thresh_value, from_ = 19, to = 255, orient = tk.HORIZONTAL, command= self.showThresh)  
-        self.thresh_scale.place(x=17,y=40, relwidth=.8)
-        self.spot_scale = ttk.Scale(self.frame, variable = self.spot_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh)  
-        self.spot_scale.place(x=17,y=110, relwidth=.8)
+        self.thresh_scale = ttk.Scale(self.adframe, variable = self.thresh_value, from_ = 19, to = 255, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.thresh_scale.pack(anchor='w')
+        self.spot_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
+        self.spot_label.pack(anchor='w')
+        #self.spot_label_value = tk.Label(self.frame, text="17")
+        #self.spot_label_value.place(x=17,y=130)
+        self.spot_scale = ttk.Scale(self.adframe, variable = self.spot_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.spot_scale.pack(anchor='w')
 
 
         #buttons
-        self.thframe = tk.LabelFrame(self.frame, text="ROI")
-        self.thframe.place(relx=.1, y= 170)
+        self.thframe = tk.LabelFrame(self.frame, text="Locate ROI")
+        self.thframe.place(relx=.11, y= 140)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.ACTIVE)
         self.begin_button.pack()
 
@@ -106,7 +107,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.frame, text="Display")
-        self.shframe.place(relx=.1, y=260)
+        self.shframe.place(relx=.11, y=225)
         self.roi_button = tk.Button(self.shframe, text = "ROI", command = self.roi, state=tk.DISABLED)
         self.roi_button.pack(anchor='w')
 
@@ -116,26 +117,26 @@ class Gui():
         self.gridA_button = tk.Button(self.shframe, text = "Grid on raw image", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.pack(anchor='w')
 
-        self.onoff_button = tk.Button(self.frame, text = "On/Off Tissue", command = lambda: self.sendinfo(self.picNames[2]), state=tk.DISABLED)
-        self.onoff_button.place(relx=.1, y= 370)
-
-        self.labelframe = tk.LabelFrame(self.frame, text="Selection")
-        self.labelframe.place(relx=.11, y= 405)
+        self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue")
+        self.labelframe.place(relx=.11, y= 340)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
+        self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
+                                      state=tk.DISABLED)
+        self.onoff_button.pack(anchor='w')
         tk.Radiobutton(self.labelframe, text="Point", variable=self.value_labelFrame, value=1, command = self.offon).pack(anchor='w')
         tk.Radiobutton(self.labelframe, text="Rectangle", variable=self.value_labelFrame, value=2, command = self.highlit).pack(anchor='w')
-        tk.Radiobutton(self.labelframe, text="Rectangle on", variable=self.value_labelFrame, value=3,
+        tk.Radiobutton(self.labelframe, text="Rectangle (all on)", variable=self.value_labelFrame, value=3,
                        command=self.highliton).pack(anchor='w')
-        tk.Radiobutton(self.labelframe, text="Rectangle off", variable=self.value_labelFrame, value=4,
+        tk.Radiobutton(self.labelframe, text="Rectangle (all off)", variable=self.value_labelFrame, value=4,
                        command=self.highlitoff).pack(anchor='w')
 
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
-        self.position_file = tk.Button(self.frame, text = "Create Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, y= 530)
+        self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
+        self.position_file.place(relx=.1, y= 495)
 
     def restart(self):
         self.newWindow.destroy()
@@ -368,8 +369,8 @@ class Gui():
                 sel+=1
             sec = int(self.spot_value.get())
 
-            self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
-            self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.spot_label_value.config(text = str(sec), font =("Courier", 14))
 
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
@@ -385,8 +386,8 @@ class Gui():
                 sel+=1
             sec = int(self.spot_value.get())
 
-            self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
-            self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.spot_label_value.config(text = str(sec), font =("Courier", 14))
 
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
