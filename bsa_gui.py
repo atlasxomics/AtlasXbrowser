@@ -65,7 +65,7 @@ class Gui():
         self.my_canvas = tk.Canvas(self.newWindow, width = int(screen_width/3), height= screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
         self.my_canvas.old_coords = None
-        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height, highlightbackground="black", highlightthickness=1)
+        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height, highlightbackground="lightgray", highlightthickness=1)
         self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         button_frame = tk.Frame(self.frame)
         button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
@@ -77,7 +77,7 @@ class Gui():
 
         #create Scales
         self.adframe = tk.LabelFrame(self.frame, text="Adaptive thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, y=10)
+        self.adframe.place(relx=.11, y=30)
         self.thresh_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.thresh_label.pack(anchor='w')
         #self.thresh_label_value = tk.Label(self.frame, text="255")
@@ -98,27 +98,27 @@ class Gui():
 
 
         #buttons
-        self.thframe = tk.LabelFrame(self.frame, text="Locate ROI")
-        self.thframe.place(relx=.11, y= 140)
+        self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
+        self.thframe.place(relx=.11, y= 165)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.ACTIVE)
         self.begin_button.pack()
 
         self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
         self.confirm_button.pack()
 
-        self.shframe = tk.LabelFrame(self.frame, text="Display")
-        self.shframe.place(relx=.11, y=225)
+        self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
+        self.shframe.place(relx=.11, y=275)
         self.roi_button = tk.Button(self.shframe, text = "ROI", command = self.roi, state=tk.DISABLED)
         self.roi_button.pack(anchor='w')
 
-        self.grid_button = tk.Button(self.shframe, text = "Grid", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(anchor='w')
 
-        self.gridA_button = tk.Button(self.shframe, text = "Grid on raw image", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button = tk.Button(self.shframe, text = "Tixels on BSA image", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.pack(anchor='w')
 
-        self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue")
-        self.labelframe.place(relx=.11, y= 340)
+        self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
+        self.labelframe.place(relx=.11, y= 415)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -136,7 +136,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, y= 495)
+        self.position_file.place(relx=.1, y= 600)
 
     def restart(self):
         self.newWindow.destroy()
