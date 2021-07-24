@@ -79,23 +79,23 @@ class Gui():
         #create Scales
         self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, y=30)
-        self.thresh_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
-        self.thresh_label.pack(anchor='w')
-        #self.thresh_label_value = tk.Label(self.frame, text="255")
-        #self.thresh_label_value.place(x=17,y=60)
+        self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
+        self.blockSize_label.pack(anchor='w')
+        #self.blockSize_label_value = tk.Label(self.frame, text="255")
+        #self.blockSize_label_value.place(x=17,y=60)
 
-        self.thresh_value = tk.IntVar()
-        self.spot_value = tk.IntVar()
-        self.thresh_value.set(13)
-        self.spot_value.set(11)
-        self.thresh_scale = ttk.Scale(self.adframe, variable = self.thresh_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
-        self.thresh_scale.pack(anchor='w')
-        self.spot_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
-        self.spot_label.pack(anchor='w')
-        #self.spot_label_value = tk.Label(self.frame, text="17")
-        #self.spot_label_value.place(x=17,y=130)
-        self.spot_scale = ttk.Scale(self.adframe, variable = self.spot_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
-        self.spot_scale.pack(anchor='w')
+        self.blockSize_value = tk.IntVar()
+        self.cMean_value = tk.IntVar()
+        self.blockSize_value.set(13)
+        self.cMean_value.set(11)
+        self.blockSize_scale = ttk.Scale(self.adframe, variable = self.blockSize_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.blockSize_scale.pack(anchor='w')
+        self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
+        self.cMean_label.pack(anchor='w')
+        #self.cMean_label_value = tk.Label(self.frame, text="17")
+        #self.cMean_label_value.place(x=17,y=130)
+        self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.cMean_scale.pack(anchor='w')
 
 
         #buttons
@@ -125,8 +125,8 @@ class Gui():
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
                                       state=tk.DISABLED)
         self.onoff_button.pack(anchor='w')
-        tk.Radiobutton(self.labelframe, text="Point", variable=self.value_labelFrame, value=1, command = self.offon).pack(anchor='w')
-        tk.Radiobutton(self.labelframe, text="Rectangle", variable=self.value_labelFrame, value=2, command = self.highlit).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Point (flip)", variable=self.value_labelFrame, value=1, command = self.offon).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle (flip)", variable=self.value_labelFrame, value=2, command = self.highlit).pack(anchor='w')
         tk.Radiobutton(self.labelframe, text="Rectangle (all on)", variable=self.value_labelFrame, value=3,
                        command=self.highliton).pack(anchor='w')
         tk.Radiobutton(self.labelframe, text="Rectangle (all off)", variable=self.value_labelFrame, value=4,
@@ -149,6 +149,16 @@ class Gui():
 
     def get_folder(self):
         self.folder_selected = filedialog.askdirectory()
+
+        self.pWindow = tk.Toplevel(self.newWindow)
+        self.pWindow.title("Loading images...")
+        self.pWindow.geometry("400x90")
+        self.bar = ttk.Progressbar(self.pWindow, orient="horizontal", length=360)
+        self.bar.pack(pady=30)
+        self.bar["value"] += 10
+        self.pWindow.update_idletasks()
+        self.pWindow.update()
+
         for file in os.listdir(self.folder_selected):
             if file.startswith(".") == False:
                 self.names.append(file)
@@ -161,6 +171,8 @@ class Gui():
             f = open(self.folder_selected + "/metadata.json")
             self.metadata = json.load(f)
             self.num_chan = int(self.metadata['numChannels'])
+            self.bar["value"] = 20
+            self.pWindow.update()
             self.second_window()
             
 
@@ -170,12 +182,19 @@ class Gui():
         for i in self.names:
             if "BSA" in i:
                 beforeA = Image.open(self.folder_selected + "/" + i)
+                self.bar["value"] = 40
+                self.pWindow.update()
                 a = beforeA.transpose(Image.FLIP_LEFT_RIGHT)
+                self.bar["value"] = 50
+                self.pWindow.update()
             elif "postB" in i:
                 self.postB_Name = self.folder_selected + "/" + i
                 beforeB = Image.open(self.postB_Name)
+                self.bar["value"] = 20
+                self.pWindow.update()
                 b = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
-
+                self.bar["value"] = 30
+                self.pWindow.update()
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
@@ -184,29 +203,43 @@ class Gui():
         floor = a.resize((newW, 850), Image.ANTIALIAS)
         postB = b.resize((newW, 850), Image.ANTIALIAS)
 
+        self.bar["value"] = 60
+        self.pWindow.update()
+
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
         temp = re.compile("/([a-zA-Z]+)([0-9]+)_postB")
         res = temp.search(self.postB_Name).groups() 
         self.excelName = res[0]+ res[1]
-        
+
+        self.bar["value"] = 70
+        self.pWindow.update()
+
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        self.bar["value"] = 80
+        self.pWindow.update()
+
         flippedimage = cv2.flip(img, 1)
+        self.bar["value"] = 90
+        self.pWindow.update()
+
         try:
             self.scale_image = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
         except cv2.error:
             self.scale_image = flippedimage   
 
+        self.bar["value"] = 100
+        self.pWindow.update()
+        self.pWindow.destroy()
+
         self.imgA = ImageTk.PhotoImage(floor)
         self.imgB = ImageTk.PhotoImage(postB)
-        self.picNames = [self.imgA, self.imgB]  
-
+        self.picNames = [self.imgA, self.imgB]
 
         #update canvas and frame
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.frame.config(width = floor.width-w, height= h)
-        
 
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
@@ -306,8 +339,11 @@ class Gui():
         previous = self.folder_selected[: len(self.folder_selected)-7]
         self.postB_Name = previous + self.excelName + "_postB.png"
         beforeB = Image.open(self.postB_Name)
+        self.bar["value"] = 30
+        self.pWindow.update()
         a = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
-
+        self.bar["value"] = 40
+        self.pWindow.update()
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
@@ -323,12 +359,17 @@ class Gui():
         self.newWidth = floor.width ; self.newHeight = floor.height
         
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        self.bar["value"] = 50
+        self.pWindow.update()
         flippedimage = cv2.flip(img, 1)
+        self.bar["value"] = 60
+        self.pWindow.update()
         try:
             self.scale_image = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            self.scale_image = flippedimage   
-
+            self.scale_image = flippedimage
+        self.bar["value"] = 80
+        self.pWindow.update()
         self.imgA = ImageTk.PhotoImage(floor)
         self.picNames = [None, None]  
 
@@ -344,33 +385,35 @@ class Gui():
         #Buttons
         self.begin_button['state'] = tk.DISABLED
         self.confirm_button['state'] = tk.DISABLED
-        self.thresh_scale['state'] = tk.DISABLED
-        self.spot_scale['state'] = tk.DISABLED
+        self.blockSize_scale['state'] = tk.DISABLED
+        self.cMean_scale['state'] = tk.DISABLED
         self.roi_button["state"] = tk.DISABLED
         self.grid_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.1, y= 380)
-
+        self.update_file.place(relx=.1, y= 630)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
+        self.bar["value"] = 100
+        self.pWindow.update()
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
 
+        self.pWindow.destroy()
         
 
     def showThresh(self, value):
         if float(value) > 11:
             self.my_canvas.delete("all")
-            sel = int(self.thresh_value.get())
-            sec = int(self.spot_value.get())
+            sel = int(self.blockSize_value.get())
+            sec = int(self.cMean_value.get())
             if sel %2 == 0:
                 sel+=1
-            #self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
-            #self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
@@ -381,13 +424,13 @@ class Gui():
             
         else:
             self.my_canvas.delete("all")
-            sel = int(self.thresh_value.get())
+            sel = int(self.blockSize_value.get())
             if sel %2 == 0:
                 sel+=1
-            sec = int(self.spot_value.get())
+            sec = int(self.cMean_value.get())
 
-            #self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
-            #self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
@@ -398,8 +441,8 @@ class Gui():
 
 
     def find_points(self):
-        self.thresh_scale['state'] = tk.DISABLED
-        self.spot_scale['state'] = tk.DISABLED
+        self.blockSize_scale['state'] = tk.DISABLED
+        self.cMean_scale['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
@@ -412,8 +455,8 @@ class Gui():
 
     def confirm(self, none):
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-        tvalue = self.thresh_value.get()
-        svalue = self.spot_value.get()
+        tvalue = self.blockSize_value.get()
+        svalue = self.cMean_value.get()
         if tvalue%2==0:
             tvalue +=1
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
@@ -754,10 +797,10 @@ class Gui():
                         "tissue_hires_scalef": factorHigh, 
                         "fiducial_diameter_fullres": self.fud_dia, 
                         "tissue_lowres_scalef": factorLow}
-        sel = int(self.thresh_value.get())
+        sel = int(self.blockSize_value.get())
         if sel %2 == 0:
             sel+=1
-        sec = int(self.spot_value.get())
+        sec = int(self.cMean_value.get())
         metaDict = {"points" : self.Rpoints,
                     "blockSize": sel,
                     "threshold": sec,
