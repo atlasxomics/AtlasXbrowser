@@ -88,20 +88,20 @@ class Gui():
         self.cMean_value = tk.IntVar()
         self.blockSize_value.set(13)
         self.cMean_value.set(11)
-        self.blockSize_scale = ttk.Scale(self.adframe, variable = self.blockSize_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.blockSize_scale = ttk.Scale(self.adframe, variable = self.blockSize_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.blockSize_scale.pack(anchor='w')
         self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
         self.cMean_label.pack(anchor='w')
         #self.cMean_label_value = tk.Label(self.frame, text="17")
         #self.cMean_label_value.place(x=17,y=130)
-        self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
 
 
         #buttons
         self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
         self.thframe.place(relx=.11, y= 165)
-        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.ACTIVE)
+        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack()
 
         self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
@@ -322,6 +322,9 @@ class Gui():
                          "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
+        self.blockSize_scale['state'] = tk.ACTIVE
+        self.cMean_scale['state'] = tk.ACTIVE
+        self.begin_button['state'] = tk.ACTIVE
 
     def second_window(self):
         for i in self.names:
@@ -681,6 +684,7 @@ class Gui():
                     self.my_canvas.itemconfig(k, fill="red", state ="normal")
                     self.arr[int(i)-1][int(j)] = 1
         self.my_canvas.coords("highlight", 0,0,0,0)
+        self.my_canvas.unbind("<ButtonRelease-1>")
     def highliton(self):
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.bind('<Button-1>',self.highlight)
@@ -702,6 +706,7 @@ class Gui():
                 self.my_canvas.itemconfig(k, fill="red", state ="normal")
                 self.arr[int(i)-1][int(j)] = 1
         self.my_canvas.coords("highlight", 0,0,0,0)
+        self.my_canvas.unbind("<ButtonRelease-1>")
     def highlitoff(self):
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.bind('<Button-1>',self.highlight)
@@ -723,6 +728,7 @@ class Gui():
                 self.my_canvas.itemconfig(k, fill="", state="disabled")
                 self.arr[int(i)-1][int(j)] = 0
         self.my_canvas.coords("highlight", 0,0,0,0)
+        self.my_canvas.unbind("<ButtonRelease-1>")
     def on_off(self, event):
         tag = event.widget.find_closest(event.x,event.y)
         position = event.widget.gettags(tag)
