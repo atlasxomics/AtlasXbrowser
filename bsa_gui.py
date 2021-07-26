@@ -36,6 +36,10 @@ class Gui():
         resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
 
+        style = ttk.Style(root)
+        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
+        style.theme_use('azure')
+
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
         filemenu = tk.Menu(menu)
@@ -290,15 +294,12 @@ class Gui():
                 self.position = self.folder_selected + "/" + i
 
 
-        temp = re.compile("/([a-zA-Z]+)([0-9]+).image")
+        temp = re.compile("/([a-zA-Z]+)([0-9]+)")
         res = temp.search(self.folder_selected).groups() 
         self.excelName = res[0]+ res[1]
 
-        previous = self.folder_selected[: len(self.folder_selected)-7]
-        self.postB_Name = previous + self.excelName + "_postB.png"
-        beforeB = Image.open(self.postB_Name)
-        a = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
-
+        self.postB_Name = self.folder_selected+"/tissue_hires_image.png"
+        a = Image.open(self.postB_Name)
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
@@ -310,15 +311,13 @@ class Gui():
             floor = a
             self.factor = 1
 
-        self.refactor = a
         self.newWidth = floor.width ; self.newHeight = floor.height
         
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
-        flippedimage = cv2.flip(img, 1)
         try:
-            self.scale_image = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
+            self.scale_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            self.scale_image = flippedimage   
+            self.scale_image = img   
 
         self.imgA = ImageTk.PhotoImage(floor)
         self.picNames = [None, None]  

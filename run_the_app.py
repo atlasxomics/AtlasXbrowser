@@ -1,4 +1,4 @@
-from tkinter import *
+import tkinter as tk
 from bsa_gui import Gui
 import os
 
@@ -9,7 +9,7 @@ import os
 #Only change the three digit number (Second value from last) when changing the adaptiveThreshold
 #Id reccomned only clicking the ON/OFF button while the grid is showing on the picture with no channels (Show Grid)
 
-root = Tk()
+root = tk.Tk()
 app = Gui(root)
 
 
