@@ -7,6 +7,7 @@ import os
 import csv
 from draggable_quad import DrawShapes
 from tkinter import filedialog
+from tkinter import messagebox as mb
 import os
 import math
 import json
@@ -32,13 +33,13 @@ class Gui():
         self.newWindow.title("Atlas Browser")
         self.newWindow.geometry("{0}x{1}".format(screen_width, screen_height))
 
-        background_image = Image.open("atlasbg.png")
-        resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
-        bg = ImageTk.PhotoImage(resized_image)
-
         style = ttk.Style(root)
         root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
         style.theme_use('azure')
+
+        background_image = Image.open("atlasbg.png")
+        resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
+        bg = ImageTk.PhotoImage(resized_image)
 
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
@@ -54,7 +55,7 @@ class Gui():
         helpmenu.add_command(label="About...", command="")
 
         self.names = []
-        self.num_tixels = 0
+        self.numTixels = 0
         self.folder_selected = None
         self.topx, self.topy, self.botx, self.boty = 0, 0, 0, 0
         self.points = []
@@ -65,7 +66,7 @@ class Gui():
         self.my_canvas = tk.Canvas(self.newWindow, width = int(screen_width/3), height= screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
         self.my_canvas.old_coords = None
-        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height)
+        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height, highlightbackground="lightgray", highlightthickness=1)
         self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         button_frame = tk.Frame(self.frame)
         button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
@@ -74,65 +75,69 @@ class Gui():
         self.lmain.pack()
         self.lmain.img = bg
         self.lmain.configure(image=bg)
-        
 
         #create Scales
-        self.thresh_label = tk.Label(self.frame, text="Threshold Value Scale", font =("Courier", 14))
-        self.thresh_label.place(x=17,y=10)
-        self.thresh_label_value = tk.Label(self.frame, text="255")
-        self.thresh_label_value.place(x=17,y=60)
-        self.spot_label = tk.Label(self.frame, text="SpotRemover Value Scale", font =("Courier", 14))
-        self.spot_label.place(x=17,y=80)
-        self.spot_label_value = tk.Label(self.frame, text="17")
-        self.spot_label_value.place(x=17,y=130)
+        self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
+        self.adframe.place(relx=.11, y=30)
+        self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
+        self.blockSize_label.pack(anchor='w')
+        #self.blockSize_label_value = tk.Label(self.frame, text="255")
+        #self.blockSize_label_value.place(x=17,y=60)
 
-        self.thresh_value = tk.IntVar()
-        self.spot_value = tk.IntVar()
-        self.thresh_value.set(255)
-        self.spot_value.set(17)
-        self.thresh_scale = ttk.Scale(self.frame, variable = self.thresh_value, from_ = 19, to = 255, orient = tk.HORIZONTAL, command= self.showThresh)  
-        self.thresh_scale.place(x=17,y=40, relwidth=.8)
-        self.spot_scale = ttk.Scale(self.frame, variable = self.spot_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh)  
-        self.spot_scale.place(x=17,y=110, relwidth=.8)
+        self.blockSize_value = tk.IntVar()
+        self.cMean_value = tk.IntVar()
+        self.blockSize_value.set(13)
+        self.cMean_value.set(11)
+        self.blockSize_scale = ttk.Scale(self.adframe, variable = self.blockSize_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.blockSize_scale.pack(anchor='w')
+        self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
+        self.cMean_label.pack(anchor='w')
+        #self.cMean_label_value = tk.Label(self.frame, text="17")
+        #self.cMean_label_value.place(x=17,y=130)
+        self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200)
+        self.cMean_scale.pack(anchor='w')
 
 
         #buttons
+        self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
+        self.thframe.place(relx=.11, y= 165)
+        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.ACTIVE)
+        self.begin_button.pack()
 
-        self.begin_button = tk.Button(self.frame, text = "Place Markers", command = self.find_points, state=tk.ACTIVE)
-        self.begin_button.place(relx=.3, y= 200)
+        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
+        self.confirm_button.pack()
 
-        self.confirm_button = tk.Button(self.frame, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
-        self.confirm_button.place(relx=.3, y= 230)
+        self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
+        self.shframe.place(relx=.11, y=275)
+        self.roi_button = tk.Button(self.shframe, text = "ROI", command = self.roi, state=tk.DISABLED)
+        self.roi_button.pack(anchor='w')
 
-        self.roi_button = tk.Button(self.frame, text = "Show Roi", command = self.roi, state=tk.DISABLED)
-        self.roi_button.place(relx=.1, y= 260)
+        self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_button.pack(anchor='w')
 
-        self.grid_button = tk.Button(self.frame, text = "Show Grid", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
-        self.grid_button.place(relx=.3, y= 260)
+        self.gridA_button = tk.Button(self.shframe, text = "Tixels on BSA image", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button.pack(anchor='w')
 
-        self.gridA_button = tk.Button(self.frame, text = "Show Grid on PostB", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
-        self.gridA_button.place(relx=.5, y= 260)
-
-        self.onoff_button = tk.Button(self.frame, text = "On/Off Tissue", command = lambda: self.sendinfo(self.picNames[2]), state=tk.DISABLED)
-        self.onoff_button.place(relx=.1, y= 290)
-
-        self.labelframe = tk.LabelFrame(self.frame, text="Selection Tools")
-        self.labelframe.place(relx=.5, y= 290)
+        self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
+        self.labelframe.place(relx=.11, y= 415)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
-        tk.Radiobutton(self.labelframe, text="One by One", variable=self.value_labelFrame, value=1, command = self.offon).pack()
-        tk.Radiobutton(self.labelframe, text="Highlight", variable=self.value_labelFrame, value=2, command = self.highlit).pack()
-        tk.Radiobutton(self.labelframe, text="Highlight On", variable=self.value_labelFrame, value=3,
-                       command=self.highliton).pack()
-        tk.Radiobutton(self.labelframe, text="Highlight Off", variable=self.value_labelFrame, value=4,
-                       command=self.highlitoff).pack()
+        self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
+                                      state=tk.DISABLED)
+        self.onoff_button.pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Point (flip)", variable=self.value_labelFrame, value=1, command = self.offon).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle (flip)", variable=self.value_labelFrame, value=2, command = self.highlit).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle (all on)", variable=self.value_labelFrame, value=3,
+                       command=self.highliton).pack(anchor='w')
+        tk.Radiobutton(self.labelframe, text="Rectangle (all off)", variable=self.value_labelFrame, value=4,
+                       command=self.highlitoff).pack(anchor='w')
 
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
-        self.position_file = tk.Button(self.frame, text = "Create Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, y= 350)
+        self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
+        self.position_file.place(relx=.1, y= 600)
 
     def restart(self):
         self.newWindow.destroy()
@@ -144,6 +149,16 @@ class Gui():
 
     def get_folder(self):
         self.folder_selected = filedialog.askdirectory()
+
+        self.pWindow = tk.Toplevel(self.newWindow)
+        self.pWindow.title("Loading images...")
+        self.pWindow.geometry("400x90")
+        self.bar = ttk.Progressbar(self.pWindow, orient="horizontal", length=360)
+        self.bar.pack(pady=30)
+        self.bar["value"] += 10
+        self.pWindow.update_idletasks()
+        self.pWindow.update()
+
         for file in os.listdir(self.folder_selected):
             if file.startswith(".") == False:
                 self.names.append(file)
@@ -156,6 +171,8 @@ class Gui():
             f = open(self.folder_selected + "/metadata.json")
             self.metadata = json.load(f)
             self.num_chan = int(self.metadata['numChannels'])
+            self.bar["value"] = 20
+            self.pWindow.update()
             self.second_window()
             
 
@@ -165,12 +182,19 @@ class Gui():
         for i in self.names:
             if "BSA" in i:
                 beforeA = Image.open(self.folder_selected + "/" + i)
+                self.bar["value"] = 40
+                self.pWindow.update()
                 a = beforeA.transpose(Image.FLIP_LEFT_RIGHT)
+                self.bar["value"] = 50
+                self.pWindow.update()
             elif "postB" in i:
                 self.postB_Name = self.folder_selected + "/" + i
                 beforeB = Image.open(self.postB_Name)
+                self.bar["value"] = 20
+                self.pWindow.update()
                 b = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
-
+                self.bar["value"] = 30
+                self.pWindow.update()
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
@@ -179,29 +203,43 @@ class Gui():
         floor = a.resize((newW, 850), Image.ANTIALIAS)
         postB = b.resize((newW, 850), Image.ANTIALIAS)
 
+        self.bar["value"] = 60
+        self.pWindow.update()
+
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
         temp = re.compile("/([a-zA-Z]+)([0-9]+)_postB")
         res = temp.search(self.postB_Name).groups() 
         self.excelName = res[0]+ res[1]
-        
+
+        self.bar["value"] = 70
+        self.pWindow.update()
+
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        self.bar["value"] = 80
+        self.pWindow.update()
+
         flippedimage = cv2.flip(img, 1)
+        self.bar["value"] = 90
+        self.pWindow.update()
+
         try:
             self.scale_image = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
         except cv2.error:
             self.scale_image = flippedimage   
 
+        self.bar["value"] = 100
+        self.pWindow.update()
+        self.pWindow.destroy()
+
         self.imgA = ImageTk.PhotoImage(floor)
         self.imgB = ImageTk.PhotoImage(postB)
-        self.picNames = [self.imgA, self.imgB]  
-
+        self.picNames = [self.imgA, self.imgB]
 
         #update canvas and frame
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.frame.config(width = floor.width-w, height= h)
-        
 
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
@@ -298,8 +336,12 @@ class Gui():
         res = temp.search(self.folder_selected).groups() 
         self.excelName = res[0]+ res[1]
 
-        self.postB_Name = self.folder_selected+"/tissue_hires_image.png"
+        self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
         a = Image.open(self.postB_Name)
+        self.bar["value"] = 30
+        self.pWindow.update()
+        self.bar["value"] = 40
+        self.pWindow.update()
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
@@ -311,14 +353,20 @@ class Gui():
             floor = a
             self.factor = 1
 
+        self.refactor = a
         self.newWidth = floor.width ; self.newHeight = floor.height
         
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        self.bar["value"] = 50
+        self.pWindow.update()
+        self.bar["value"] = 60
+        self.pWindow.update()
         try:
             self.scale_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            self.scale_image = img   
-
+            self.scale_image = img
+        self.bar["value"] = 80
+        self.pWindow.update()
         self.imgA = ImageTk.PhotoImage(floor)
         self.picNames = [None, None]  
 
@@ -334,34 +382,35 @@ class Gui():
         #Buttons
         self.begin_button['state'] = tk.DISABLED
         self.confirm_button['state'] = tk.DISABLED
-        self.thresh_scale['state'] = tk.DISABLED
-        self.spot_scale['state'] = tk.DISABLED
+        self.blockSize_scale['state'] = tk.DISABLED
+        self.cMean_scale['state'] = tk.DISABLED
         self.roi_button["state"] = tk.DISABLED
         self.grid_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.1, y= 380)
+        self.update_file.place(relx=.1, y= 630)
 
-
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['th1']), int(self.metadata['th2']))
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
+        self.bar["value"] = 100
+        self.pWindow.update()
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
 
+        self.pWindow.destroy()
         
 
     def showThresh(self, value):
         if float(value) > 11:
             self.my_canvas.delete("all")
-            sel = int(self.thresh_value.get())
+            sel = int(self.blockSize_value.get())
+            sec = int(self.cMean_value.get())
             if sel %2 == 0:
                 sel+=1
-            sec = int(self.spot_value.get())
-
-            self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
-            self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
@@ -372,13 +421,13 @@ class Gui():
             
         else:
             self.my_canvas.delete("all")
-            sel = int(self.thresh_value.get())
+            sel = int(self.blockSize_value.get())
             if sel %2 == 0:
                 sel+=1
-            sec = int(self.spot_value.get())
+            sec = int(self.cMean_value.get())
 
-            self.thresh_label_value.config(text = str(sel), font =("Courier", 14))
-            self.spot_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
@@ -389,8 +438,8 @@ class Gui():
 
 
     def find_points(self):
-        self.thresh_scale['state'] = tk.DISABLED
-        self.spot_scale['state'] = tk.DISABLED
+        self.blockSize_scale['state'] = tk.DISABLED
+        self.cMean_scale['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
@@ -403,8 +452,8 @@ class Gui():
 
     def confirm(self, none):
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-        tvalue = self.thresh_value.get()
-        svalue = self.spot_value.get()
+        tvalue = self.blockSize_value.get()
+        svalue = self.cMean_value.get()
         if tvalue%2==0:
             tvalue +=1
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
@@ -711,7 +760,7 @@ class Gui():
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
-                        self.num_tixels+=1
+                        self.numTixels+=1
                         writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
                         writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
@@ -721,6 +770,7 @@ class Gui():
         my_file.close()
         self.json_file(path)
         f.close()
+        mb.showinfo("Congraduations!", "The spatial folder is created!")
 
     def json_file(self,path):
         factorHigh = 0
@@ -744,14 +794,14 @@ class Gui():
                         "tissue_hires_scalef": factorHigh, 
                         "fiducial_diameter_fullres": self.fud_dia, 
                         "tissue_lowres_scalef": factorLow}
-        sel = int(self.thresh_value.get())
+        sel = int(self.blockSize_value.get())
         if sel %2 == 0:
             sel+=1
-        sec = int(self.spot_value.get())
+        sec = int(self.cMean_value.get())
         metaDict = {"points" : self.Rpoints,
-                    "th1": sel,
-                    "th2": sec,
-                    "num_tixels": self.num_tixels}
+                    "blockSize": sel,
+                    "threshold": sec,
+                    "numTixels": self.numTixels}
         metaDict.update(self.metadata)
         
         json_object = json.dumps(dictionary, indent = 4)
@@ -785,12 +835,8 @@ class Gui():
         f.close()
         p = open(self.folder_selected + "/metadata.json")
         meta = json.load(p)
-        meta['num_tixels'] = self.num_tixels
+        meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
-
-
-    
-        
