@@ -7,7 +7,9 @@ def distance(p1, p2):
 class DrawShapes():
     def __init__(self, my_canvas):
         self.my_canvas = my_canvas
-        self.points = 100, 50, 800, 50, 800, 800, 100, 800
+        width = self.my_canvas.winfo_width()
+        height = self.my_canvas.winfo_height()
+        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), height-(height*.10), width*.10, height-(height*.10)
         self.current = self.my_canvas.create_polygon(*self.points, outline="red", fill="", width=1)
 
     def on_click_quad(self, event):
@@ -21,15 +23,12 @@ class DrawShapes():
               distance((event.x, event.y), (x3, y3)), distance((event.x, event.y), (x4, y4))]
         dsi = ds.index(min(ds))
         if dsi == 0:
-            self.points = max(0,event.x), max(0,event.y), x2, y2, x3, y3, x4, y4
+            self.points = event.x, event.y, x2, y2, x3, y3, x4, y4
         elif dsi == 1:
-            self.points = x1, y1, min(event.x,850),max(0, event.y), x3,y3, x4, y4
+            self.points = x1, y1, event.x,event.y, x3,y3, x4, y4
         elif dsi == 2:
-            self.points = x1, y1, x2, y2, min(850,event.x), min(850,event.y), x4, y4
+            self.points = x1, y1, x2, y2, event.x, event.y, x4, y4
         else:
-            self.points = x1, y1, x2, y2, x3, y3, max(0,event.x), min(850, event.y)
+            self.points = x1, y1, x2, y2, x3, y3, event.x, event.y
 
         self.my_canvas.coords(self.current, *self.points)
-
-
-

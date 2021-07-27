@@ -29,16 +29,16 @@ class Gui():
     def __init__(self, root):
         self.newWindow = root
         screen_width = self.newWindow.winfo_screenwidth()
-        screen_height = self.newWindow.winfo_screenheight()
+        self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("Atlas Browser")
-        self.newWindow.geometry("{0}x{1}".format(screen_width, screen_height))
+        self.newWindow.geometry("{0}x{1}".format(screen_width, self.screen_height))
 
         style = ttk.Style(root)
         root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
         style.theme_use('azure')
 
         background_image = Image.open("atlasbg.png")
-        resized_image = background_image.resize((int(screen_width/1.5), screen_height), Image.ANTIALIAS)
+        resized_image = background_image.resize((int(screen_width/1.5), self.screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
 
         menu = tk.Menu(self.newWindow)
@@ -63,10 +63,10 @@ class Gui():
         self.coords = None
 
         #containers
-        self.my_canvas = tk.Canvas(self.newWindow, width = int(screen_width/3), height= screen_height, highlightthickness = 0, bd=0)
+        self.my_canvas = tk.Canvas(self.newWindow, width = int(screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
         self.my_canvas.old_coords = None
-        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= screen_height, highlightbackground="lightgray", highlightthickness=1)
+        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= self.screen_height, highlightbackground="lightgray", highlightthickness=1)
         self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         button_frame = tk.Frame(self.frame)
         button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
@@ -78,7 +78,7 @@ class Gui():
 
         #create Scales
         self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, y=30)
+        self.adframe.place(relx=.11, rely=.03)
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
         #self.blockSize_label_value = tk.Label(self.frame, text="255")
@@ -100,7 +100,7 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, y= 165)
+        self.thframe.place(relx=.11, rely= .2)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack()
 
@@ -108,7 +108,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, y=275)
+        self.shframe.place(relx=.11, rely=.34)
         self.roi_button = tk.Button(self.shframe, text = "ROI", command = self.roi, state=tk.DISABLED)
         self.roi_button.pack(anchor='w')
 
@@ -119,7 +119,7 @@ class Gui():
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, y= 415)
+        self.labelframe.place(relx=.11, rely= .52)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -137,7 +137,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, y= 600)
+        self.position_file.place(relx=.1, rely= .74)
 
     def restart(self):
         self.newWindow.destroy()
@@ -198,10 +198,11 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        self.factor = 850/h
-        newW = int(round(w*850.0/h))
-        floor = a.resize((newW, 850), Image.ANTIALIAS)
-        postB = b.resize((newW, 850), Image.ANTIALIAS)
+        self.factor = (self.screen_height - 50)/h
+        num = self.screen_height-50
+        newW = int(round(w*num/h))
+        floor = a.resize((newW, self.screen_height - 50), Image.ANTIALIAS)
+        postB = b.resize((newW, self.screen_height - 50), Image.ANTIALIAS)
 
         self.bar["value"] = 60
         self.pWindow.update()
@@ -348,10 +349,11 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        if h > 850:
-            self.factor = 850/h
-            newW = int(round(w*850.0/h))
-            floor = a.resize((newW, 850), Image.ANTIALIAS)
+        resizeNumber = self.screen_height - 50
+        if h > resizeNumber:
+            self.factor = resizeNumber/h
+            newW = int(round(w*resizeNumber/h))
+            floor = a.resize((newW, resizeNumber), Image.ANTIALIAS)
         else:
             floor = a
             self.factor = 1
@@ -391,7 +393,7 @@ class Gui():
         self.grid_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.1, y= 630)
+        self.update_file.place(relx=.11, rely= .79)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
