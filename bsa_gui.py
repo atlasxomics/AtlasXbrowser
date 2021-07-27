@@ -73,7 +73,7 @@ class Gui():
 
         self.lmain = tk.Label(self.my_canvas)
         self.lmain.pack()
-        self.lmain.img = bg
+        self.lmain.image = bg
         self.lmain.configure(image=bg)
 
         #create Scales
@@ -96,11 +96,13 @@ class Gui():
         #self.cMean_label_value.place(x=17,y=130)
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
+        self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
+        self.activateThresh_button.pack(anchor='w')
 
 
         #buttons
         self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .2)
+        self.thframe.place(relx=.11, rely= .23)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack()
 
@@ -108,9 +110,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.34)
-        self.roi_button = tk.Button(self.shframe, text = "ROI", command = self.roi, state=tk.DISABLED)
-        self.roi_button.pack(anchor='w')
+        self.shframe.place(relx=.11, rely=.37)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(anchor='w')
@@ -119,7 +119,7 @@ class Gui():
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .52)
+        self.labelframe.place(relx=.11, rely= .51)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -137,7 +137,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, rely= .74)
+        self.position_file.place(relx=.1, rely= .73)
 
     def restart(self):
         self.newWindow.destroy()
@@ -176,7 +176,6 @@ class Gui():
             self.second_window()
             
 
-        
 
     def init_images(self):
         for i in self.names:
@@ -241,6 +240,20 @@ class Gui():
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.frame.config(width = floor.width-w, height= h)
+
+
+    def activate_thresh(self):
+        self.blockSize_scale['state'] = tk.ACTIVE
+        self.cMean_scale['state'] = tk.ACTIVE
+        self.activateThresh_button['state'] = tk.DISABLED
+        
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
+        bw_image = Image.fromarray(thresh)
+        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        imgtk = ImageTk.PhotoImage(sized_bw)
+        self.lmain.image = imgtk
+        self.lmain.configure(image=imgtk)
+        self.begin_button['state'] = tk.ACTIVE
 
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
@@ -323,9 +336,8 @@ class Gui():
                          "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
-        self.blockSize_scale['state'] = tk.ACTIVE
-        self.cMean_scale['state'] = tk.ACTIVE
-        self.begin_button['state'] = tk.ACTIVE
+        self.activateThresh_button['state'] = tk.ACTIVE
+        
 
     def second_window(self):
         for i in self.names:
@@ -389,11 +401,10 @@ class Gui():
         self.confirm_button['state'] = tk.DISABLED
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
-        self.roi_button["state"] = tk.DISABLED
         self.grid_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .79)
+        self.update_file.place(relx=.11, rely= .78)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -421,7 +432,7 @@ class Gui():
             bw_image = Image.fromarray(thresh)
             sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
-            self.lmain.imgtk = imgtk
+            self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
             
         else:
@@ -438,7 +449,7 @@ class Gui():
             bw_image = Image.fromarray(thresh)
             sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
-            self.lmain.imgtk = imgtk
+            self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
 
 
@@ -477,18 +488,10 @@ class Gui():
         self.picNames.append(bw_Image)
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.DISABLED
-        self.roi_button["state"] = tk.ACTIVE
         self.grid_button["state"] = tk.ACTIVE
         self.gridA_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
             
-            
-
-
-    def roi(self):
-        self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgB)
-        self.my_canvas.create_polygon(self.Rpoints, fill ="",outline="black", tags="roi")
 
     def grid(self,pic):
 
@@ -605,7 +608,6 @@ class Gui():
 
             self.position_file["state"] = tk.ACTIVE
             self.onoff_button["state"] = tk.DISABLED
-            self.roi_button["state"] = tk.DISABLED
             self.grid_button["state"] = tk.DISABLED
             self.gridA_button["state"] = tk.DISABLED
             
@@ -630,7 +632,6 @@ class Gui():
 
             self.update_file["state"] = tk.ACTIVE
             self.onoff_button["state"] = tk.DISABLED
-            self.roi_button["state"] = tk.DISABLED
             self.grid_button["state"] = tk.DISABLED
             self.gridA_button["state"] = tk.DISABLED
 
