@@ -79,6 +79,8 @@ class Gui():
         #create Scales
         self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, rely=.03)
+        self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
+        self.activateThresh_button.pack(anchor='e')
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
         #self.blockSize_label_value = tk.Label(self.frame, text="255")
@@ -96,8 +98,6 @@ class Gui():
         #self.cMean_label_value.place(x=17,y=130)
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
-        self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
-        self.activateThresh_button.pack(anchor='w')
 
 
         #buttons
