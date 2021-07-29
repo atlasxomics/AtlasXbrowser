@@ -13,6 +13,12 @@ import math
 import json
 from tissue_grid import Tissue
 import cv2
+import numpy as np
+import matplotlib
+import matplotlib.cm
+import pandas as pd
+
+
 
 def center(tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
@@ -24,21 +30,26 @@ def ratio50l(xc,yc,xr,yr,num):
     txp = xc + (1/(num))*(xr-xc)
     typ = yc + (1/(num))*(yr-yc)
     return [txp , typ]
+def from_rgb(rgb):
+    """translates an rgb tuple of int to a tkinter friendly color code
+    """
+    r, g, b = rgb
+    return f'#{r:02x}{g:02x}{b:02x}'
 
 class Gui():
     def __init__(self, root):
         self.newWindow = root
-        screen_width = self.newWindow.winfo_screenwidth()
+        self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("Atlas Browser")
-        self.newWindow.geometry("{0}x{1}".format(screen_width, self.screen_height))
+        self.newWindow.geometry("{0}x{1}".format(self.screen_width, self.screen_height))
 
         style = ttk.Style(root)
         root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
         style.theme_use('azure')
 
         background_image = Image.open("atlasbg.png")
-        resized_image = background_image.resize((int(screen_width/1.5), self.screen_height), Image.ANTIALIAS)
+        resized_image = background_image.resize((int(self.screen_width/1.5), self.screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
 
         menu = tk.Menu(self.newWindow)
@@ -61,12 +72,14 @@ class Gui():
         self.points = []
         self.Rpoints = []
         self.coords = None
+        self.check_on = tk.IntVar()
+        self.check_on.set(0)
 
         #containers
-        self.my_canvas = tk.Canvas(self.newWindow, width = int(screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
+        self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
         self.my_canvas.old_coords = None
-        self.frame = tk.Frame(self.newWindow, width = int(screen_width/3) - screen_width, height= self.screen_height, highlightbackground="lightgray", highlightthickness=1)
+        self.frame = tk.Frame(self.newWindow, width = int(self.screen_width/3) - self.screen_width, height= self.screen_height, highlightbackground="lightgray", highlightthickness=1)
         self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         button_frame = tk.Frame(self.frame)
         button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
@@ -110,7 +123,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.37)
+        self.shframe.place(relx=.5, rely=.37)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(anchor='w')
@@ -137,7 +150,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.1, rely= .73)
+        self.position_file.place(relx=.11, rely= .73)
 
     def restart(self):
         self.newWindow.destroy()
@@ -340,6 +353,7 @@ class Gui():
         
 
     def second_window(self):
+        self.count_flag = False
         for i in self.names:
             if "meta" in i:
                 self.json = self.folder_selected + "/" + i
@@ -391,10 +405,19 @@ class Gui():
         #update canvas and frame
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.destroy()
-        self.frame.config(width = floor.width-w, height= h)
+        self.frame.config(width = self.screen_width-floor.width, height= h)
         self.Rpoints = self.metadata['points']
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+
+        #colorBar
+        bar = Image.open("colorbar.png")
+        resized_bar = bar.resize(((self.screen_width-floor.width)-30, 70), Image.ANTIALIAS)
+        color = ImageTk.PhotoImage(resized_bar)
+        self.color_bar = tk.Label(self.frame)
+        self.color_bar.place(x = 10, rely=.9)
+        self.color_bar.image = color
+        self.color_bar.configure(image=color)
 
         #Buttons
         self.begin_button['state'] = tk.DISABLED
@@ -403,8 +426,17 @@ class Gui():
         self.cMean_scale['state'] = tk.DISABLED
         self.grid_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
+        self.regular_button = tk.Button(self.shframe, text = "On Off", command= lambda:self.sendinfo(self.picNames[2]), state=tk.DISABLED)
+        self.regular_button.pack(anchor='w')
+        self.umi_button = tk.Button(self.shframe, text = "Gene Count", command= lambda: self.count(6), state=tk.DISABLED)
+        self.umi_button.pack(anchor='w')
+        self.gene_button = tk.Button(self.shframe, text = "UMI Count", command= lambda: self.count(7), state=tk.DISABLED)
+        self.gene_button.pack(anchor='w')
+        self.check_on = tk.IntVar()
+        self.check_on.set(0)
+        tk.Radiobutton(self.frame, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .78)
+        self.update_file.place(relx=.5, rely= .73)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -414,7 +446,6 @@ class Gui():
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
-
         self.pWindow.destroy()
         
 
@@ -548,6 +579,7 @@ class Gui():
 
 
     def sendinfo(self,pic):
+        self.check_on.set(0)
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
 
@@ -628,28 +660,44 @@ class Gui():
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
                     child['state'] = 'active'
+            self.my_canvas.unbind("<Button-1>")
+            self.my_canvas.unbind("<B1-Motion>")
+            self.my_canvas.unbind("<ButtonRelease-1>")
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.update_file["state"] = tk.ACTIVE
+            self.umi_button['state'] = tk.ACTIVE
+            self.gene_button['state'] = tk.ACTIVE
             self.onoff_button["state"] = tk.DISABLED
             self.grid_button["state"] = tk.DISABLED
             self.gridA_button["state"] = tk.DISABLED
-
-            with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
-                csv_reader = csv.reader(csv_file)
-                for row in csv_reader:
-                    j = int(row[3])+1
-                    i = int(row[2])
-                    if row[1] == "1":
-                        self.arr[j-1][i] = 1
-                        position = str(j)+"x"+str(i)
-                        try:
-                            tags = self.my_canvas.find_withtag(position)
-                            self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
-                        except IndexError:
-                            pass
-                    else:
-                        self.arr[j-1][i] = 0
+            if self.regular_button['state'] == tk.DISABLED:
+                with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
+                    csv_reader = csv.reader(csv_file)
+                    for row in csv_reader:
+                        j = int(row[3])+1
+                        i = int(row[2])
+                        if row[1] == "1":
+                            self.arr[j-1][i] = 1
+                            position = str(j)+"x"+str(i)
+                            try:
+                                tags = self.my_canvas.find_withtag(position)
+                                self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                            except IndexError:
+                                pass
+                        else:
+                            self.arr[j-1][i] = 0
+            else:
+                for i in range(len(self.arr)):
+                    for j in range(len(self.arr)):
+                        position = str(j+1) + "x" + str(i)
+                        if self.arr[j][i] == 1:
+                            try:
+                                tags = self.my_canvas.find_withtag(position)
+                                self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                            except IndexError:
+                                self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
+            self.regular_button['state'] = tk.ACTIVE
             
 
     """Functions used to update On/off Tissue ... creates a new quadrilateral"""
@@ -677,15 +725,25 @@ class Gui():
                     where = position[0].split("x")
                 except IndexError:
                     break
+                
                 state = self.my_canvas.itemcget(k,'state')
                 i = where[0]
                 j = where[1]
-                if state == "normal":
-                    self.my_canvas.itemconfig(k, fill="", state="disabled")
-                    self.arr[int(i)-1][int(j)] = 0
+                if self.check_on.get() == 0:
+                    if state == "normal":
+                        self.my_canvas.itemconfig(k, fill="", state="disabled", width=1)
+                        self.arr[int(i)-1][int(j)] = 0
+                    else:
+                        self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
+                        self.arr[int(i)-1][int(j)] = 1
                 else:
-                    self.my_canvas.itemconfig(k, fill="red", state ="normal")
-                    self.arr[int(i)-1][int(j)] = 1
+                    if state == "normal":
+                        self.my_canvas.itemconfig(k, state="disabled", outline="")
+                        self.arr[int(i)-1][int(j)] = 0
+                    else:
+                        self.my_canvas.itemconfig(k, state ="normal", width=2, outline="black")
+                        self.arr[int(i)-1][int(j)] = 1
+
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
     def highliton(self):
@@ -706,8 +764,13 @@ class Gui():
                     break
                 i = where[0]
                 j = where[1]
-                self.my_canvas.itemconfig(k, fill="red", state ="normal")
-                self.arr[int(i)-1][int(j)] = 1
+                if self.check_on.get() == 0:
+                    self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
+                    self.arr[int(i)-1][int(j)] = 1
+                else:
+                    self.my_canvas.itemconfig(k, width=2, state ="normal", outline="black")
+                    self.arr[int(i)-1][int(j)] = 1
+
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
     def highlitoff(self):
@@ -728,8 +791,13 @@ class Gui():
                     break
                 i = where[0]
                 j = where[1]
-                self.my_canvas.itemconfig(k, fill="", state="disabled")
-                self.arr[int(i)-1][int(j)] = 0
+                if self.check_on.get() == 0:
+                    self.my_canvas.itemconfig(k, fill="", state="disabled", width=1)
+                    self.arr[int(i)-1][int(j)] = 0
+                else:
+                    self.my_canvas.itemconfig(k, state="disabled", outline="")
+                    self.arr[int(i)-1][int(j)] = 0
+
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
     def on_off(self, event):
@@ -742,12 +810,21 @@ class Gui():
         state = self.my_canvas.itemcget(tag,'state')
         i = where[0]
         j = where[1]
-        if state ==  "normal":
-            self.my_canvas.itemconfig(tag, fill="", state="disabled")
-            self.arr[int(i)-1][int(j)] = 0
+        if self.check_on.get()==0:
+            if state == "normal":
+                self.my_canvas.itemconfig(tag, fill="", state="disabled", width=1)
+                self.arr[int(i)-1][int(j)] = 0
+            else:
+                self.my_canvas.itemconfig(tag, fill="red", state ="normal", width=1)
+                self.arr[int(i)-1][int(j)] = 1
         else:
-            self.my_canvas.itemconfig(tag, fill="red", state ="normal")
-            self.arr[int(i)-1][int(j)] = 1
+            if state == "normal":
+                self.my_canvas.itemconfig(tag, state="disabled", outline="")
+                self.arr[int(i)-1][int(j)] = 0
+            else:
+                self.my_canvas.itemconfig(tag, state ="normal", width=2, outline="black")
+                self.arr[int(i)-1][int(j)] = 1
+                
         
 
 
@@ -827,7 +904,6 @@ class Gui():
     def update_pos(self):
         barcode_file = "bc"+ str(self.num_chan)+".txt"
         my_file = open(barcode_file,"r")
-        excelC = 1
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             for i in range(self.num_chan):
@@ -838,7 +914,6 @@ class Gui():
                     else:
                         writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
-                excelC += 1
               
         my_file.close()
         f.close()
@@ -849,3 +924,39 @@ class Gui():
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
+
+    def count(self,which):
+        self.check_on.set(1)
+        my_data = np.genfromtxt(self.folder_selected + "/D91.csv", delimiter=",")
+        min_value = int(my_data.min(axis=0)[which])
+        max_value = round(my_data.max(axis=0)[which])
+        difference = max_value-min_value
+        divider = round(difference/2)
+        values = [(i,i+1) if i+1 <= max_value else (i) for i in range(min_value, max_value,2) if i+1 <= max_value]
+        with open(self.folder_selected + "/D91.csv", 'r') as f:
+            csv_reader = csv.reader(f)
+            for row in csv_reader:
+                j = int(row[3])+1
+                i = int(row[2])
+                count = float(row[which])
+                '''
+                if int(count) in values[0]:
+                    count-=divider
+                elif round(count) in values[len(values)-1]:
+                    count = 9
+                else:
+                    count-=1
+
+                '''
+                position = str(j)+"x"+str(i)
+                cmap = matplotlib.cm.get_cmap('Reds')
+                rgba = cmap(count/10)
+                new = [round(i*255) for i in rgba[:-1]]
+                var = from_rgb(new)    
+                if self.arr[j-1][i] == 1:
+                    self.my_canvas.itemconfig(position, fill=var, width="2", state="normal") 
+                else:
+                    self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
+        f.close()
+                        
+                
