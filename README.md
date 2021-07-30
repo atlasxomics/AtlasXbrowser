@@ -38,6 +38,11 @@ To get python installed:
     brew install python@3.7
     
 ## Usage
+
+Update to the latest version before running
+
+    git pull https://github.com/atlasxomics/AtlasBrowser.git
+    
 Run the program with following command:
 
     python run_the_app.py
