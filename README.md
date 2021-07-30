@@ -8,6 +8,8 @@ This is designed as an interactive browser for processing AtlasXomics image Data
 ## Download
 
     git clone https://github.com/atlasxomics/AtlasBrowser.git
+    cd AtlasBrowser
+    git clone https://github.com/formazione/Azure-ttk-theme
 
 ## Dependencies
 
