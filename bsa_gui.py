@@ -91,7 +91,7 @@ class Gui():
 
         #create Scales
         self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, rely=.03)
+        self.adframe.place(relx=.11, rely=.01)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
         self.activateThresh_button.pack(anchor='e')
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
@@ -115,24 +115,24 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .23)
+        self.thframe.place(relx=.11, rely= .2)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
-        self.begin_button.pack()
+        self.begin_button.pack(side=tk.LEFT)
 
         self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.5, rely=.37)
+        self.shframe.place(relx=.11, rely=.29)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
-        self.grid_button.pack(anchor='w')
+        self.grid_button.pack(side=tk.LEFT)
 
-        self.gridA_button = tk.Button(self.shframe, text = "Tixels on BSA image", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .51)
+        self.labelframe.place(relx=.11, rely= .38)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -145,12 +145,23 @@ class Gui():
         tk.Radiobutton(self.labelframe, text="Rectangle (all off)", variable=self.value_labelFrame, value=4,
                        command=self.highlitoff).pack(anchor='w')
 
+        self.sheframe = tk.LabelFrame(self.frame, text="Verify", padx="10px", pady="10px")
+        self.sheframe.place(relx=.11, rely= .59)
+        self.regular_button = tk.Button(self.sheframe, text = "Tixel", command= lambda:self.sendinfo(self.picNames[2]), state=tk.DISABLED)
+        self.regular_button.pack(side=tk.LEFT)
+
+        self.umi_button = tk.Button(self.sheframe, text = "Gene", command= lambda: self.count(6), state=tk.DISABLED)
+        self.umi_button.pack(side=tk.LEFT)
+
+        self.gene_button = tk.Button(self.sheframe, text = "UMI", command= lambda: self.count(7), state=tk.DISABLED)
+        self.gene_button.pack(side=tk.LEFT)
+
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .73)
+        self.position_file.place(relx=.11, rely= .69)
 
     def restart(self):
         self.newWindow.destroy()
@@ -426,17 +437,11 @@ class Gui():
         self.cMean_scale['state'] = tk.DISABLED
         self.grid_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
-        self.regular_button = tk.Button(self.shframe, text = "On Off", command= lambda:self.sendinfo(self.picNames[2]), state=tk.DISABLED)
-        self.regular_button.pack(anchor='w')
-        self.umi_button = tk.Button(self.shframe, text = "Gene Count", command= lambda: self.count(6), state=tk.DISABLED)
-        self.umi_button.pack(anchor='w')
-        self.gene_button = tk.Button(self.shframe, text = "UMI Count", command= lambda: self.count(7), state=tk.DISABLED)
-        self.gene_button.pack(anchor='w')
         self.check_on = tk.IntVar()
         self.check_on.set(0)
-        tk.Radiobutton(self.frame, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
+        #tk.Radiobutton(self.frame, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.5, rely= .73)
+        self.update_file.place(relx=.11, rely= .73)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
