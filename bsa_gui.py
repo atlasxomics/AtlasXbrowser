@@ -115,7 +115,7 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .2)
+        self.thframe.place(relx=.11, rely= .22)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -123,7 +123,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.29)
+        self.shframe.place(relx=.11, rely=.33)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
@@ -132,7 +132,7 @@ class Gui():
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .38)
+        self.labelframe.place(relx=.11, rely= .44)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -146,7 +146,7 @@ class Gui():
                        command=self.highlitoff).pack(anchor='w')
 
         self.sheframe = tk.LabelFrame(self.frame, text="Verify", padx="10px", pady="10px")
-        self.sheframe.place(relx=.11, rely= .59)
+        self.sheframe.place(relx=.11, rely= .67)
         self.regular_button = tk.Button(self.sheframe, text = "Tixel", command= lambda:self.sendinfo(self.picNames[2]), state=tk.DISABLED)
         self.regular_button.pack(side=tk.LEFT)
 
@@ -161,7 +161,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .69)
+        self.position_file.place(relx=.11, rely= .79)
 
     def restart(self):
         self.newWindow.destroy()
@@ -441,7 +441,7 @@ class Gui():
         self.check_on.set(0)
         #tk.Radiobutton(self.frame, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .73)
+        self.update_file.place(relx=.11, rely= .83)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -746,7 +746,7 @@ class Gui():
                         self.my_canvas.itemconfig(k, state="disabled", outline="")
                         self.arr[int(i)-1][int(j)] = 0
                     else:
-                        self.my_canvas.itemconfig(k, state ="normal", width=2, outline="black")
+                        self.my_canvas.itemconfig(k, state ="normal", width=1, outline="black")
                         self.arr[int(i)-1][int(j)] = 1
 
         self.my_canvas.coords("highlight", 0,0,0,0)
@@ -773,7 +773,7 @@ class Gui():
                     self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
                     self.arr[int(i)-1][int(j)] = 1
                 else:
-                    self.my_canvas.itemconfig(k, width=2, state ="normal", outline="black")
+                    self.my_canvas.itemconfig(k, width=1, state ="normal", outline="black")
                     self.arr[int(i)-1][int(j)] = 1
 
         self.my_canvas.coords("highlight", 0,0,0,0)
@@ -827,7 +827,7 @@ class Gui():
                 self.my_canvas.itemconfig(tag, state="disabled", outline="")
                 self.arr[int(i)-1][int(j)] = 0
             else:
-                self.my_canvas.itemconfig(tag, state ="normal", width=2, outline="black")
+                self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
                 self.arr[int(i)-1][int(j)] = 1
                 
         
@@ -933,33 +933,24 @@ class Gui():
     def count(self,which):
         self.check_on.set(1)
         my_data = np.genfromtxt(self.folder_selected + "/D91.csv", delimiter=",")
-        min_value = int(my_data.min(axis=0)[which])
-        max_value = round(my_data.max(axis=0)[which])
+        min_value = my_data.min(axis=0)[which]
+        max_value = my_data.max(axis=0)[which]
         difference = max_value-min_value
-        divider = round(difference/2)
-        values = [(i,i+1) if i+1 <= max_value else (i) for i in range(min_value, max_value,2) if i+1 <= max_value]
         with open(self.folder_selected + "/D91.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
                 j = int(row[3])+1
                 i = int(row[2])
                 count = float(row[which])
-                '''
-                if int(count) in values[0]:
-                    count-=divider
-                elif round(count) in values[len(values)-1]:
-                    count = 9
-                else:
-                    count-=1
 
-                '''
                 position = str(j)+"x"+str(i)
-                cmap = matplotlib.cm.get_cmap('Reds')
-                rgba = cmap(count/10)
-                new = [round(i*255) for i in rgba[:-1]]
-                var = from_rgb(new)    
+                level = round((count-0)/max_value*50)
+                cmap = matplotlib.cm.get_cmap('jet', 50)
+                rgba = cmap(level)
+                new = [round(i * 255) for i in rgba[:-1]]
+                var = from_rgb(new)
                 if self.arr[j-1][i] == 1:
-                    self.my_canvas.itemconfig(position, fill=var, width="2", state="normal") 
+                    self.my_canvas.itemconfig(position, fill=var, width="1", state="normal")
                 else:
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
         f.close()
