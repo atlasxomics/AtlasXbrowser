@@ -41,6 +41,7 @@ To get python installed:
 
 Update to the latest version before running
 
+    cd AtlasBrowser
     git pull https://github.com/atlasxomics/AtlasBrowser.git
     
 Run the program with following command:
