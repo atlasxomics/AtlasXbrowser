@@ -145,18 +145,18 @@ class Gui():
         tk.Radiobutton(self.labelframe, text="Rectangle (all off)", variable=self.value_labelFrame, value=4,
                        command=self.highlitoff).pack(anchor='w')
 
-        self.sheframe = tk.LabelFrame(self.frame, text="Verify", padx="10px", pady="10px")
+        self.value_sheFrame = tk.IntVar()
+        self.value_sheFrame.set(0)
+        self.sheframe = tk.LabelFrame(self.frame, text="Verify", padx="10px", pady="10px",width=100)
         self.sheframe.place(relx=.11, rely= .67)
-        self.regular_button = tk.Button(self.sheframe, text = "Tixel", command= lambda:self.sendinfo(self.picNames[2]), state=tk.DISABLED)
-        self.regular_button.pack(side=tk.LEFT)
-
-        self.umi_button = tk.Button(self.sheframe, text = "Gene", command= lambda: self.count(6), state=tk.DISABLED)
-        self.umi_button.pack(side=tk.LEFT)
-
-        self.gene_button = tk.Button(self.sheframe, text = "UMI", command= lambda: self.count(7), state=tk.DISABLED)
-        self.gene_button.pack(side=tk.LEFT)
+        tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
+        tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(6)).grid(row=0,column=1)
+        tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(7)).grid(row=0,column=2)
 
         for child in self.labelframe.winfo_children():
+            if child.winfo_class() == 'Radiobutton':
+                child['state'] = 'disabled'
+        for child in self.sheframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
@@ -665,18 +665,18 @@ class Gui():
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
                     child['state'] = 'active'
+            for child in self.sheframe.winfo_children():
+                if child.winfo_class() == 'Radiobutton':
+                    child['state'] = 'active'
             self.my_canvas.unbind("<Button-1>")
             self.my_canvas.unbind("<B1-Motion>")
             self.my_canvas.unbind("<ButtonRelease-1>")
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.update_file["state"] = tk.ACTIVE
-            self.umi_button['state'] = tk.ACTIVE
-            self.gene_button['state'] = tk.ACTIVE
-            self.onoff_button["state"] = tk.DISABLED
             self.grid_button["state"] = tk.DISABLED
             self.gridA_button["state"] = tk.DISABLED
-            if self.regular_button['state'] == tk.DISABLED:
+            if self.onoff_button['state'] == tk.NORMAL:
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                     csv_reader = csv.reader(csv_file)
                     for row in csv_reader:
@@ -702,7 +702,7 @@ class Gui():
                                 self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
                             except IndexError:
                                 self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
-            self.regular_button['state'] = tk.ACTIVE
+            self.onoff_button["state"] = tk.DISABLED
             
 
     """Functions used to update On/off Tissue ... creates a new quadrilateral"""
@@ -935,7 +935,6 @@ class Gui():
         my_data = np.genfromtxt(self.folder_selected + "/D91.csv", delimiter=",")
         min_value = my_data.min(axis=0)[which]
         max_value = my_data.max(axis=0)[which]
-        difference = max_value-min_value
         with open(self.folder_selected + "/D91.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
@@ -954,5 +953,3 @@ class Gui():
                 else:
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
         f.close()
-                        
-                
