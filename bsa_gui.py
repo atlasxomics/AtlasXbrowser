@@ -173,31 +173,33 @@ class Gui():
 
     def get_folder(self):
         self.folder_selected = filedialog.askdirectory()
-
-        self.pWindow = tk.Toplevel(self.newWindow)
-        self.pWindow.title("Loading images...")
-        self.pWindow.geometry("400x90")
-        self.bar = ttk.Progressbar(self.pWindow, orient="horizontal", length=360)
-        self.bar.pack(pady=30)
-        self.bar["value"] += 10
-        self.pWindow.update_idletasks()
-        self.pWindow.update()
-
-        for file in os.listdir(self.folder_selected):
-            if file.startswith(".") == False:
-                self.names.append(file)
-
-        if "spatial" not in self.folder_selected:
-            self.init_images()
-            self.question_window()
-
-        else:
-            f = open(self.folder_selected + "/metadata.json")
-            self.metadata = json.load(f)
-            self.num_chan = int(self.metadata['numChannels'])
-            self.bar["value"] = 20
+        if self.folder_selected != '':
+            self.pWindow = tk.Toplevel(self.newWindow)
+            self.pWindow.title("Loading images...")
+            self.pWindow.geometry("400x90")
+            self.bar = ttk.Progressbar(self.pWindow, orient="horizontal", length=360)
+            self.bar.pack(pady=30)
+            self.bar["value"] += 10
+            self.pWindow.update_idletasks()
             self.pWindow.update()
-            self.second_window()
+
+            for file in os.listdir(self.folder_selected):
+                if file.startswith(".") == False:
+                    self.names.append(file)
+
+            if "spatial" not in self.folder_selected:
+                self.init_images()
+                self.question_window()
+
+            else:
+                f = open(self.folder_selected + "/metadata.json")
+                self.metadata = json.load(f)
+                self.num_chan = int(self.metadata['numChannels'])
+                self.bar["value"] = 20
+                self.pWindow.update()
+                self.second_window()
+        else:
+            pass
             
 
 
@@ -523,7 +525,7 @@ class Gui():
         self.my_canvas.unbind("<Button-1>")
         self.picNames.append(bw_Image)
         self.confirm_button["state"] = tk.DISABLED
-        self.begin_button["state"] = tk.DISABLED
+        self.begin_button["state"] = tk.ACTIVE
         self.grid_button["state"] = tk.ACTIVE
         self.gridA_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
@@ -644,6 +646,7 @@ class Gui():
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.position_file["state"] = tk.ACTIVE
+            self.begin_button['state'] = tk.DISABLED
             self.onoff_button["state"] = tk.DISABLED
             self.grid_button["state"] = tk.DISABLED
             self.gridA_button["state"] = tk.DISABLED
