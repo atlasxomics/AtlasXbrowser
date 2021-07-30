@@ -22,7 +22,7 @@ Need python 3.6 or higher. Follow steps below to install required libraries (Mac
 Get pip installed if not admin
 
     curl https://bootstrap.pypa.io/get-pip.py -o ~/Downloads/get-pip.py
-    python ~/Downloads/get-pip.py --user
+    python3 ~/Downloads/get-pip.py --user
     export PATH="/Users/YOUR_USAER_NAME/.local/bin:$PATH"
 
 To get python installed:
