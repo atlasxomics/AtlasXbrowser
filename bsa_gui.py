@@ -17,8 +17,7 @@ import numpy as np
 import matplotlib
 import matplotlib.cm
 import pandas as pd
-
-
+Image.MAX_IMAGE_PIXELS = None
 
 def center(tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
