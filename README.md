@@ -47,7 +47,9 @@ Run the program with following command:
 
     python run_the_app.py
 
-## The input image folder contains either
+## Input data
+
+The input image folder contains either
 
     Dxx_postB.tif
     Dxx_postB_BSA.tif
