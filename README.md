@@ -16,10 +16,14 @@ This is designed as an interactive browser for processing AtlasXomics image Data
 Need python 3.6 or higher. Follow steps below to install required libraries (Mac OS X):
   
     sudo easy_install pip (admin)
-    pip install pillow
-    pip install opencv-python
-    pip install matplotlib
+    pip install scipy
+    pip install seaborn
+    pip install tifffile
+    pip install jsbeautifier
     pip install pandas
+    pip install pillow
+    pip install matplotlib
+    pip install opencv-python
 
 Get pip installed if not admin
 
