@@ -40,8 +40,8 @@ Run the program with following command:
 
 ## The input image folder contains either
 
-    Dxx_postB.TIFF
-    Dxx_postB_BSA.TIFF
+    Dxx_postB.tif
+    Dxx_postB_BSA.tif
 
 or a 'spatial' folder contains following files for updating the position file
 
