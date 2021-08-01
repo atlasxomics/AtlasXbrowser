@@ -16,10 +16,14 @@ This is designed as an interactive browser for processing AtlasXomics image Data
 Need python 3.6 or higher. Follow steps below to install required libraries (Mac OS X):
   
     sudo easy_install pip (admin)
-    pip install pillow
-    pip install opencv-python
-    pip install matplotlib
+    pip install scipy
+    pip install seaborn
+    pip install tifffile
+    pip install jsbeautifier
     pip install pandas
+    pip install pillow
+    pip install matplotlib
+    pip install opencv-python
 
 Get pip installed if not admin
 
@@ -34,14 +38,22 @@ To get python installed:
     brew install python@3.7
     
 ## Usage
+
+Update to the latest version before running
+
+    cd AtlasBrowser
+    git pull https://github.com/atlasxomics/AtlasBrowser.git
+    
 Run the program with following command:
 
     python run_the_app.py
 
-## The input image folder contains either
+## Input data
 
-    Dxx_postB.TIFF
-    Dxx_postB_BSA.TIFF
+The input image folder contains either
+
+    Dxx_postB.tif
+    Dxx_postB_BSA.tif
 
 or a 'spatial' folder contains following files for updating the position file
 
