@@ -222,11 +222,11 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        self.factor = (self.screen_height - 50)/h
-        num = self.screen_height-50
-        newW = int(round(w*num/h))
-        floor = a.resize((newW, self.screen_height - 50), Image.ANTIALIAS)
-        postB = b.resize((newW, self.screen_height - 50), Image.ANTIALIAS)
+        newH = self.screen_height - 60
+        self.factor = newH/h
+        newW = int(round(w*newH/h))
+        floor = a.resize((newW, newH), Image.ANTIALIAS)
+        postB = b.resize((newW, newH), Image.ANTIALIAS)
 
         self.bar["value"] = 60
         self.pWindow.update()
@@ -883,9 +883,9 @@ class Gui():
         high_res.save(path+"/tissue_hires_image.png")
         low_res.save(path+"/tissue_lowres_image.png")
         
-        dictionary = {"spot_diameter_fullres": self.spot_dia, 
+        dictionary = {"spot_diameter_fullres": self.spot_dia,
                         "tissue_hires_scalef": factorHigh, 
-                        "fiducial_diameter_fullres": self.fud_dia, 
+                        "fiducial_diameter_fullres": self.fud_dia,
                         "tissue_lowres_scalef": factorLow}
         sel = int(self.blockSize_value.get())
         if sel %2 == 0:
