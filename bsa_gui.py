@@ -149,8 +149,8 @@ class Gui():
         self.sheframe = tk.LabelFrame(self.frame, text="Verify", padx="10px", pady="10px",width=100)
         self.sheframe.place(relx=.11, rely= .67)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
-        tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(6)).grid(row=0,column=1)
-        tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(7)).grid(row=0,column=2)
+        tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
+        tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
 
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
@@ -387,7 +387,7 @@ class Gui():
 
         w, h = (a.width, a.height)
         self.width, self.height = (a.width, a.height)
-        resizeNumber = self.screen_height - 50
+        resizeNumber = self.screen_height - 60
         if h > resizeNumber:
             self.factor = resizeNumber/h
             newW = int(round(w*resizeNumber/h))
@@ -934,10 +934,10 @@ class Gui():
 
     def count(self,which):
         self.check_on.set(1)
-        my_data = np.genfromtxt(self.folder_selected + "/D91.csv", delimiter=",")
+        my_data = np.genfromtxt(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", delimiter=",")
         min_value = my_data.min(axis=0)[which]
         max_value = my_data.max(axis=0)[which]
-        with open(self.folder_selected + "/D91.csv", 'r') as f:
+        with open(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
                 j = int(row[3])+1
