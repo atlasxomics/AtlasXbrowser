@@ -68,8 +68,10 @@ or a 'spatial' folder contains following files for updating the position file
 1. Image filenames have to be Dxx_postB and Dxx_postB_BSA with extentisions
 2. If the ROI is too small in the image, you may want to crop both images then register them in the terminal
    
-   python imgreg -r Dxx_postB.tif -i Dxx_postB_BSA.tif -o registered_BSA.tif
+   ```
+   python imgreg.py -r Dxx_postB.tif -i Dxx_postB_BSA.tif -o registered_BSA.tif
    mv registered_BSA.tif Dxx_postB_BSA.tif
+   ```
    
 3. Images are automatically flipped from left to right by the software, no need to flip them manually
 4. You will need to rotate both images 90 degree counter-clockwise if it is from keyence
