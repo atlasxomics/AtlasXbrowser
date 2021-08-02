@@ -69,7 +69,7 @@ or a 'spatial' folder contains following files for updating the position file
 2. If the ROI is too small in the image, you may want to crop both images then register them in the terminal
    
    ```
-   python imgreg.py -r Dxx_postB.tif -i Dxx_postB_BSA.tif -o registered_BSA.tif
+   python regimg.py -r Dxx_postB.tif -i Dxx_postB_BSA.tif -o registered_BSA.tif
    mv registered_BSA.tif Dxx_postB_BSA.tif
    ```
    
