@@ -236,6 +236,7 @@ class Gui():
         temp = re.compile("/([a-zA-Z]+)([0-9]+)_postB")
         res = temp.search(self.postB_Name).groups() 
         self.excelName = res[0]+ res[1]
+        self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
         self.bar["value"] = 70
         self.pWindow.update()
@@ -377,6 +378,7 @@ class Gui():
         temp = re.compile("/([a-zA-Z]+)([0-9]+)")
         res = temp.search(self.folder_selected).groups() 
         self.excelName = res[0]+ res[1]
+        self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
         a = Image.open(self.postB_Name)
@@ -667,9 +669,10 @@ class Gui():
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
                     child['state'] = 'active'
-            for child in self.sheframe.winfo_children():
-                if child.winfo_class() == 'Radiobutton':
-                    child['state'] = 'active'
+            if "tissue_positions_list_log_UMI_Genes.csv" in self.names:
+                for child in self.sheframe.winfo_children():
+                    if child.winfo_class() == 'Radiobutton':
+                        child['state'] = 'active'
             self.my_canvas.unbind("<Button-1>")
             self.my_canvas.unbind("<B1-Motion>")
             self.my_canvas.unbind("<ButtonRelease-1>")
