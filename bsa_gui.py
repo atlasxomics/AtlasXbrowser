@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import re
 from tkinter.constants import DISABLED
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageGrab
 import os
 import csv
 from draggable_quad import DrawShapes
@@ -38,6 +38,7 @@ def from_rgb(rgb):
 class Gui():
     def __init__(self, root):
         self.newWindow = root
+        self.resolution = ImageGrab.grab()
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("Atlas Browser")
@@ -221,6 +222,7 @@ class Gui():
                 self.pWindow.update()
 
         w, h = (a.width, a.height)
+        self.rawHeight = h
         self.width, self.height = (a.width, a.height)
         newH = self.screen_height - 60
         self.factor = newH/h
@@ -265,7 +267,9 @@ class Gui():
         #update canvas and frame
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
-        self.frame.config(width = floor.width-w, height= h)
+        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
+        self.frame.config(width = floor.width + 300, height= h)
+        
 
 
     def activate_thresh(self):
@@ -291,6 +295,8 @@ class Gui():
             self.metadata = json.load(f)
             self.num_chan = int(self.metadata['numChannels'])
             os.remove(self.folder_selected + "/metadata.json")
+            self.r_clicked = tk.StringVar()
+            self.r_clicked.set(self.metadata['run'])
             self.s_clicked = tk.StringVar()
             self.s_clicked.set(self.metadata['species'])
             self.t_clicked = tk.StringVar()
@@ -303,6 +309,7 @@ class Gui():
             self.n_clicked.set(self.metadata['numChannels'])
 
         else:
+            self.r_clicked = tk.StringVar()
             self.s_clicked = tk.StringVar()
             self.s_clicked.set("Mouse")
             self.t_clicked = tk.StringVar()
@@ -314,48 +321,53 @@ class Gui():
             self.n_clicked = tk.StringVar()
             self.n_clicked.set(50)
 
-        s_label = tk.Label(self.qWindow, text="Species: ", font =("Courier", 14)).place(x=20, y=10)
+        
+        r_label = tk.Label(self.qWindow, text="Run: ", font =("Courier", 14)).place(x=20, y=10)
+        r_entry = tk.Entry(self.qWindow, textvariable=self.r_clicked).place(x=200,y=10)
+
+        s_label = tk.Label(self.qWindow, text="Species: ", font =("Courier", 14)).place(x=20, y=45)
         species = [
             "Mouse",
             "Human"
         ]
-        s_drop = tk.OptionMenu(self.qWindow , self.s_clicked , *species).place(x=200,y=10)
+        s_drop = tk.OptionMenu(self.qWindow , self.s_clicked , *species).place(x=200,y=45)
 
-        t_label = tk.Label(self.qWindow, text="Type: ", font =("Courier", 14)).place(x=20, y=45)
+        t_label = tk.Label(self.qWindow, text="Type: ", font =("Courier", 14)).place(x=20, y=80)
         type = [
             "FF",
             "FFPE"
         ]
-        t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=45)
+        t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=80)
 
-        tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=80)
+        tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=115)
         trim = [
             "Yes",
             "No"
         ]
-        tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=80)
+        tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=115)
 
-        a_label = tk.Label(self.qWindow, text="Assay: ", font =("Courier", 14)).place(x=20, y=115)
+        a_label = tk.Label(self.qWindow, text="Assay: ", font =("Courier", 14)).place(x=20, y=150)
         assay = [
             "mRNA",
             "Protein",
             "Epigenome"
         ]
-        a_drop = tk.OptionMenu(self.qWindow , self.a_clicked , *assay).place(x=200,y=115)
+        a_drop = tk.OptionMenu(self.qWindow , self.a_clicked , *assay).place(x=200,y=150)
 
-        n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=150)
+        n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=185)
         chan = [
             "50",
             "100"
         ]
-        n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=150)
+        n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=185)
 
         button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=350, y=250, anchor=tk.SE)
         
         
 
     def update_meta(self):
-        self.metadata = {"species": self.s_clicked.get(), 
+        self.metadata = {"run": self.r_clicked.get(),
+                        "species": self.s_clicked.get(), 
                          "type": self.t_clicked.get(), 
                          "trimming": self.tr_clicked.get(), 
                          "assay": self.a_clicked.get(), 
@@ -366,7 +378,7 @@ class Gui():
         
 
     def second_window(self):
-        self.count_flag = False
+        self.sendinfo_flag = False
         for i in self.names:
             if "meta" in i:
                 self.json = self.folder_selected + "/" + i
@@ -375,9 +387,7 @@ class Gui():
                 self.position = self.folder_selected + "/" + i
 
 
-        temp = re.compile("/([a-zA-Z]+)([0-9]+)")
-        res = temp.search(self.folder_selected).groups() 
-        self.excelName = res[0]+ res[1]
+        self.excelName = self.metadata['run']
         self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
@@ -419,14 +429,17 @@ class Gui():
         #update canvas and frame
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.destroy()
-        self.frame.config(width = self.screen_width-floor.width, height= h)
-        self.Rpoints = self.metadata['points']
+        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
+        self.frame.config(width = floor.width + 300, height= h)
+        newFactor = resizeNumber/self.metadata['rawHeight']
+        self.Rpoints = [i*newFactor for i in self.metadata['points']]
+
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         #colorBar
         bar = Image.open("colorbar.png")
-        resized_bar = bar.resize(((self.screen_width-floor.width)-30, 70), Image.ANTIALIAS)
+        resized_bar = bar.resize((280, 70), Image.ANTIALIAS)
         color = ImageTk.PhotoImage(resized_bar)
         self.color_bar = tk.Label(self.frame)
         self.color_bar.place(x = 10, rely=.9)
@@ -438,8 +451,8 @@ class Gui():
         self.confirm_button['state'] = tk.DISABLED
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
-        self.grid_button["state"] = tk.ACTIVE
-        self.onoff_button["state"] = tk.ACTIVE
+        self.grid_button["state"] = tk.DISABLED
+        self.onoff_button["state"] = tk.DISABLED
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         #tk.Radiobutton(self.frame, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
@@ -455,6 +468,7 @@ class Gui():
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
         self.pWindow.destroy()
+        self.sendinfo(self.picNames[2])
         
 
     def showThresh(self, value):
@@ -681,7 +695,7 @@ class Gui():
             self.update_file["state"] = tk.ACTIVE
             self.grid_button["state"] = tk.DISABLED
             self.gridA_button["state"] = tk.DISABLED
-            if self.onoff_button['state'] == tk.NORMAL:
+            if self.sendinfo_flag == False:
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                     csv_reader = csv.reader(csv_file)
                     for row in csv_reader:
@@ -697,6 +711,7 @@ class Gui():
                                 pass
                         else:
                             self.arr[j-1][i] = 0
+                self.sendinfo_flag = True
             else:
                 for i in range(len(self.arr)):
                     for j in range(len(self.arr)):
@@ -894,10 +909,12 @@ class Gui():
         if sel %2 == 0:
             sel+=1
         sec = int(self.cMean_value.get())
-        metaDict = {"points" : self.Rpoints,
+        points_Raw = [i/self.factor for i in self.Rpoints]
+        metaDict = {"points" : points_Raw,
                     "blockSize": sel,
                     "threshold": sec,
-                    "numTixels": self.numTixels}
+                    "numTixels": self.numTixels,
+                    "rawHeight": self.rawHeight}
         metaDict.update(self.metadata)
         
         json_object = json.dumps(dictionary, indent = 4)
@@ -946,7 +963,6 @@ class Gui():
                 j = int(row[3])+1
                 i = int(row[2])
                 count = float(row[which])
-
                 position = str(j)+"x"+str(i)
                 level = round((count-0)/max_value*50)
                 cmap = matplotlib.cm.get_cmap('jet', 50)
