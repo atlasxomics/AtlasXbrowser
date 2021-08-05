@@ -957,6 +957,7 @@ class Gui():
         my_data = np.genfromtxt(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", delimiter=",")
         min_value = my_data.min(axis=0)[which]
         max_value = my_data.max(axis=0)[which]
+        CBleft = min_value;
         with open(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
@@ -964,7 +965,7 @@ class Gui():
                 i = int(row[2])
                 count = float(row[which])
                 position = str(j)+"x"+str(i)
-                level = round((count-0)/max_value*50)
+                level = round((count-CBleft)/(max_value-CBleft)*50)
                 cmap = matplotlib.cm.get_cmap('jet', 50)
                 rgba = cmap(level)
                 new = [round(i * 255) for i in rgba[:-1]]
