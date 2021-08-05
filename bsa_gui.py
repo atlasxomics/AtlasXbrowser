@@ -38,7 +38,6 @@ def from_rgb(rgb):
 class Gui():
     def __init__(self, root):
         self.newWindow = root
-        self.resolution = ImageGrab.grab()
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("Atlas Browser")
@@ -79,9 +78,9 @@ class Gui():
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
         self.my_canvas.old_coords = None
-        self.frame = tk.Frame(self.newWindow, width = int(self.screen_width/3) - self.screen_width, height= self.screen_height, highlightbackground="lightgray", highlightthickness=1)
-        self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-        button_frame = tk.Frame(self.frame)
+        self.right_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3) - self.screen_width, height= self.screen_height, highlightbackground="lightgray", highlightthickness=1)
+        self.right_canvas.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        button_frame = tk.Frame(self.right_canvas)
         button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
 
         self.lmain = tk.Label(self.my_canvas)
@@ -90,13 +89,13 @@ class Gui():
         self.lmain.configure(image=bg)
 
         #create Scales
-        self.adframe = tk.LabelFrame(self.frame, text="Adaptive Thresholding", padx="10px", pady="10px")
+        self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, rely=.01)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
         self.activateThresh_button.pack(anchor='e')
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
-        #self.blockSize_label_value = tk.Label(self.frame, text="255")
+        #self.blockSize_label_value = tk.Label(self.right_canvas, text="255")
         #self.blockSize_label_value.place(x=17,y=60)
 
         self.blockSize_value = tk.IntVar()
@@ -107,14 +106,14 @@ class Gui():
         self.blockSize_scale.pack(anchor='w')
         self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
         self.cMean_label.pack(anchor='w')
-        #self.cMean_label_value = tk.Label(self.frame, text="17")
+        #self.cMean_label_value = tk.Label(self.right_canvas, text="17")
         #self.cMean_label_value.place(x=17,y=130)
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
 
 
         #buttons
-        self.thframe = tk.LabelFrame(self.frame, text="Locate ROI", padx="10px", pady="10px")
+        self.thframe = tk.LabelFrame(self.right_canvas, text="Locate ROI", padx="10px", pady="10px")
         self.thframe.place(relx=.11, rely= .22)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
@@ -122,7 +121,7 @@ class Gui():
         self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
         self.confirm_button.pack()
 
-        self.shframe = tk.LabelFrame(self.frame, text="Display", padx="10px", pady="10px")
+        self.shframe = tk.LabelFrame(self.right_canvas, text="Display", padx="10px", pady="10px")
         self.shframe.place(relx=.11, rely=.33)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
@@ -131,7 +130,7 @@ class Gui():
         self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.pack(anchor='w')
 
-        self.labelframe = tk.LabelFrame(self.frame, text="On/Off Tissue", padx="10px", pady="10px")
+        self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
         self.labelframe.place(relx=.11, rely= .44)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
@@ -147,7 +146,7 @@ class Gui():
 
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(0)
-        self.sheframe = tk.LabelFrame(self.frame, text="Verify", padx="10px", pady="10px",width=100)
+        self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
         self.sheframe.place(relx=.11, rely= .67)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
@@ -160,7 +159,7 @@ class Gui():
             if child.winfo_class() == 'Radiobutton':
                 child['state'] = 'disabled'
 
-        self.position_file = tk.Button(self.frame, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
+        self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.11, rely= .79)
 
     def restart(self):
@@ -268,7 +267,7 @@ class Gui():
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.frame.config(width = floor.width + 300, height= h)
+        self.right_canvas.config(width = floor.width + 300, height= h)
         
 
 
@@ -430,7 +429,7 @@ class Gui():
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.destroy()
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.frame.config(width = floor.width + 300, height= h)
+        self.right_canvas.config(width = floor.width + 300, height= h)
         newFactor = resizeNumber/self.metadata['rawHeight']
         self.Rpoints = [i*newFactor for i in self.metadata['points']]
 
@@ -439,10 +438,10 @@ class Gui():
 
         #colorBar
         bar = Image.open("colorbar.png")
-        resized_bar = bar.resize((280, 70), Image.ANTIALIAS)
+        resized_bar = bar.resize((280, 40), Image.ANTIALIAS)
         color = ImageTk.PhotoImage(resized_bar)
-        self.color_bar = tk.Label(self.frame)
-        self.color_bar.place(x = 10, rely=.9)
+        self.color_bar = tk.Label(self.right_canvas)
+        self.color_bar.place(x = 10, rely=.92)
         self.color_bar.image = color
         self.color_bar.configure(image=color)
 
@@ -455,8 +454,8 @@ class Gui():
         self.onoff_button["state"] = tk.DISABLED
         self.check_on = tk.IntVar()
         self.check_on.set(0)
-        #tk.Radiobutton(self.frame, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
-        self.update_file = tk.Button(self.frame, text = "Update Position File", command = self.update_pos)
+        #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
+        self.update_file = tk.Button(self.right_canvas, text = "Update Position File", command = self.update_pos)
         self.update_file.place(relx=.11, rely= .83)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
@@ -953,6 +952,14 @@ class Gui():
             outfile.close()
 
     def count(self,which):
+        name = ""
+        if len(self.right_canvas.gettags("name0")) > 0:
+            self.right_canvas.delete("name0")
+            self.right_canvas.delete("name1")
+            self.right_canvas.delete("name2")
+            self.right_canvas.delete("name3")
+            self.right_canvas.delete("name4")
+
         self.check_on.set(1)
         my_data = np.genfromtxt(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", delimiter=",")
         min_value = my_data.min(axis=0)[which]
@@ -975,3 +982,20 @@ class Gui():
                 else:
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
         f.close()
+
+
+        colorbarLog = [min_value, max_value]
+        difference = max_value/min_value
+        maxCount = max_value
+        for i in range(2):
+            maxCount-=difference
+            colorbarLog.append(maxCount)
+        colorbarLog.sort()
+        colorbarNorm = [round(math.exp(i)-1) for i in colorbarLog]
+        colorbarNorm.insert(0,0)
+        xvalues = [20,80,140,200,260]
+        yValue = self.screen_height * .87
+        for i in range(len(colorbarNorm)):
+            name = "name"
+            name += str(i)
+            self.right_canvas.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
