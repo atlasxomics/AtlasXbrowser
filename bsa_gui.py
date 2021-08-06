@@ -73,6 +73,7 @@ class Gui():
         self.coords = None
         self.check_on = tk.IntVar()
         self.check_on.set(0)
+        self.quad_coords = [0]
 
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
@@ -145,7 +146,7 @@ class Gui():
                        command=self.highlitoff).pack(anchor='w')
 
         self.value_sheFrame = tk.IntVar()
-        self.value_sheFrame.set(0)
+        self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
         self.sheframe.place(relx=.11, rely= .67)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
@@ -365,6 +366,8 @@ class Gui():
         
 
     def update_meta(self):
+        if self.r_clicked.get() == "":
+            self.r_clicked.set("Test")
         self.metadata = {"run": self.r_clicked.get(),
                         "species": self.s_clicked.get(), 
                          "type": self.t_clicked.get(), 
@@ -512,7 +515,7 @@ class Gui():
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
-        self.c = DrawShapes(self.my_canvas)
+        self.c = DrawShapes(self.my_canvas, self.quad_coords)
         self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
         self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
 
@@ -532,6 +535,8 @@ class Gui():
         bw_Image = ImageTk.PhotoImage(sized_bw)
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
+        self.quad_coords = self.my_canvas.coords(self.c.current)
+
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgB, state="normal")
@@ -983,16 +988,14 @@ class Gui():
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
         f.close()
 
-
-        colorbarLog = [min_value, max_value]
         difference = max_value/min_value
+        colorbarLog = [min_value, max_value, max_value-(difference-1)]
         maxCount = max_value
         for i in range(2):
             maxCount-=difference
             colorbarLog.append(maxCount)
         colorbarLog.sort()
         colorbarNorm = [round(math.exp(i)-1) for i in colorbarLog]
-        colorbarNorm.insert(0,0)
         xvalues = [20,80,140,200,260]
         yValue = self.screen_height * .87
         for i in range(len(colorbarNorm)):

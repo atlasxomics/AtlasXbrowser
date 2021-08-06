@@ -5,12 +5,16 @@ def distance(p1, p2):
     return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
 
 class DrawShapes():
-    def __init__(self, my_canvas):
+    def __init__(self, my_canvas,coords):
         self.my_canvas = my_canvas
         width = self.my_canvas.winfo_width()
         height = self.my_canvas.winfo_height()
-        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), height-(height*.10), width*.10, height-(height*.10)
-        self.current = self.my_canvas.create_polygon(*self.points, outline="red", fill="", width=1)
+        if coords[0] == 0:
+            self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), height-(height*.10), width*.10, height-(height*.10)
+            self.current = self.my_canvas.create_polygon(*self.points, outline="red", fill="", width=1)
+        else:
+            self.points = coords
+            self.current = self.my_canvas.create_polygon(*self.points, outline="red", fill="", width=1)
 
     def on_click_quad(self, event):
         """fires when the user clicks on a quadrilateral ... edits the clicked on quadrilateral"""
