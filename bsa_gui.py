@@ -41,7 +41,7 @@ class Gui():
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("Atlas Browser")
-        self.newWindow.geometry("{0}x{1}".format(self.screen_width, self.screen_height))
+        self.newWindow.geometry("{0}x{1}".format(self.screen_width-200, self.screen_height))
 
         style = ttk.Style(root)
         root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
@@ -265,7 +265,7 @@ class Gui():
 
         #update canvas and frame
         self.my_canvas.config(width = floor.width, height= floor.height)
-        self.lmain.configure(image=self.imgA)
+        self.lmain.configure(image=self.imgB)
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
         self.right_canvas.config(width = floor.width + 300, height= h)
         
@@ -999,3 +999,5 @@ class Gui():
             name = "name"
             name += str(i)
             self.right_canvas.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
+ 
+              
