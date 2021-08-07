@@ -115,7 +115,7 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .22)
+        self.thframe.place(relx=.11, rely= .2)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -123,7 +123,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.33)
+        self.shframe.place(relx=.11, rely=.3)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
@@ -132,7 +132,7 @@ class Gui():
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .44)
+        self.labelframe.place(relx=.11, rely= .4)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -148,7 +148,7 @@ class Gui():
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .67)
+        self.sheframe.place(relx=.11, rely= .6)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
         tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
@@ -161,7 +161,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .79)
+        self.position_file.place(relx=.11, rely= .7)
 
     def restart(self):
         self.newWindow.destroy()
@@ -447,15 +447,6 @@ class Gui():
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
-        #colorBar
-        bar = Image.open("colorbar.png")
-        resized_bar = bar.resize((280, 40), Image.ANTIALIAS)
-        color = ImageTk.PhotoImage(resized_bar)
-        self.color_bar = tk.Label(self.right_canvas)
-        self.color_bar.place(x = 10, rely=.92)
-        self.color_bar.image = color
-        self.color_bar.configure(image=color)
-
         #Buttons
         self.begin_button['state'] = tk.DISABLED
         self.confirm_button['state'] = tk.DISABLED
@@ -466,8 +457,8 @@ class Gui():
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
-        self.update_file = tk.Button(self.right_canvas, text = "Update Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .83)
+        self.update_file = tk.Button(self.right_canvas, text = "Update the Position File", command = self.update_pos)
+        self.update_file.place(relx=.11, rely= .74)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -996,15 +987,28 @@ class Gui():
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
         f.close()
 
-        steps = 8
-        colorbarLog = np.linspace(min_value, max_value, steps)
+        numsteps = 6
+        colorbarLog = np.linspace(min_value, max_value, numsteps)
         colorbarNorm = [round(math.exp(i)-1) for i in colorbarLog]
-        xvalues = np.linspace(20, 280, steps)
-        yValue = self.screen_height * .87
-        self.right_canvas.delete("all")
+        xvalues = np.linspace(15, 205, numsteps)
+        yValue = 40
+
+        self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="5px")
+        self.cbframe.place(relx=.11, rely=.8)
+
+        c = tk.Canvas(self.cbframe, width=220, height=40)
+        c.pack()
+        c.delete("all")
         for i in range(len(colorbarNorm)):
             name = "name"
             name += str(i)
-            self.right_canvas.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
- 
-              
+            c.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
+
+        # colorBar
+        bar = Image.open("colorbar.png")
+        resized_bar = bar.resize((200, 40), Image.ANTIALIAS)
+        color = ImageTk.PhotoImage(resized_bar)
+        self.color_bar = tk.Label(self.cbframe, image=color)
+        self.color_bar.pack()
+        self.color_bar.image = color
+        self.color_bar.configure(image=color)
