@@ -996,16 +996,12 @@ class Gui():
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")
         f.close()
 
-        difference = max_value/min_value
-        colorbarLog = [min_value, max_value, max_value-(difference-1)]
-        maxCount = max_value
-        for i in range(2):
-            maxCount-=difference
-            colorbarLog.append(maxCount)
-        colorbarLog.sort()
+        steps = 8
+        colorbarLog = np.linspace(min_value, max_value, steps)
         colorbarNorm = [round(math.exp(i)-1) for i in colorbarLog]
-        xvalues = [20,80,140,200,260]
+        xvalues = np.linspace(20, 280, steps)
         yValue = self.screen_height * .87
+        self.right_canvas.delete("all")
         for i in range(len(colorbarNorm)):
             name = "name"
             name += str(i)
