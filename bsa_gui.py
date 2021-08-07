@@ -310,6 +310,7 @@ class Gui():
 
         else:
             self.r_clicked = tk.StringVar()
+            self.r_clicked.set(self.excelName)
             self.s_clicked = tk.StringVar()
             self.s_clicked.set("Mouse")
             self.t_clicked = tk.StringVar()
@@ -389,7 +390,11 @@ class Gui():
                 self.position = self.folder_selected + "/" + i
 
 
-        self.excelName = self.metadata['run']
+        try:
+            self.excelName = self.metadata['run']
+        except KeyError:
+            self.excelName = "Test"
+
         self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
@@ -433,7 +438,10 @@ class Gui():
         self.lmain.destroy()
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
         self.right_canvas.config(width = floor.width + 300, height= h)
-        newFactor = resizeNumber/self.metadata['rawHeight']
+        try:
+            newFactor = resizeNumber/self.metadata['rawHeight']
+        except KeyError:
+            newFactor = 1
         self.Rpoints = [i*newFactor for i in self.metadata['points']]
 
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
