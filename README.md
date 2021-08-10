@@ -46,7 +46,7 @@ Update to the latest version before running
     
 Run the program with following command:
 
-    python run_the_app.py
+    python ABrowser.py
 
 ## Input data
 
