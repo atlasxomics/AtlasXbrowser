@@ -8,7 +8,7 @@ app = Gui(root)
 root.mainloop()
 try:
     app.kill
-    os.system('python run_the_app.py')
+    os.system('python ABrowser.py')
     os._exit(0)
 except AttributeError:
     pass
