@@ -195,6 +195,10 @@ class Gui():
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
                 self.num_chan = int(self.metadata['numChannels'])
+                self.numTixels = int(self.metadata['numTixels'])
+                f2 = open(self.folder_selected + "/scalefactors_json.json")
+                self.metadata2 = json.load(f2)
+                self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
                 self.bar["value"] = 20
                 self.pWindow.update()
                 self.second_window()
@@ -842,16 +846,20 @@ class Gui():
             if state == "normal":
                 self.my_canvas.itemconfig(tag, fill="", state="disabled", width=1)
                 self.arr[int(i)-1][int(j)] = 0
+                self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, fill="red", state ="normal", width=1)
                 self.arr[int(i)-1][int(j)] = 1
+                self.numTixels += 1
         else:
             if state == "normal":
                 self.my_canvas.itemconfig(tag, state="disabled", outline="")
                 self.arr[int(i)-1][int(j)] = 0
+                self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
                 self.arr[int(i)-1][int(j)] = 1
+                self.numTixels += 1
                 
         
 
@@ -869,7 +877,7 @@ class Gui():
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
-
+            self.numTixels = 0
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
@@ -940,9 +948,9 @@ class Gui():
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
 
               
         my_file.close()

@@ -60,7 +60,6 @@ class Tissue():
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
 
                 corners.append(tL);corners.append(tR);corners.append(bR);corners.append(bL);
-                
                 if self.calculate_avg(thresh, corners, distance) > 242:
                     self.arr[j][i] = 0
                 else:
