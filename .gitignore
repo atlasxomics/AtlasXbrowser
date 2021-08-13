@@ -9,6 +9,11 @@ bin-release/
 __pycache__
 .DS_store
 *BW.png
+*.tif
+*.TIF
+*.TIFF
+*.jpg
+*.jpeg
 .idea/*
 .idea
 
