@@ -56,7 +56,7 @@ class Gui():
         filemenu = tk.Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Open Image Folder", command=self.get_folder)
-        filemenu.add_command(label="Open Spatial", command=self.get_folder)
+        filemenu.add_command(label="Open Spatial Folder", command=self.get_folder)
         filemenu.add_command(label="New Instance", command=self.restart)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.destruct)
