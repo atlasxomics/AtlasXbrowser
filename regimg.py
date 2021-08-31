@@ -27,7 +27,7 @@ img1 = cv2.cvtColor(img1_color, cv2.COLOR_BGR2GRAY)
 img2 = cv2.cvtColor(img2_color, cv2.COLOR_BGR2GRAY)
 height, width = img2.shape
   
-# Create ORB detector with 5000 features.
+# Create ORB detector with 8000 features.
 orb_detector = cv2.ORB_create(5000)
   
 # Find keypoints and descriptors.
@@ -48,7 +48,7 @@ matches = matcher.match(d1, d2)
 matches.sort(key = lambda x: x.distance)
   
 # Take the top 90 % matches forward.
-matches = matches[:int(len(matches)*10)]
+matches = matches[:int(len(matches)*5)]
 no_of_matches = len(matches)
   
 # Define empty matrices of shape no_of_matches * 2.

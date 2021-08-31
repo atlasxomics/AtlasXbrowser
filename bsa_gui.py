@@ -41,7 +41,7 @@ class Gui():
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("Atlas Browser")
-        self.newWindow.geometry("{0}x{1}".format(self.screen_width-200, self.screen_height))
+        self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
 
         style = ttk.Style(root)
         root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
@@ -115,7 +115,7 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .2)
+        self.thframe.place(relx=.11, rely= .21)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -123,7 +123,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.3)
+        self.shframe.place(relx=.11, rely=.31)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
@@ -132,7 +132,7 @@ class Gui():
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .4)
+        self.labelframe.place(relx=.11, rely= .41)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -148,7 +148,7 @@ class Gui():
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .6)
+        self.sheframe.place(relx=.11, rely= .63)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
         tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
@@ -161,7 +161,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .7)
+        self.position_file.place(relx=.11, rely= .73)
 
     def restart(self):
         self.newWindow.destroy()
@@ -195,6 +195,10 @@ class Gui():
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
                 self.num_chan = int(self.metadata['numChannels'])
+                self.numTixels = int(self.metadata['numTixels'])
+                f2 = open(self.folder_selected + "/scalefactors_json.json")
+                self.metadata2 = json.load(f2)
+                self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
                 self.bar["value"] = 20
                 self.pWindow.update()
                 self.second_window()
@@ -458,7 +462,7 @@ class Gui():
         self.check_on.set(0)
         #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.right_canvas, text = "Update the Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .74)
+        self.update_file.place(relx=.11, rely= .77)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -842,16 +846,20 @@ class Gui():
             if state == "normal":
                 self.my_canvas.itemconfig(tag, fill="", state="disabled", width=1)
                 self.arr[int(i)-1][int(j)] = 0
+                self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, fill="red", state ="normal", width=1)
                 self.arr[int(i)-1][int(j)] = 1
+                self.numTixels += 1
         else:
             if state == "normal":
                 self.my_canvas.itemconfig(tag, state="disabled", outline="")
                 self.arr[int(i)-1][int(j)] = 0
+                self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
                 self.arr[int(i)-1][int(j)] = 1
+                self.numTixels += 1
                 
         
 
@@ -869,7 +877,7 @@ class Gui():
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
-
+            self.numTixels = 0
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
@@ -940,9 +948,9 @@ class Gui():
                 for j in range(self.num_chan):
                     barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
 
               
         my_file.close()
@@ -994,7 +1002,7 @@ class Gui():
         yValue = 40
 
         self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="5px")
-        self.cbframe.place(relx=.11, rely=.8)
+        self.cbframe.place(relx=.11, rely=.83)
 
         c = tk.Canvas(self.cbframe, width=220, height=40)
         c.pack()

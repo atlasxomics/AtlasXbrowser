@@ -13,7 +13,7 @@ This is designed as an interactive browser for processing AtlasXomics image Data
 
 ## Dependencies
 
-Need python 3.6 or higher. Follow steps below to install required libraries (Mac OS X):
+Need python 3.7. Follow steps below to install required libraries (Mac OS X):
   
     sudo easy_install pip (admin)
     pip install scipy
@@ -46,7 +46,7 @@ Update to the latest version before running
     
 Run the program with following command:
 
-    python run_the_app.py
+    python ABrowser.py
 
 ## Input data
 
