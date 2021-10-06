@@ -11,6 +11,7 @@ from tkinter import messagebox as mb
 import os
 import math
 import json
+import string
 from tissue_grid import Tissue
 import cv2
 import numpy as np
@@ -18,6 +19,7 @@ import matplotlib
 import matplotlib.cm
 import pandas as pd
 Image.MAX_IMAGE_PIXELS = None
+import magic
 
 def center(tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
@@ -66,6 +68,7 @@ class Gui():
 
         self.names = []
         self.numTixels = 0
+        self.excelName = None
         self.folder_selected = None
         self.topx, self.topy, self.botx, self.boty = 0, 0, 0, 0
         self.points = []
@@ -74,6 +77,9 @@ class Gui():
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         self.quad_coords = [0]
+        self.rotated_degree = 0
+        self.flipped_vert = False
+        self.flipped_horz = False
 
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
@@ -162,6 +168,30 @@ class Gui():
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.11, rely= .73)
+        rotate_canvas = tk.Canvas(self.right_canvas, width=138, height=40)
+        rotate_canvas.place(relx=.11, rely=.78)
+        rotateleft = Image.open("rotateleft.png")
+        bg = ImageTk.PhotoImage(rotateleft)
+        self.left = tk.Button(rotate_canvas, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
+        self.left.image = bg
+        self.left.place(x=0,y=0)
+        rotateright = Image.open("rotateright.png")
+        bg2 = ImageTk.PhotoImage(rotateright)
+        self.right = tk.Button(rotate_canvas, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
+        self.right.image = bg2
+        self.right.place(x=35,y=0)
+        uparrow = Image.open("up.png")
+        bg3 = ImageTk.PhotoImage(uparrow)
+        self.up = tk.Button(rotate_canvas, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
+        self.up.image = bg3
+        self.up.place(x=70,y=0)
+        leftarrow = Image.open("leftarrow.png")
+        bg4 = ImageTk.PhotoImage(leftarrow)
+        self.flip = tk.Button(rotate_canvas, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
+        self.flip.image = bg4
+        self.flip.place(x=105,y=0)
+        self.image_updated = tk.Button(self.right_canvas, text = "Confirm Image Position", command = self.image_position, state=tk.DISABLED)
+        self.image_updated.place(relx=.11,rely=.83)
 
     def restart(self):
         self.newWindow.destroy()
@@ -173,7 +203,11 @@ class Gui():
 
     def get_folder(self):
         self.folder_selected = filedialog.askdirectory()
+        
         if self.folder_selected != '':
+            temp = re.compile("/([a-zA-Z]+)([0-9]+)")
+            res = temp.search(self.folder_selected).groups() 
+            self.excelName = res[0]+ res[1]
             self.pWindow = tk.Toplevel(self.newWindow)
             self.pWindow.title("Loading images...")
             self.pWindow.geometry("400x90")
@@ -188,7 +222,6 @@ class Gui():
                     self.names.append(file)
 
             if "spatial" not in self.folder_selected:
-                self.init_images()
                 self.question_window()
 
             else:
@@ -209,21 +242,13 @@ class Gui():
 
     def init_images(self):
         for i in self.names:
-            if "BSA" in i:
+            if "bsa" in i.lower():
                 beforeA = Image.open(self.folder_selected + "/" + i)
-                self.bar["value"] = 40
-                self.pWindow.update()
-                a = beforeA.transpose(Image.FLIP_LEFT_RIGHT)
-                self.bar["value"] = 50
-                self.pWindow.update()
-            elif "postB" in i:
+                a = beforeA
+            elif "postb" in i.lower() and "bsa" not in i.lower():
                 self.postB_Name = self.folder_selected + "/" + i
                 beforeB = Image.open(self.postB_Name)
-                self.bar["value"] = 20
-                self.pWindow.update()
-                b = beforeB.transpose(Image.FLIP_LEFT_RIGHT)
-                self.bar["value"] = 30
-                self.pWindow.update()
+                b = beforeB
 
         w, h = (a.width, a.height)
         self.rawHeight = h
@@ -234,47 +259,113 @@ class Gui():
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
-        self.bar["value"] = 60
-        self.pWindow.update()
-
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
-        temp = re.compile("/([a-zA-Z]+)([0-9]+)_postB")
-        res = temp.search(self.postB_Name).groups() 
-        self.excelName = res[0]+ res[1]
-        self.newWindow.title("Atlas Browser (" + self.excelName+")")
-
-        self.bar["value"] = 70
-        self.pWindow.update()
 
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
-        self.bar["value"] = 80
-        self.pWindow.update()
 
-        flippedimage = cv2.flip(img, 1)
-        self.bar["value"] = 90
-        self.pWindow.update()
+        flippedImage = img
 
         try:
-            self.scale_image = cv2.cvtColor(flippedimage, cv2.COLOR_BGR2GRAY)
+            self.scale_image = cv2.cvtColor(flippedImage, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            self.scale_image = flippedimage   
-
-        self.bar["value"] = 100
-        self.pWindow.update()
-        self.pWindow.destroy()
+            self.scale_image = flippedImage  
 
         self.imgA = ImageTk.PhotoImage(floor)
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgA, self.imgB]
 
-        #update canvas and frame
-        self.my_canvas.config(width = floor.width, height= floor.height)
+        self.my_canvas.config(width = postB.width, height= postB.height)
         self.lmain.configure(image=self.imgB)
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
-        
+        self.newWindow.geometry("{0}x{1}".format(postB.width + 300, self.screen_height))
+        self.right_canvas.config(width = postB.width + 300, height= h)
 
+
+    def image_axis(self, num):
+        if num == 0:
+            updated = cv2.rotate(self.scale_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            formatted = Image.fromarray(updated)
+            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(sized)
+            self.lmain.image = imgtk
+            self.lmain.configure(image=imgtk)
+            self.scale_image = updated
+            self.rotated_degree+=-90
+        if num == 1:
+            updated = cv2.rotate(self.scale_image, cv2.ROTATE_90_CLOCKWISE)
+            formatted = Image.fromarray(updated)
+            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(sized)
+            self.lmain.image = imgtk
+            self.lmain.configure(image=imgtk)
+            self.scale_image = updated
+            self.rotated_degree+=90
+        if num == 2:
+            updated = cv2.flip(self.scale_image, 0)
+            formatted = Image.fromarray(updated)
+            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(sized)
+            self.lmain.image = imgtk
+            self.lmain.configure(image=imgtk)
+            self.scale_image = updated
+            if self.flipped_vert == False:
+                self.flipped_vert = True
+            else: 
+                self.flipped_vert = False
+        if num == 3:
+            updated = cv2.flip(self.scale_image, 1)
+            formatted = Image.fromarray(updated)
+            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(sized)
+            self.lmain.image = imgtk
+            self.lmain.configure(image=imgtk)
+            self.scale_image = updated
+            if self.flipped_horz == False:
+                self.flipped_horz = True
+            else: 
+                self.flipped_horz = False
+
+    def image_position(self):
+        iteration = self.rotated_degree/90
+        if abs(iteration) > 4:
+            multiplier = abs(int(iteration/4))
+            degree = int(abs(iteration)-(4*multiplier))
+        else:
+            degree = int(iteration)
+        for i in self.names:
+            if 'image' in magic.from_file(self.folder_selected+"/"+i,mime= True):
+                img = cv2.imread(self.folder_selected+"/"+i, cv2.IMREAD_UNCHANGED)
+                if iteration < 0:
+                    for x in range(abs(degree)):
+                        rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                        img = rotate
+                elif iteration > 0:
+                    for y in range(abs(degree)):
+                        rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+                        img = rotate
+                else:
+                    rotate = img
+
+                if self.flipped_vert == True and self.flipped_horz == True:
+                    once = cv2.flip(rotate,0)
+                    flipped = cv2.flip(once,1)
+                elif self.flipped_horz == True and self.flipped_vert == False:
+                    flipped = cv2.flip(rotate,1)
+                elif self.flipped_vert == True and self.flipped_horz == False:
+                    flipped = cv2.flip(rotate,0)
+                elif self.flipped_vert == False and self.flipped_horz == False:
+                    flipped = rotate
+                
+                cv2.imwrite(self.folder_selected+"/"+i, flipped)
+
+        self.activateThresh_button['state'] = tk.ACTIVE
+        try:
+            self.scale_image = cv2.cvtColor(flipped, cv2.COLOR_BGR2GRAY)
+        except cv2.error:
+            self.scale_image = flipped
+
+        self.init_images()
+                
 
     def activate_thresh(self):
         self.blockSize_scale['state'] = tk.ACTIVE
@@ -292,7 +383,60 @@ class Gui():
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
         self.qWindow.title("Meta Data")
-        self.qWindow.geometry("400x300")
+        self.qWindow.geometry('%dx%d+%d+%d' % (400, 300, 500, 0))
+        for i in self.names:
+            if "postb" in i.lower() and not "bsa" in i.lower():
+                self.postB_Name = self.folder_selected + "/" + i
+                beforeB = Image.open(self.postB_Name)
+                self.bar["value"] = 20
+                self.pWindow.update()
+                b = beforeB
+                self.bar["value"] = 30
+                self.pWindow.update()
+
+        w, h = (b.width, b.height)
+        self.rawHeight = h
+        newH = self.screen_height - 60
+        self.factor = newH/h
+        newW = int(round(w*newH/h))
+        postB = b.resize((newW, newH), Image.ANTIALIAS)
+        self.qwimgB = ImageTk.PhotoImage(postB)
+
+        self.bar["value"] = 60
+        self.pWindow.update()
+
+        self.refactor = b
+        self.newWidth = postB.width ; self.newHeight = postB.height
+        temp = re.compile("/(d[0-9]+)")
+        res = temp.search(self.postB_Name.lower()).groups() 
+        self.excelName = res[0].upper()
+        self.newWindow.title("Atlas Browser (" + self.excelName+")")
+
+        self.bar["value"] = 70
+        self.pWindow.update()
+
+        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        self.bar["value"] = 80
+        self.pWindow.update()
+
+        self.bar["value"] = 90
+        self.pWindow.update()
+        flippedImage = img
+
+        try:
+            self.scale_image = cv2.cvtColor(flippedImage, cv2.COLOR_BGR2GRAY)
+        except cv2.error:
+            self.scale_image = flippedImage  
+
+        self.bar["value"] = 100
+        self.pWindow.update()
+        self.pWindow.destroy()
+
+        #update canvas and frame
+        self.my_canvas.config(width = postB.width, height= postB.height)
+        self.lmain.configure(image=self.qwimgB)
+        self.newWindow.geometry("{0}x{1}".format(postB.width + 300, self.screen_height))
+        self.right_canvas.config(width = postB.width + 300, height= h)
 
         if 'metadata.json' in self.names:
             f = open(self.folder_selected + "/metadata.json")
@@ -311,6 +455,7 @@ class Gui():
             self.a_clicked.set(self.metadata['assay'])
             self.n_clicked = tk.StringVar()
             self.n_clicked.set(self.metadata['numChannels'])
+            
 
         else:
             self.r_clicked = tk.StringVar()
@@ -325,6 +470,7 @@ class Gui():
             self.a_clicked.set("mRNA")
             self.n_clicked = tk.StringVar()
             self.n_clicked.set(50)
+            
 
         
         r_label = tk.Label(self.qWindow, text="Run: ", font =("Courier", 14)).place(x=20, y=10)
@@ -340,7 +486,8 @@ class Gui():
         t_label = tk.Label(self.qWindow, text="Type: ", font =("Courier", 14)).place(x=20, y=80)
         type = [
             "FF",
-            "FFPE"
+            "FFPE",
+            "EFPE"
         ]
         t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=80)
 
@@ -366,7 +513,9 @@ class Gui():
         ]
         n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=185)
 
-        button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=350, y=250, anchor=tk.SE)
+        
+
+        button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=285, anchor=tk.SE)
         
         
 
@@ -381,7 +530,12 @@ class Gui():
                          "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
-        self.activateThresh_button['state'] = tk.ACTIVE
+        self.up['state'] = tk.ACTIVE
+        self.right['state'] = tk.ACTIVE
+        self.left['state'] = tk.ACTIVE
+        self.flip['state'] = tk.ACTIVE
+        self.image_updated['state'] = tk.ACTIVE
+        
         
 
     def second_window(self):
@@ -892,7 +1046,14 @@ class Gui():
         my_file.close()
         self.json_file(path)
         f.close()
+        bwFile_Name = self.excelName + "BW.png"
+        os.remove(bwFile_Name)
         mb.showinfo("Congraduations!", "The spatial folder is created!")
+        figure_folder = os.path.join(self.folder_selected, "spatial/figurefolder")
+        os.mkdir(figure_folder)
+        for i in self.names:
+            os.rename(self.folder_selected+"/"+i, figure_folder+"/"+i)
+
 
     def json_file(self,path):
         factorHigh = 0
