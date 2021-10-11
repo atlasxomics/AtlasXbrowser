@@ -168,30 +168,40 @@ class Gui():
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.11, rely= .73)
-        rotate_canvas = tk.Canvas(self.right_canvas, width=138, height=40)
-        rotate_canvas.place(relx=.11, rely=.78)
+        self.rotate_canvas = tk.Canvas(self.right_canvas, width=190, height=40)
+        self.rotate_canvas.place(relx=.11, rely=.78)
         rotateleft = Image.open("rotateleft.png")
         bg = ImageTk.PhotoImage(rotateleft)
-        self.left = tk.Button(rotate_canvas, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
+        self.left = tk.Button(self.rotate_canvas, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
         self.left.image = bg
         self.left.place(x=0,y=0)
         rotateright = Image.open("rotateright.png")
         bg2 = ImageTk.PhotoImage(rotateright)
-        self.right = tk.Button(rotate_canvas, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
+        self.right = tk.Button(self.rotate_canvas, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.place(x=35,y=0)
         uparrow = Image.open("up.png")
         bg3 = ImageTk.PhotoImage(uparrow)
-        self.up = tk.Button(rotate_canvas, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
+        self.up = tk.Button(self.rotate_canvas, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
         self.up.image = bg3
         self.up.place(x=70,y=0)
         leftarrow = Image.open("leftarrow.png")
         bg4 = ImageTk.PhotoImage(leftarrow)
-        self.flip = tk.Button(rotate_canvas, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
+        self.flip = tk.Button(self.rotate_canvas, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
         self.flip.image = bg4
         self.flip.place(x=105,y=0)
+        self.crop = tk.IntVar()
+        self.crop.set(0)
+        tk.Radiobutton(self.rotate_canvas, text="Crop", variable=self.crop, value=1, command = self.cropping).place(x=135,y=0)
         self.image_updated = tk.Button(self.right_canvas, text = "Confirm Image Position", command = self.image_position, state=tk.DISABLED)
-        self.image_updated.place(relx=.11,rely=.83)
+        self.image_updated.config(width=15)
+        self.image_updated.place(relx=.04,rely=.83)
+        self.crop_confirm = tk.Button(self.right_canvas, text = "Next", command = self.square_image, state=tk.DISABLED)
+        self.crop_confirm.configure(width=3)
+        self.crop_confirm.place(relx=.63,rely=.83)
+        for child in self.rotate_canvas.winfo_children():
+            if child.winfo_class() == 'Radiobutton':
+                child['state'] = 'disabled'
 
     def restart(self):
         self.newWindow.destroy()
@@ -254,7 +264,6 @@ class Gui():
         self.rawHeight = h
         self.width, self.height = (a.width, a.height)
         newH = self.screen_height - 60
-        self.factor = newH/h
         newW = int(round(w*newH/h))
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
@@ -333,30 +342,35 @@ class Gui():
         else:
             degree = int(iteration)
         for i in self.names:
-            if 'image' in magic.from_file(self.folder_selected+"/"+i,mime= True):
-                img = cv2.imread(self.folder_selected+"/"+i, cv2.IMREAD_UNCHANGED)
-                if iteration < 0:
-                    for x in range(abs(degree)):
-                        rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                        img = rotate
-                elif iteration > 0:
-                    for y in range(abs(degree)):
-                        rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-                        img = rotate
-                else:
-                    rotate = img
+            try:
+                if 'image' in magic.from_file(self.folder_selected+"/"+i,mime= True):
+                    img = cv2.imread(self.folder_selected+"/"+i, cv2.IMREAD_UNCHANGED)
+                    if iteration < 0:
+                        for x in range(abs(degree)):
+                            rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                            img = rotate
+                    elif iteration > 0:
+                        for y in range(abs(degree)):
+                            rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+                            img = rotate
+                    else:
+                        rotate = img
 
-                if self.flipped_vert == True and self.flipped_horz == True:
-                    once = cv2.flip(rotate,0)
-                    flipped = cv2.flip(once,1)
-                elif self.flipped_horz == True and self.flipped_vert == False:
-                    flipped = cv2.flip(rotate,1)
-                elif self.flipped_vert == True and self.flipped_horz == False:
-                    flipped = cv2.flip(rotate,0)
-                elif self.flipped_vert == False and self.flipped_horz == False:
-                    flipped = rotate
+                    if self.flipped_vert == True and self.flipped_horz == True:
+                        once = cv2.flip(rotate,0)
+                        flipped = cv2.flip(once,1)
+                    elif self.flipped_horz == True and self.flipped_vert == False:
+                        flipped = cv2.flip(rotate,1)
+                    elif self.flipped_vert == True and self.flipped_horz == False:
+                        flipped = cv2.flip(rotate,0)
+                    elif self.flipped_vert == False and self.flipped_horz == False:
+                        flipped = rotate
+
+                    cv2.imwrite(self.folder_selected+"/"+i, flipped)
+            except IsADirectoryError:
+                pass
                 
-                cv2.imwrite(self.folder_selected+"/"+i, flipped)
+                
 
         self.activateThresh_button['state'] = tk.ACTIVE
         try:
@@ -364,13 +378,79 @@ class Gui():
         except cv2.error:
             self.scale_image = flipped
 
+        self.up['state'] = tk.DISABLED
+        self.left['state'] = tk.DISABLED
+        self.right['state'] = tk.DISABLED
+        self.flip['state'] = tk.DISABLED
+        self.image_updated['state'] = tk.DISABLED
         self.init_images()
+
+
+
+    def cropping(self):
+        self.my_canvas.bind('<Button-1>', self.highlight)
+        self.my_canvas.bind('<B1-Motion>', self.update_sel_rectcrop)
+
+
+    def square_image(self):
+        if len(self.my_canvas.coords('highlight')) > 1:
+            image = Image.open(self.postB_Name)
+            image1 = Image.open(self.bsa_Name)
+            coords = self.my_canvas.coords('highlight')
+            im1 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+            im2 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+            mg = ImageTk.PhotoImage(im2)
+            post = im1.save(self.postB_Name)
+            bsa = im2.save(self.bsa_Name)
+
+        self.crop_confirm['state'] = tk.DISABLED
+        for child in self.rotate_canvas.winfo_children():
+            if child.winfo_class() == 'Radiobutton':
+                child['state'] = 'disabled'
+        self.up['state'] = tk.ACTIVE
+        self.left['state'] = tk.ACTIVE
+        self.right['state'] = tk.ACTIVE
+        self.flip['state'] = tk.ACTIVE
+        self.image_updated['state'] = tk.ACTIVE
+
+        for i in self.names:
+            if "postb" in i.lower() and "bsa" not in i.lower():
+                beforeB = Image.open(self.postB_Name)
+                b = beforeB
+
+        w, h = (b.width, b.height)
+        newH = self.screen_height - 60
+        newW = int(round(w*newH/h))
+        floor = b.resize((newW, newH), Image.ANTIALIAS)
+        self.newWidth = floor.width ; self.newHeight = floor.height
+
+        imgA = ImageTk.PhotoImage(floor)
+        self.my_canvas.config(width = floor.width, height= floor.height)
+
+        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        flippedImage = img
+
+        try:
+            self.scale_image = cv2.cvtColor(flippedImage, cv2.COLOR_BGR2GRAY)
+        except cv2.error:
+            self.scale_image = flippedImage
+
+        self.lmain.pack()
+        self.lmain.image = imgA
+        self.lmain.configure(image=imgA)
+        self.my_canvas.delete("image")
+        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
+        self.right_canvas.config(width = floor.width + 300, height= h)
+        
+        
                 
 
     def activate_thresh(self):
         self.blockSize_scale['state'] = tk.ACTIVE
         self.cMean_scale['state'] = tk.ACTIVE
         self.activateThresh_button['state'] = tk.DISABLED
+        self.my_canvas.unbind('<Button-1>')
+        self.my_canvas.unbind('<B1-Motion>')
         
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
@@ -385,58 +465,54 @@ class Gui():
         self.qWindow.title("Meta Data")
         self.qWindow.geometry('%dx%d+%d+%d' % (400, 300, 500, 0))
         for i in self.names:
-            if "postb" in i.lower() and not "bsa" in i.lower():
-                self.postB_Name = self.folder_selected + "/" + i
-                beforeB = Image.open(self.postB_Name)
+            if "bsa" in i.lower():
+                beforeA = Image.open(self.folder_selected + "/" + i)
+                a = beforeA
+                self.bsa_Name = self.folder_selected + "/" + i
                 self.bar["value"] = 20
                 self.pWindow.update()
-                b = beforeB
                 self.bar["value"] = 30
                 self.pWindow.update()
+            elif "postb" in i.lower() and "bsa" not in i.lower():
+                self.postB_Name = self.folder_selected + "/" + i
 
-        w, h = (b.width, b.height)
-        self.rawHeight = h
+        w, h = (a.width, a.height)
         newH = self.screen_height - 60
         self.factor = newH/h
         newW = int(round(w*newH/h))
-        postB = b.resize((newW, newH), Image.ANTIALIAS)
-        self.qwimgB = ImageTk.PhotoImage(postB)
+        bsa = a.resize((newW, newH), Image.ANTIALIAS)
+        self.qwimga = ImageTk.PhotoImage(bsa)
 
         self.bar["value"] = 60
         self.pWindow.update()
 
-        self.refactor = b
-        self.newWidth = postB.width ; self.newHeight = postB.height
         temp = re.compile("/(d[0-9]+)")
-        res = temp.search(self.postB_Name.lower()).groups() 
+        res = temp.search(self.bsa_Name.lower()).groups() 
         self.excelName = res[0].upper()
         self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
         self.bar["value"] = 70
         self.pWindow.update()
 
-        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(self.bsa_Name, cv2.IMREAD_UNCHANGED)
         self.bar["value"] = 80
         self.pWindow.update()
 
         self.bar["value"] = 90
         self.pWindow.update()
-        flippedImage = img
-
-        try:
-            self.scale_image = cv2.cvtColor(flippedImage, cv2.COLOR_BGR2GRAY)
-        except cv2.error:
-            self.scale_image = flippedImage  
+          
 
         self.bar["value"] = 100
         self.pWindow.update()
         self.pWindow.destroy()
 
+        
         #update canvas and frame
-        self.my_canvas.config(width = postB.width, height= postB.height)
-        self.lmain.configure(image=self.qwimgB)
-        self.newWindow.geometry("{0}x{1}".format(postB.width + 300, self.screen_height))
-        self.right_canvas.config(width = postB.width + 300, height= h)
+        self.my_canvas.config(width = bsa.width, height= bsa.height)
+        self.lmain.pack_forget()
+        self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
+        self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
+        self.right_canvas.config(width = bsa.width + 300, height= h)
 
         if 'metadata.json' in self.names:
             f = open(self.folder_selected + "/metadata.json")
@@ -530,11 +606,11 @@ class Gui():
                          "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
-        self.up['state'] = tk.ACTIVE
-        self.right['state'] = tk.ACTIVE
-        self.left['state'] = tk.ACTIVE
-        self.flip['state'] = tk.ACTIVE
-        self.image_updated['state'] = tk.ACTIVE
+        self.crop_confirm['state'] = tk.ACTIVE
+        for child in self.rotate_canvas.winfo_children():
+            if child.winfo_class() == 'Radiobutton':
+                child['state'] = 'active'
+        
         
         
 
@@ -1014,6 +1090,25 @@ class Gui():
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
                 self.arr[int(i)-1][int(j)] = 1
                 self.numTixels += 1
+
+    def update_sel_rectcrop(self, event):
+        self.my_canvas.bind("<ButtonRelease-1>", self.releasecrop)
+        self.botx, self.boty = event.x, event.y
+        self.my_canvas.coords("highlight", self.topx, self.topy, self.botx, self.boty)  # Update selection rect.
+    def releasecrop(self, event):
+        coords = self.my_canvas.coords("highlight")
+        length1 = coords[2] - coords[0]
+        length2 = coords[3] - coords[1]
+        if length1 > length2:
+            added_on = length1 - length2
+            coords[3] += added_on
+        if length2 > length1:
+            added_on = length2 - length1
+            coords[1] += added_on
+        self.my_canvas.coords("highlight", coords[0], coords[1], coords[2], coords[3])
+
+
+        
                 
         
 
