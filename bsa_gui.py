@@ -95,15 +95,47 @@ class Gui():
         self.lmain.image = bg
         self.lmain.configure(image=bg)
 
+        #rotation/crop
+        self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
+        self.cropframe.place(relx=.11, rely=.01)
+        self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
+        self.activateCrop_button.pack(side=tk.LEFT)
+        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
+        self.confirmCrop_button.pack()
+
+        self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
+        self.rotateframe.place(relx=.1, rely=.10)
+        self.image_updated = tk.Button(self.rotateframe, text = "Confirm Image Position", command = self.image_position, state=tk.DISABLED)
+        self.image_updated.pack(side=tk.BOTTOM)
+        rotateleft = Image.open("rotateleft.png")
+        bg = ImageTk.PhotoImage(rotateleft)
+        self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
+        self.left.image = bg
+        self.left.pack(side=tk.LEFT)
+        rotateright = Image.open("rotateright.png")
+        bg2 = ImageTk.PhotoImage(rotateright)
+        self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
+        self.right.image = bg2
+        self.right.pack(side=tk.LEFT)
+        uparrow = Image.open("up.png")
+        bg3 = ImageTk.PhotoImage(uparrow)
+        self.up = tk.Button(self.rotateframe, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
+        self.up.image = bg3
+        self.up.pack(side=tk.LEFT)
+        leftarrow = Image.open("leftarrow.png")
+        bg4 = ImageTk.PhotoImage(leftarrow)
+        self.flip = tk.Button(self.rotateframe, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
+        self.flip.image = bg4
+        self.flip.pack(side=tk.LEFT)
+        
+
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, rely=.01)
+        self.adframe.place(relx=.11, rely=.23)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
         self.activateThresh_button.pack(anchor='e')
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
-        #self.blockSize_label_value = tk.Label(self.right_canvas, text="255")
-        #self.blockSize_label_value.place(x=17,y=60)
 
         self.blockSize_value = tk.IntVar()
         self.cMean_value = tk.IntVar()
@@ -113,15 +145,13 @@ class Gui():
         self.blockSize_scale.pack(anchor='w')
         self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
         self.cMean_label.pack(anchor='w')
-        #self.cMean_label_value = tk.Label(self.right_canvas, text="17")
-        #self.cMean_label_value.place(x=17,y=130)
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
 
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locate ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .21)
+        self.thframe.place(relx=.11, rely= .42)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -129,7 +159,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Display", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.31)
+        self.shframe.place(relx=.11, rely=.51)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
@@ -138,7 +168,7 @@ class Gui():
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .41)
+        self.labelframe.place(relx=.11, rely= .60)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -154,7 +184,7 @@ class Gui():
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .63)
+        self.sheframe.place(relx=.11, rely= .80)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
         tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
@@ -167,41 +197,9 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .73)
-        self.rotate_canvas = tk.Canvas(self.right_canvas, width=190, height=40)
-        self.rotate_canvas.place(relx=.11, rely=.78)
-        rotateleft = Image.open("rotateleft.png")
-        bg = ImageTk.PhotoImage(rotateleft)
-        self.left = tk.Button(self.rotate_canvas, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
-        self.left.image = bg
-        self.left.place(x=0,y=0)
-        rotateright = Image.open("rotateright.png")
-        bg2 = ImageTk.PhotoImage(rotateright)
-        self.right = tk.Button(self.rotate_canvas, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
-        self.right.image = bg2
-        self.right.place(x=35,y=0)
-        uparrow = Image.open("up.png")
-        bg3 = ImageTk.PhotoImage(uparrow)
-        self.up = tk.Button(self.rotate_canvas, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
-        self.up.image = bg3
-        self.up.place(x=70,y=0)
-        leftarrow = Image.open("leftarrow.png")
-        bg4 = ImageTk.PhotoImage(leftarrow)
-        self.flip = tk.Button(self.rotate_canvas, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
-        self.flip.image = bg4
-        self.flip.place(x=105,y=0)
-        self.crop = tk.IntVar()
-        self.crop.set(0)
-        tk.Radiobutton(self.rotate_canvas, text="Crop", variable=self.crop, value=1, command = self.cropping).place(x=135,y=0)
-        self.image_updated = tk.Button(self.right_canvas, text = "Confirm Image Position", command = self.image_position, state=tk.DISABLED)
-        self.image_updated.config(width=15)
-        self.image_updated.place(relx=.04,rely=.83)
-        self.crop_confirm = tk.Button(self.right_canvas, text = "Next", command = self.square_image, state=tk.DISABLED)
-        self.crop_confirm.configure(width=3)
-        self.crop_confirm.place(relx=.63,rely=.83)
-        for child in self.rotate_canvas.winfo_children():
-            if child.winfo_class() == 'Radiobutton':
-                child['state'] = 'disabled'
+        self.position_file.place(relx=.11, rely= .89)
+
+        
 
     def restart(self):
         self.newWindow.destroy()
@@ -228,7 +226,7 @@ class Gui():
             self.pWindow.update()
 
             for file in os.listdir(self.folder_selected):
-                if file.startswith(".") == False:
+                if file.startswith(".") == False and 'spatial' not in file:
                     self.names.append(file)
 
             if "spatial" not in self.folder_selected:
@@ -336,7 +334,7 @@ class Gui():
 
     def image_position(self):
         iteration = self.rotated_degree/90
-        if abs(iteration) > 4:
+        if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
             degree = int(abs(iteration)-(4*multiplier))
         else:
@@ -345,11 +343,11 @@ class Gui():
             try:
                 if 'image' in magic.from_file(self.folder_selected+"/"+i,mime= True):
                     img = cv2.imread(self.folder_selected+"/"+i, cv2.IMREAD_UNCHANGED)
-                    if iteration < 0:
+                    if degree < 0:
                         for x in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
                             img = rotate
-                    elif iteration > 0:
+                    elif degree > 0:
                         for y in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                             img = rotate
@@ -388,8 +386,9 @@ class Gui():
 
 
     def cropping(self):
-        self.my_canvas.bind('<Button-1>', self.highlight)
+        self.my_canvas.bind('<Button-1>', self.highlightcrop)
         self.my_canvas.bind('<B1-Motion>', self.update_sel_rectcrop)
+        self.activateCrop_button['state'] = tk.DISABLED
 
 
     def square_image(self):
@@ -403,15 +402,12 @@ class Gui():
             post = im1.save(self.postB_Name)
             bsa = im2.save(self.bsa_Name)
 
-        self.crop_confirm['state'] = tk.DISABLED
-        for child in self.rotate_canvas.winfo_children():
-            if child.winfo_class() == 'Radiobutton':
-                child['state'] = 'disabled'
         self.up['state'] = tk.ACTIVE
         self.left['state'] = tk.ACTIVE
         self.right['state'] = tk.ACTIVE
         self.flip['state'] = tk.ACTIVE
         self.image_updated['state'] = tk.ACTIVE
+        self.confirmCrop_button['state'] = tk.DISABLED
 
         for i in self.names:
             if "postb" in i.lower() and "bsa" not in i.lower():
@@ -451,6 +447,7 @@ class Gui():
         self.activateThresh_button['state'] = tk.DISABLED
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<B1-Motion>')
+        self.my_canvas.unbind('<ButtonRelease-1>')
         
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
@@ -464,6 +461,7 @@ class Gui():
         self.qWindow = tk.Toplevel(self.newWindow)
         self.qWindow.title("Meta Data")
         self.qWindow.geometry('%dx%d+%d+%d' % (400, 300, 500, 0))
+        both_images_flag = 0
         for i in self.names:
             if "bsa" in i.lower():
                 beforeA = Image.open(self.folder_selected + "/" + i)
@@ -473,125 +471,130 @@ class Gui():
                 self.pWindow.update()
                 self.bar["value"] = 30
                 self.pWindow.update()
+                both_images_flag+=1
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 self.postB_Name = self.folder_selected + "/" + i
+                both_images_flag+=1
+        if both_images_flag==2:
+            w, h = (a.width, a.height)
+            newH = self.screen_height - 60
+            self.factor = newH/h
+            newW = int(round(w*newH/h))
+            bsa = a.resize((newW, newH), Image.ANTIALIAS)
+            self.qwimga = ImageTk.PhotoImage(bsa)
 
-        w, h = (a.width, a.height)
-        newH = self.screen_height - 60
-        self.factor = newH/h
-        newW = int(round(w*newH/h))
-        bsa = a.resize((newW, newH), Image.ANTIALIAS)
-        self.qwimga = ImageTk.PhotoImage(bsa)
+            self.bar["value"] = 60
+            self.pWindow.update()
 
-        self.bar["value"] = 60
-        self.pWindow.update()
+            temp = re.compile("/(d[0-9]+)")
+            res = temp.search(self.bsa_Name.lower()).groups() 
+            self.excelName = res[0].upper()
+            self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
-        temp = re.compile("/(d[0-9]+)")
-        res = temp.search(self.bsa_Name.lower()).groups() 
-        self.excelName = res[0].upper()
-        self.newWindow.title("Atlas Browser (" + self.excelName+")")
+            self.bar["value"] = 70
+            self.pWindow.update()
 
-        self.bar["value"] = 70
-        self.pWindow.update()
+            img = cv2.imread(self.bsa_Name, cv2.IMREAD_UNCHANGED)
+            self.bar["value"] = 80
+            self.pWindow.update()
 
-        img = cv2.imread(self.bsa_Name, cv2.IMREAD_UNCHANGED)
-        self.bar["value"] = 80
-        self.pWindow.update()
-
-        self.bar["value"] = 90
-        self.pWindow.update()
-          
-
-        self.bar["value"] = 100
-        self.pWindow.update()
-        self.pWindow.destroy()
-
-        
-        #update canvas and frame
-        self.my_canvas.config(width = bsa.width, height= bsa.height)
-        self.lmain.pack_forget()
-        self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
-        self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
-        self.right_canvas.config(width = bsa.width + 300, height= h)
-
-        if 'metadata.json' in self.names:
-            f = open(self.folder_selected + "/metadata.json")
-            self.metadata = json.load(f)
-            self.num_chan = int(self.metadata['numChannels'])
-            os.remove(self.folder_selected + "/metadata.json")
-            self.r_clicked = tk.StringVar()
-            self.r_clicked.set(self.metadata['run'])
-            self.s_clicked = tk.StringVar()
-            self.s_clicked.set(self.metadata['species'])
-            self.t_clicked = tk.StringVar()
-            self.t_clicked.set(self.metadata['type'])
-            self.tr_clicked = tk.StringVar()
-            self.tr_clicked.set(self.metadata['trimming'])
-            self.a_clicked = tk.StringVar()
-            self.a_clicked.set(self.metadata['assay'])
-            self.n_clicked = tk.StringVar()
-            self.n_clicked.set(self.metadata['numChannels'])
+            self.bar["value"] = 90
+            self.pWindow.update()
             
+
+            self.bar["value"] = 100
+            self.pWindow.update()
+            self.pWindow.destroy()
+
+            
+            #update canvas and frame
+            self.my_canvas.config(width = bsa.width, height= bsa.height)
+            self.lmain.pack_forget()
+            self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
+            self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
+            self.right_canvas.config(width = bsa.width + 300, height= h)
+
+            if 'metadata.json' in self.names:
+                f = open(self.folder_selected + "/metadata.json")
+                self.metadata = json.load(f)
+                self.num_chan = int(self.metadata['numChannels'])
+                os.remove(self.folder_selected + "/metadata.json")
+                self.r_clicked = tk.StringVar()
+                self.r_clicked.set(self.metadata['run'])
+                self.s_clicked = tk.StringVar()
+                self.s_clicked.set(self.metadata['species'])
+                self.t_clicked = tk.StringVar()
+                self.t_clicked.set(self.metadata['type'])
+                self.tr_clicked = tk.StringVar()
+                self.tr_clicked.set(self.metadata['trimming'])
+                self.a_clicked = tk.StringVar()
+                self.a_clicked.set(self.metadata['assay'])
+                self.n_clicked = tk.StringVar()
+                self.n_clicked.set(self.metadata['numChannels'])
+                
+
+            else:
+                self.r_clicked = tk.StringVar()
+                self.r_clicked.set(self.excelName)
+                self.s_clicked = tk.StringVar()
+                self.s_clicked.set("Mouse")
+                self.t_clicked = tk.StringVar()
+                self.t_clicked.set("FF")
+                self.tr_clicked = tk.StringVar()
+                self.tr_clicked.set("No")
+                self.a_clicked = tk.StringVar()
+                self.a_clicked.set("mRNA")
+                self.n_clicked = tk.StringVar()
+                self.n_clicked.set(50)
+                
+
+            
+            r_label = tk.Label(self.qWindow, text="Run: ", font =("Courier", 14)).place(x=20, y=10)
+            r_entry = tk.Entry(self.qWindow, textvariable=self.r_clicked).place(x=200,y=10)
+
+            s_label = tk.Label(self.qWindow, text="Species: ", font =("Courier", 14)).place(x=20, y=45)
+            species = [
+                "Mouse",
+                "Human"
+            ]
+            s_drop = tk.OptionMenu(self.qWindow , self.s_clicked , *species).place(x=200,y=45)
+
+            t_label = tk.Label(self.qWindow, text="Type: ", font =("Courier", 14)).place(x=20, y=80)
+            type = [
+                "FF",
+                "FFPE",
+                "EFPE"
+            ]
+            t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=80)
+
+            tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=115)
+            trim = [
+                "Yes",
+                "No"
+            ]
+            tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=115)
+
+            a_label = tk.Label(self.qWindow, text="Assay: ", font =("Courier", 14)).place(x=20, y=150)
+            assay = [
+                "mRNA",
+                "Protein",
+                "Epigenome"
+            ]
+            a_drop = tk.OptionMenu(self.qWindow , self.a_clicked , *assay).place(x=200,y=150)
+
+            n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=185)
+            chan = [
+                "50",
+                "100"
+            ]
+            n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=185)
+
+            
+
+            button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=285, anchor=tk.SE)
 
         else:
-            self.r_clicked = tk.StringVar()
-            self.r_clicked.set(self.excelName)
-            self.s_clicked = tk.StringVar()
-            self.s_clicked.set("Mouse")
-            self.t_clicked = tk.StringVar()
-            self.t_clicked.set("FF")
-            self.tr_clicked = tk.StringVar()
-            self.tr_clicked.set("No")
-            self.a_clicked = tk.StringVar()
-            self.a_clicked.set("mRNA")
-            self.n_clicked = tk.StringVar()
-            self.n_clicked.set(50)
-            
-
-        
-        r_label = tk.Label(self.qWindow, text="Run: ", font =("Courier", 14)).place(x=20, y=10)
-        r_entry = tk.Entry(self.qWindow, textvariable=self.r_clicked).place(x=200,y=10)
-
-        s_label = tk.Label(self.qWindow, text="Species: ", font =("Courier", 14)).place(x=20, y=45)
-        species = [
-            "Mouse",
-            "Human"
-        ]
-        s_drop = tk.OptionMenu(self.qWindow , self.s_clicked , *species).place(x=200,y=45)
-
-        t_label = tk.Label(self.qWindow, text="Type: ", font =("Courier", 14)).place(x=20, y=80)
-        type = [
-            "FF",
-            "FFPE",
-            "EFPE"
-        ]
-        t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=80)
-
-        tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=115)
-        trim = [
-            "Yes",
-            "No"
-        ]
-        tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=115)
-
-        a_label = tk.Label(self.qWindow, text="Assay: ", font =("Courier", 14)).place(x=20, y=150)
-        assay = [
-            "mRNA",
-            "Protein",
-            "Epigenome"
-        ]
-        a_drop = tk.OptionMenu(self.qWindow , self.a_clicked , *assay).place(x=200,y=150)
-
-        n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=185)
-        chan = [
-            "50",
-            "100"
-        ]
-        n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=185)
-
-        
-
-        button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=285, anchor=tk.SE)
+            mb.showwarning("Error", "The necessary images (postB and BSA) are not present")
         
         
 
@@ -606,10 +609,7 @@ class Gui():
                          "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
-        self.crop_confirm['state'] = tk.ACTIVE
-        for child in self.rotate_canvas.winfo_children():
-            if child.winfo_class() == 'Radiobutton':
-                child['state'] = 'active'
+        self.activateCrop_button['state'] = tk.ACTIVE
         
         
         
@@ -1090,21 +1090,24 @@ class Gui():
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
                 self.arr[int(i)-1][int(j)] = 1
                 self.numTixels += 1
-
+    def highlightcrop(self, event):
+        self.topx, self.topy = event.x, event.y
+        self.my_canvas.create_rectangle(self.topx, self.topy, self.topx, self.topy, fill='', tag= "highlight", outline='red')
     def update_sel_rectcrop(self, event):
         self.my_canvas.bind("<ButtonRelease-1>", self.releasecrop)
         self.botx, self.boty = event.x, event.y
         self.my_canvas.coords("highlight", self.topx, self.topy, self.botx, self.boty)  # Update selection rect.
     def releasecrop(self, event):
+        self.confirmCrop_button['state'] = tk.ACTIVE
         coords = self.my_canvas.coords("highlight")
         length1 = coords[2] - coords[0]
         length2 = coords[3] - coords[1]
         if length1 > length2:
             added_on = length1 - length2
             coords[3] += added_on
-        if length2 > length1:
+        if length1 < length2:
             added_on = length2 - length1
-            coords[1] += added_on
+            coords[3] -= added_on
         self.my_canvas.coords("highlight", coords[0], coords[1], coords[2], coords[3])
 
 
@@ -1143,7 +1146,7 @@ class Gui():
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
-        mb.showinfo("Congraduations!", "The spatial folder is created!")
+        mb.showinfo("Congratulations!", "The spatial folder is created!")
         figure_folder = os.path.join(self.folder_selected, "spatial/figurefolder")
         os.mkdir(figure_folder)
         for i in self.names:
