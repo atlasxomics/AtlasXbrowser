@@ -1144,7 +1144,7 @@ class Gui():
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
         mb.showinfo("Congraduations!", "The spatial folder is created!")
-        figure_folder = os.path.join(self.folder_selected, "spatial/figurefolder")
+        figure_folder = os.path.join(self.folder_selected, "spatial/figure")
         os.mkdir(figure_folder)
         for i in self.names:
             os.rename(self.folder_selected+"/"+i, figure_folder+"/"+i)
