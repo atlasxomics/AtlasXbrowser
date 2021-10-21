@@ -262,6 +262,7 @@ class Gui():
         self.rawHeight = h
         self.width, self.height = (a.width, a.height)
         newH = self.screen_height - 60
+        self.factor = newH/h
         newW = int(round(w*newH/h))
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
