@@ -104,8 +104,8 @@ class Gui():
         self.confirmCrop_button.pack()
 
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
-        self.rotateframe.place(relx=.1, rely=.10)
-        self.image_updated = tk.Button(self.rotateframe, text = "Confirm Image Position", command = self.image_position, state=tk.DISABLED)
+        self.rotateframe.place(relx=.11, rely=.10)
+        self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
         self.image_updated.pack(side=tk.BOTTOM)
         rotateleft = Image.open("rotateleft.png")
         bg = ImageTk.PhotoImage(rotateleft)
@@ -150,7 +150,7 @@ class Gui():
 
 
         #buttons
-        self.thframe = tk.LabelFrame(self.right_canvas, text="Locate ROI", padx="10px", pady="10px")
+        self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
         self.thframe.place(relx=.11, rely= .42)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
@@ -158,7 +158,7 @@ class Gui():
         self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
         self.confirm_button.pack()
 
-        self.shframe = tk.LabelFrame(self.right_canvas, text="Display", padx="10px", pady="10px")
+        self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
         self.shframe.place(relx=.11, rely=.51)
 
         self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
@@ -183,11 +183,11 @@ class Gui():
 
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
-        self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .80)
+        self.sheframe = tk.LabelFrame(self.right_canvas, text="Visualization", padx="10px", pady="10px",width=100)
+        self.sheframe.place(relx=.11, rely= .81)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
-        tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
-        tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
+        tk.Radiobutton(self.sheframe, text="Feature", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
+        tk.Radiobutton(self.sheframe, text="Count", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
 
         for child in self.labelframe.winfo_children():
             if child.winfo_class() == 'Radiobutton':
@@ -197,7 +197,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .89)
+        self.position_file.place(relx=.11, rely= .9)
 
         
 
@@ -692,8 +692,8 @@ class Gui():
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
-        self.update_file = tk.Button(self.right_canvas, text = "Update the Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .77)
+        self.update_file = tk.Button(self.right_canvas, text = "Update the Spatial folder", command = self.update_pos)
+        self.update_file.place(relx=.11, rely= .9)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
