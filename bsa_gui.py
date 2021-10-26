@@ -6,6 +6,7 @@ from PIL import Image, ImageTk, ImageGrab
 import os
 import csv
 from draggable_quad import DrawShapes
+from draggable_square import DrawSquare
 from tkinter import filedialog
 from tkinter import messagebox as mb
 import os
@@ -184,7 +185,7 @@ class Gui():
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Verify", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .80)
+        self.sheframe.place(relx=.11, rely= .84)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Gene", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
         tk.Radiobutton(self.sheframe, text="UMI", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
@@ -197,7 +198,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .89)
+        self.position_file.place(relx=.11, rely= .93)
 
         
 
@@ -291,43 +292,43 @@ class Gui():
 
     def image_axis(self, num):
         if num == 0:
-            updated = cv2.rotate(self.scale_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
             formatted = Image.fromarray(updated)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
-            self.scale_image = updated
+            self.cropped_image = updated
             self.rotated_degree+=-90
         if num == 1:
-            updated = cv2.rotate(self.scale_image, cv2.ROTATE_90_CLOCKWISE)
+            updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
             formatted = Image.fromarray(updated)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
-            self.scale_image = updated
+            self.cropped_image = updated
             self.rotated_degree+=90
         if num == 2:
-            updated = cv2.flip(self.scale_image, 0)
+            updated = cv2.flip(self.cropped_image, 0)
             formatted = Image.fromarray(updated)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
-            self.scale_image = updated
+            self.cropped_image = updated
             if self.flipped_vert == False:
                 self.flipped_vert = True
             else: 
                 self.flipped_vert = False
         if num == 3:
-            updated = cv2.flip(self.scale_image, 1)
+            updated = cv2.flip(self.cropped_image, 1)
             formatted = Image.fromarray(updated)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
-            self.scale_image = updated
+            self.cropped_image = updated
             if self.flipped_horz == False:
                 self.flipped_horz = True
             else: 
@@ -372,10 +373,7 @@ class Gui():
                 
 
         self.activateThresh_button['state'] = tk.ACTIVE
-        try:
-            self.scale_image = cv2.cvtColor(flipped, cv2.COLOR_BGR2GRAY)
-        except cv2.error:
-            self.scale_image = flipped
+        
 
         self.up['state'] = tk.DISABLED
         self.left['state'] = tk.DISABLED
@@ -387,16 +385,21 @@ class Gui():
 
 
     def cropping(self):
-        self.my_canvas.bind('<Button-1>', self.highlightcrop)
-        self.my_canvas.bind('<B1-Motion>', self.update_sel_rectcrop)
+        self.b = DrawSquare(self.my_canvas)
+        self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
+        self.my_canvas.bind('<Button1-Motion>', self.b.on_motion)
+        self.my_canvas.bind('<ButtonRelease-1>', self.b.on_release)
         self.activateCrop_button['state'] = tk.DISABLED
+        self.confirmCrop_button['state'] = tk.ACTIVE
 
 
     def square_image(self):
-        if len(self.my_canvas.coords('highlight')) > 1:
+        self.my_canvas.unbind('<Button-1>')
+        self.my_canvas.unbind('<Button1-Motion>')
+        if len(self.my_canvas.coords('crop')) > 1:
             image = Image.open(self.postB_Name)
             image1 = Image.open(self.bsa_Name)
-            coords = self.my_canvas.coords('highlight')
+            coords = self.my_canvas.coords('crop')
             im1 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
             im2 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
             mg = ImageTk.PhotoImage(im2)
@@ -425,12 +428,7 @@ class Gui():
         self.my_canvas.config(width = floor.width, height= floor.height)
 
         img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
-        flippedImage = img
-
-        try:
-            self.scale_image = cv2.cvtColor(flippedImage, cv2.COLOR_BGR2GRAY)
-        except cv2.error:
-            self.scale_image = flippedImage
+        self.cropped_image = img
 
         self.lmain.pack()
         self.lmain.image = imgA
@@ -693,7 +691,7 @@ class Gui():
         self.check_on.set(0)
         #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.right_canvas, text = "Update the Position File", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .77)
+        self.update_file.place(relx=.11, rely= .8)
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -1091,25 +1089,8 @@ class Gui():
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
                 self.arr[int(i)-1][int(j)] = 1
                 self.numTixels += 1
-    def highlightcrop(self, event):
-        self.topx, self.topy = event.x, event.y
-        self.my_canvas.create_rectangle(self.topx, self.topy, self.topx, self.topy, fill='', tag= "highlight", outline='red')
-    def update_sel_rectcrop(self, event):
-        self.my_canvas.bind("<ButtonRelease-1>", self.releasecrop)
-        self.botx, self.boty = event.x, event.y
-        self.my_canvas.coords("highlight", self.topx, self.topy, self.botx, self.boty)  # Update selection rect.
-    def releasecrop(self, event):
-        self.confirmCrop_button['state'] = tk.ACTIVE
-        coords = self.my_canvas.coords("highlight")
-        length1 = coords[2] - coords[0]
-        length2 = coords[3] - coords[1]
-        if length1 > length2:
-            added_on = length1 - length2
-            coords[3] += added_on
-        if length1 < length2:
-            added_on = length2 - length1
-            coords[3] -= added_on
-        self.my_canvas.coords("highlight", coords[0], coords[1], coords[2], coords[3])
+
+        
 
 
         
