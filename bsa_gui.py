@@ -459,7 +459,7 @@ class Gui():
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
         self.qWindow.title("Meta Data")
-        self.qWindow.geometry('%dx%d+%d+%d' % (400, 300, 500, 0))
+        self.qWindow.geometry('%dx%d+%d+%d' % (400, 350, 500, 0))
         both_images_flag = 0
         for i in self.names:
             if "bsa" in i.lower():
@@ -524,10 +524,14 @@ class Gui():
                 self.s_clicked.set(self.metadata['species'])
                 self.t_clicked = tk.StringVar()
                 self.t_clicked.set(self.metadata['type'])
-                self.tr_clicked = tk.StringVar()
-                self.tr_clicked.set(self.metadata['trimming'])
+                self.o_clicked = tk.StringVar()
+                self.o_clicked.set(self.metadata['tissue'])
                 self.a_clicked = tk.StringVar()
                 self.a_clicked.set(self.metadata['assay'])
+                self.c_clicked = tk.StringVar()
+                self.c_clicked.set(self.metadata['collaborator'])
+                self.tr_clicked = tk.StringVar()
+                self.tr_clicked.set(self.metadata['trimming'])
                 self.n_clicked = tk.StringVar()
                 self.n_clicked.set(self.metadata['numChannels'])
                 
@@ -539,10 +543,14 @@ class Gui():
                 self.s_clicked.set("Mouse")
                 self.t_clicked = tk.StringVar()
                 self.t_clicked.set("FF")
-                self.tr_clicked = tk.StringVar()
-                self.tr_clicked.set("No")
+                self.o_clicked = tk.StringVar()
+                self.o_clicked.set("Embryo")
                 self.a_clicked = tk.StringVar()
                 self.a_clicked.set("mRNA")
+                self.c_clicked = tk.StringVar()
+                self.c_clicked.set("Atlas")
+                self.tr_clicked = tk.StringVar()
+                self.tr_clicked.set("No")
                 self.n_clicked = tk.StringVar()
                 self.n_clicked.set(50)
                 
@@ -554,7 +562,9 @@ class Gui():
             s_label = tk.Label(self.qWindow, text="Species: ", font =("Courier", 14)).place(x=20, y=45)
             species = [
                 "Mouse",
-                "Human"
+                "Human",
+                "Rat",
+                "Hamster"
             ]
             s_drop = tk.OptionMenu(self.qWindow , self.s_clicked , *species).place(x=200,y=45)
 
@@ -566,31 +576,40 @@ class Gui():
             ]
             t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=80)
 
-            tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=115)
-            trim = [
-                "Yes",
-                "No"
-            ]
-            tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=115)
+            o_label = tk.Label(self.qWindow, text="Tissue: ", font=("Courier", 14)).place(x=20, y=115)
+            o_entry = tk.Entry(self.qWindow, textvariable=self.o_clicked).place(x=200, y=115)
 
             a_label = tk.Label(self.qWindow, text="Assay: ", font =("Courier", 14)).place(x=20, y=150)
             assay = [
                 "mRNA",
                 "Protein",
-                "Epigenome"
+                "ATAC",
+                "H3K27me3",
+                "H3K4me3",
+                "H3K27ac"
             ]
             a_drop = tk.OptionMenu(self.qWindow , self.a_clicked , *assay).place(x=200,y=150)
 
-            n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=185)
+            c_label = tk.Label(self.qWindow, text="Collaborator: ", font=("Courier", 14)).place(x=20, y=185)
+            c_entry = tk.Entry(self.qWindow, textvariable=self.c_clicked).place(x=200, y=185)
+
+            tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=220)
+            trim = [
+                "Yes",
+                "No"
+            ]
+            tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=220)
+
+            n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=255)
             chan = [
                 "50",
                 "100"
             ]
-            n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=185)
+            n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=255)
 
             
 
-            button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=285, anchor=tk.SE)
+            button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=320, anchor=tk.SE)
 
         else:
             mb.showwarning("Error", "The necessary images (postB and BSA) are not present")
@@ -602,9 +621,11 @@ class Gui():
             self.r_clicked.set("Test")
         self.metadata = {"run": self.r_clicked.get(),
                         "species": self.s_clicked.get(), 
-                         "type": self.t_clicked.get(), 
-                         "trimming": self.tr_clicked.get(), 
-                         "assay": self.a_clicked.get(), 
+                         "type": self.t_clicked.get(),
+                         "tissue": self.o_clicked.get(),
+                         "assay": self.a_clicked.get(),
+                         "collaborator": self.c_clicked.get(),
+                         "trimming": self.tr_clicked.get(),
                          "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
