@@ -1,3 +1,4 @@
+import shutil
 import tkinter as tk
 from tkinter import ttk
 import re
@@ -12,15 +13,15 @@ from tkinter import messagebox as mb
 import os
 import math
 import json
-import string
 from tissue_grid import Tissue
 import cv2
 import numpy as np
 import matplotlib
 import matplotlib.cm
-import pandas as pd
-Image.MAX_IMAGE_PIXELS = None
+from shutil import copy, move, rmtree, copytree
 import magic
+Image.MAX_IMAGE_PIXELS = None
+
 
 def center(tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
@@ -59,7 +60,7 @@ class Gui():
         filemenu = tk.Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Open Image Folder", command=self.get_folder)
-        filemenu.add_command(label="Open Spatial Folder", command=self.get_folder)
+        filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
         filemenu.add_command(label="New Instance", command=self.restart)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.destruct)
@@ -227,24 +228,58 @@ class Gui():
             self.pWindow.update()
 
             for file in os.listdir(self.folder_selected):
-                if file.startswith(".") == False and 'spatial' not in file:
-                    self.names.append(file)
+                if file.startswith(".") == False:
+                    try:
+                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True):
+                            self.names.append(file)
+                    except IsADirectoryError:
+                        pass
 
-            if "spatial" not in self.folder_selected:
-                self.question_window()
-
-            else:
-                f = open(self.folder_selected + "/metadata.json")
-                self.metadata = json.load(f)
-                self.num_chan = int(self.metadata['numChannels'])
-                self.numTixels = int(self.metadata['numTixels'])
-                f2 = open(self.folder_selected + "/scalefactors_json.json")
-                self.metadata2 = json.load(f2)
-                self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
-                self.bar["value"] = 20
-                self.pWindow.update()
-                self.second_window()
+            self.question_window()
+            
         else:
+            #Add error mesage
+            pass
+
+    def get_spatial(self):
+        self.folder_selected = filedialog.askdirectory()
+        
+        if self.folder_selected != '':
+            temp = re.compile("/([a-zA-Z]+)([0-9]+)")
+            res = temp.search(self.folder_selected).groups() 
+            self.excelName = res[0]+ res[1]
+            self.pWindow = tk.Toplevel(self.newWindow)
+            self.pWindow.title("Loading images...")
+            self.pWindow.geometry("400x90")
+            self.bar = ttk.Progressbar(self.pWindow, orient="horizontal", length=360)
+            self.bar.pack(pady=30)
+            self.bar["value"] += 10
+            self.pWindow.update_idletasks()
+            self.pWindow.update()
+
+            for file in os.listdir(self.folder_selected):
+                if file.startswith(".") == False:
+                    try:
+                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True):
+                            self.names.append(file)
+                    except IsADirectoryError:
+                        pass
+
+            
+
+            f = open(self.folder_selected + "/metadata.json")
+            self.metadata = json.load(f)
+            self.num_chan = int(self.metadata['numChannels'])
+            self.numTixels = int(self.metadata['numTixels'])
+            f2 = open(self.folder_selected + "/scalefactors_json.json")
+            self.metadata2 = json.load(f2)
+            self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
+            self.bar["value"] = 20
+            self.pWindow.update()
+            self.second_window()
+
+        else:
+            #Add error message
             pass
             
 
@@ -252,11 +287,11 @@ class Gui():
     def init_images(self):
         for i in self.names:
             if "bsa" in i.lower():
-                beforeA = Image.open(self.folder_selected + "/" + i)
+                beforeA = Image.open(self.figure_folder + "/" + i)
                 a = beforeA
             elif "postb" in i.lower() and "bsa" not in i.lower():
-                self.postB_Name = self.folder_selected + "/" + i
-                beforeB = Image.open(self.postB_Name)
+                postB_Name = self.figure_folder + "/" + i
+                beforeB = Image.open(postB_Name)
                 b = beforeB
 
         w, h = (a.width, a.height)
@@ -271,7 +306,7 @@ class Gui():
         self.refactor = b
         self.newWidth = floor.width ; self.newHeight = floor.height
 
-        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(postB_Name, cv2.IMREAD_UNCHANGED)
 
         flippedImage = img
 
@@ -335,6 +370,37 @@ class Gui():
                 self.flipped_horz = False
 
     def image_position(self):
+        self.figure_folder = os.path.join(self.folder_selected, "figure")
+        try:
+            os.mkdir(self.figure_folder)
+        except FileExistsError:
+            rmtree(self.figure_folder)
+            os.mkdir(self.figure_folder)
+        self.up['state'] = tk.DISABLED
+        self.left['state'] = tk.DISABLED
+        self.right['state'] = tk.DISABLED
+        self.flip['state'] = tk.DISABLED
+        self.image_updated['state'] = tk.DISABLED
+        self.activateThresh_button['state'] = tk.ACTIVE
+        self.copy_images()
+        self.init_images()
+
+
+    def copy_images(self):
+        source = self.folder_selected
+        coords = self.my_canvas.coords('crop')
+        for i in self.names:
+            copy(source+"/"+i,self.figure_folder)
+
+        for i in self.names:
+            if "bsa" in i.lower():
+                image1 = Image.open(self.figure_folder+"/"+i)   
+                im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+                bsa = im1.save(self.figure_folder+"/"+i)
+            elif "postb" in i.lower() and "bsa" not in i.lower():
+                image = Image.open(self.figure_folder+"/"+i)
+                im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+                post = im2.save(self.figure_folder+"/"+i)
         iteration = self.rotated_degree/90
         if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
@@ -343,8 +409,8 @@ class Gui():
             degree = int(iteration)
         for i in self.names:
             try:
-                if 'image' in magic.from_file(self.folder_selected+"/"+i,mime= True):
-                    img = cv2.imread(self.folder_selected+"/"+i, cv2.IMREAD_UNCHANGED)
+                if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
+                    img = cv2.imread(self.figure_folder+"/"+i, cv2.IMREAD_UNCHANGED)
                     if degree < 0:
                         for x in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -366,23 +432,12 @@ class Gui():
                     elif self.flipped_vert == False and self.flipped_horz == False:
                         flipped = rotate
 
-                    cv2.imwrite(self.folder_selected+"/"+i, flipped)
+                    cv2.imwrite(self.figure_folder+"/"+i, flipped)
             except IsADirectoryError:
                 pass
                 
-                
-
-        self.activateThresh_button['state'] = tk.ACTIVE
         
-
-        self.up['state'] = tk.DISABLED
-        self.left['state'] = tk.DISABLED
-        self.right['state'] = tk.DISABLED
-        self.flip['state'] = tk.DISABLED
-        self.image_updated['state'] = tk.DISABLED
-        self.init_images()
-
-
+        
 
     def cropping(self):
         self.b = DrawSquare(self.my_canvas)
@@ -395,16 +450,7 @@ class Gui():
 
     def square_image(self):
         self.my_canvas.unbind('<Button-1>')
-        self.my_canvas.unbind('<Button1-Motion>')
-        if len(self.my_canvas.coords('crop')) > 1:
-            image = Image.open(self.postB_Name)
-            image1 = Image.open(self.bsa_Name)
-            coords = self.my_canvas.coords('crop')
-            im1 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-            im2 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-            mg = ImageTk.PhotoImage(im2)
-            post = im1.save(self.postB_Name)
-            bsa = im2.save(self.bsa_Name)
+        self.my_canvas.unbind('<Button1-Motion>') 
 
         self.up['state'] = tk.ACTIVE
         self.left['state'] = tk.ACTIVE
@@ -1114,11 +1160,6 @@ class Gui():
         
 
 
-        
-                
-        
-
-
 
     def create_files(self):
         try:
@@ -1126,8 +1167,9 @@ class Gui():
             os.mkdir(path)
         except FileExistsError:
             path = self.folder_selected + "/spatial"
-        barcode_file = "bc"+ str(self.num_chan)+".txt"
         
+
+        barcode_file = "bc"+ str(self.num_chan)+".txt"
         my_file = open(barcode_file,"r")
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
@@ -1146,14 +1188,16 @@ class Gui():
               
         my_file.close()
         self.json_file(path)
+        try: 
+            move(self.figure_folder,path)
+        except shutil.Error:
+            rmtree(path+"/"+"figure")
+            move(self.figure_folder,path)
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
-        mb.showinfo("Congraduations!", "The spatial folder is created!")
-        figure_folder = os.path.join(self.folder_selected, "spatial/figure")
-        os.mkdir(figure_folder)
-        for i in self.names:
-            os.rename(self.folder_selected+"/"+i, figure_folder+"/"+i)
+        mb.showinfo("Congratulations!", "The spatial folder is created!")
+        
 
 
     def json_file(self,path):
@@ -1198,9 +1242,10 @@ class Gui():
         with open(path+"/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
+
+    
+        
                 
-
-
     def update_pos(self):
         barcode_file = "bc"+ str(self.num_chan)+".txt"
         my_file = open(barcode_file,"r")
