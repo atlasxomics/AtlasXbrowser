@@ -267,17 +267,20 @@ class Gui():
 
             
 
-            f = open(self.folder_selected + "/metadata.json")
-            self.metadata = json.load(f)
-            self.num_chan = int(self.metadata['numChannels'])
-            self.numTixels = int(self.metadata['numTixels'])
-            f2 = open(self.folder_selected + "/scalefactors_json.json")
-            self.metadata2 = json.load(f2)
-            self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
-            self.bar["value"] = 20
-            self.pWindow.update()
-            self.second_window()
-
+            try:
+                f = open(self.folder_selected + "/metadata.json")
+                self.metadata = json.load(f)
+                self.num_chan = int(self.metadata['numChannels'])
+                self.numTixels = int(self.metadata['numTixels'])
+                f2 = open(self.folder_selected + "/scalefactors_json.json")
+                self.metadata2 = json.load(f2)
+                self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
+                self.bar["value"] = 20
+                self.pWindow.update()
+                self.second_window()
+            except FileNotFoundError:
+                mb.showwarning("Error", "metadata.json file is not present")
+                self.pWindow.destroy()
         else:
             #Add error message
             pass
@@ -659,7 +662,7 @@ class Gui():
 
         else:
             mb.showwarning("Error", "The necessary images (postB and BSA) are not present")
-        
+            self.pWindow.destroy()
         
 
     def update_meta(self):
