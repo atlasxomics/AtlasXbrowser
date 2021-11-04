@@ -373,37 +373,6 @@ class Gui():
                 self.flipped_horz = False
 
     def image_position(self):
-        self.figure_folder = os.path.join(self.folder_selected, "figure")
-        try:
-            os.mkdir(self.figure_folder)
-        except FileExistsError:
-            rmtree(self.figure_folder)
-            os.mkdir(self.figure_folder)
-        self.up['state'] = tk.DISABLED
-        self.left['state'] = tk.DISABLED
-        self.right['state'] = tk.DISABLED
-        self.flip['state'] = tk.DISABLED
-        self.image_updated['state'] = tk.DISABLED
-        self.activateThresh_button['state'] = tk.ACTIVE
-        self.copy_images()
-        self.init_images()
-
-
-    def copy_images(self):
-        source = self.folder_selected
-        coords = self.my_canvas.coords('crop')
-        for i in self.names:
-            copy(source+"/"+i,self.figure_folder)
-
-        for i in self.names:
-            if "bsa" in i.lower():
-                image1 = Image.open(self.figure_folder+"/"+i)   
-                im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-                bsa = im1.save(self.figure_folder+"/"+i)
-            elif "postb" in i.lower() and "bsa" not in i.lower():
-                image = Image.open(self.figure_folder+"/"+i)
-                im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-                post = im2.save(self.figure_folder+"/"+i)
         iteration = self.rotated_degree/90
         if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
@@ -438,6 +407,18 @@ class Gui():
                     cv2.imwrite(self.figure_folder+"/"+i, flipped)
             except IsADirectoryError:
                 pass
+
+        self.up['state'] = tk.DISABLED
+        self.left['state'] = tk.DISABLED
+        self.right['state'] = tk.DISABLED
+        self.flip['state'] = tk.DISABLED
+        self.image_updated['state'] = tk.DISABLED
+        self.activateThresh_button['state'] = tk.ACTIVE
+        self.init_images()
+
+
+    
+        
                 
         
         
@@ -452,6 +433,28 @@ class Gui():
 
 
     def square_image(self):
+        self.figure_folder = os.path.join(self.folder_selected, "figure")
+        try:
+            os.mkdir(self.figure_folder)
+        except FileExistsError:
+            rmtree(self.figure_folder)
+            os.mkdir(self.figure_folder)
+
+        source = self.folder_selected
+        coords = self.my_canvas.coords('crop')
+        for i in self.names:
+            copy(source+"/"+i,self.figure_folder)
+
+        for i in self.names:
+            if "bsa" in i.lower():
+                image1 = Image.open(self.figure_folder+"/"+i)   
+                im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+                bsa = im1.save(self.figure_folder+"/"+i)
+            elif "postb" in i.lower() and "bsa" not in i.lower():
+                image = Image.open(self.figure_folder+"/"+i)
+                im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+                post = im2.save(self.figure_folder+"/"+i)
+
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
 
@@ -464,7 +467,8 @@ class Gui():
 
         for i in self.names:
             if "postb" in i.lower() and "bsa" not in i.lower():
-                beforeB = Image.open(self.postB_Name)
+                beforeb_Name = self.figure_folder+"/"+i
+                beforeB = Image.open(beforeb_Name)
                 b = beforeB
 
         w, h = (b.width, b.height)
@@ -476,7 +480,7 @@ class Gui():
         imgA = ImageTk.PhotoImage(floor)
         self.my_canvas.config(width = floor.width, height= floor.height)
 
-        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(beforeb_Name, cv2.IMREAD_UNCHANGED)
         self.cropped_image = img
 
         self.lmain.pack()
@@ -485,10 +489,10 @@ class Gui():
         self.my_canvas.delete("image")
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
         self.right_canvas.config(width = floor.width + 300, height= h)
-        
-        
-                
 
+
+        
+                        
     def activate_thresh(self):
         self.blockSize_scale['state'] = tk.ACTIVE
         self.cMean_scale['state'] = tk.ACTIVE
