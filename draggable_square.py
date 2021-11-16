@@ -40,8 +40,8 @@ class DrawSquare():
 
     def on_release(self, event):
         coords = self.my_canvas.coords('crop')
-        length1 = coords[2] - coords[0]
-        length2 = coords[3] - coords[1]
+        length1 = int(coords[2] - coords[0])
+        length2 = int(coords[3] - coords[1])
         if length1 > length2:
             added_on = length1 - length2
             coords[3] += added_on
