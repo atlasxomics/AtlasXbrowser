@@ -230,7 +230,7 @@ class Gui():
             for file in os.listdir(self.folder_selected):
                 if file.startswith(".") == False:
                     try:
-                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True):
+                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True) and "postb" in file.lower():
                             self.names.append(file)
                     except IsADirectoryError:
                         pass
@@ -260,7 +260,7 @@ class Gui():
             for file in os.listdir(self.folder_selected):
                 if file.startswith(".") == False:
                     try:
-                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True):
+                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True) and "postb" in file.lower():
                             self.names.append(file)
                     except IsADirectoryError:
                         pass
@@ -374,6 +374,7 @@ class Gui():
 
     def image_position(self):
         iteration = self.rotated_degree/90
+        holder = 0
         if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
             degree = int(abs(iteration)-(4*multiplier))
@@ -383,11 +384,11 @@ class Gui():
             try:
                 if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
                     img = cv2.imread(self.figure_folder+"/"+i, cv2.IMREAD_UNCHANGED)
-                    if degree < 0:
+                    if iteration < 0 and iteration % 2 == 1:
                         for x in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
                             img = rotate
-                    elif degree > 0:
+                    elif iteration > 0 and iteration % 2 == 0:
                         for y in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                             img = rotate
@@ -407,6 +408,22 @@ class Gui():
                     cv2.imwrite(self.figure_folder+"/"+i, flipped)
             except IsADirectoryError:
                 pass
+
+        if iteration < 0 and iteration % 2 == 1:
+            holder = degree + 2
+        else:
+            holder = degree
+        
+        self.metadata = {"run": self.r_clicked.get(),
+                        "species": self.s_clicked.get(), 
+                         "type": self.t_clicked.get(),
+                         "tissue": self.o_clicked.get(),
+                         "assay": self.a_clicked.get(),
+                         "collaborator": self.c_clicked.get(),
+                         "trimming": self.tr_clicked.get(),
+                         "numChannels": self.n_clicked.get(),
+                         "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * holder,"vertical_flip": self.flipped_vert}
+                        }
 
         self.up['state'] = tk.DISABLED
         self.left['state'] = tk.DISABLED
@@ -672,20 +689,10 @@ class Gui():
     def update_meta(self):
         if self.r_clicked.get() == "":
             self.r_clicked.set("Test")
-        self.metadata = {"run": self.r_clicked.get(),
-                        "species": self.s_clicked.get(), 
-                         "type": self.t_clicked.get(),
-                         "tissue": self.o_clicked.get(),
-                         "assay": self.a_clicked.get(),
-                         "collaborator": self.c_clicked.get(),
-                         "trimming": self.tr_clicked.get(),
-                         "numChannels": self.n_clicked.get()}
         self.num_chan = int(self.n_clicked.get())
         self.qWindow.destroy()
         self.activateCrop_button['state'] = tk.ACTIVE
-        
-        
-        
+
 
     def second_window(self):
         self.sendinfo_flag = False
