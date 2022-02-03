@@ -29,6 +29,7 @@ def center(tL,tR,bR,bL):
         x = (top[0]+bottom[0])/2
         y = (top[1]+bottom[1])/2
         return x,y
+#Function for dividing line segemnt according to ratio
 def ratio50l(xc,yc,xr,yr,num):
     txp = xc + (1/(num))*(xr-xc)
     typ = yc + (1/(num))*(yr-yc)
@@ -210,7 +211,7 @@ class Gui():
     def destruct(self):
         self.newWindow.destroy()
 
-
+    #Ability to grab files from specified folder 'Image folder'
     def get_folder(self):
         self.folder_selected = filedialog.askdirectory()
         
@@ -241,6 +242,7 @@ class Gui():
             #Add error mesage
             pass
 
+    #Ability to grab files from specified folder 'Spatial folder'
     def get_spatial(self):
         self.folder_selected = filedialog.askdirectory()
         
@@ -286,7 +288,7 @@ class Gui():
             pass
             
 
-
+    #Initalize images that will be in container 
     def init_images(self):
         for i in self.names:
             if "bsa" in i.lower():
@@ -327,7 +329,7 @@ class Gui():
         self.newWindow.geometry("{0}x{1}".format(postB.width + 300, self.screen_height))
         self.right_canvas.config(width = postB.width + 300, height= h)
 
-
+    #Rotate and flip the images
     def image_axis(self, num):
         if num == 0:
             updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -372,6 +374,7 @@ class Gui():
             else: 
                 self.flipped_horz = False
 
+    #Update postB and BSA images to new image orientation 
     def image_position(self):
         iteration = self.rotated_degree/90
         holder = 0
@@ -448,7 +451,7 @@ class Gui():
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
-
+    #Confirm cropping and reinitalize images in the containers
     def square_image(self):
         self.figure_folder = os.path.join(self.folder_selected, "figure")
         try:
@@ -526,6 +529,7 @@ class Gui():
         self.lmain.configure(image=imgtk)
         self.begin_button['state'] = tk.ACTIVE
 
+    #Show Metadata window
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
         self.qWindow.title("Meta Data")
@@ -693,7 +697,7 @@ class Gui():
         self.qWindow.destroy()
         self.activateCrop_button['state'] = tk.ACTIVE
 
-
+    # "Open spatial folder" window
     def second_window(self):
         self.sendinfo_flag = False
         for i in self.names:
@@ -785,7 +789,7 @@ class Gui():
         self.pWindow.destroy()
         self.sendinfo(self.picNames[2])
         
-
+    #Update Threshold sliders
     def showThresh(self, value):
         if float(value) > 11:
             self.my_canvas.delete("all")
@@ -820,7 +824,7 @@ class Gui():
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
 
-
+    #Find Roi coordinates
     def find_points(self):
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
@@ -834,6 +838,7 @@ class Gui():
 
         self.confirm_button["state"] = tk.ACTIVE
 
+    #Confirms coordinates choosen 
     def confirm(self, none):
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         tvalue = self.blockSize_value.get()
@@ -916,7 +921,7 @@ class Gui():
             prev[0] += slopeTO[1]
             prev[1] += slopeTO[0]
 
-
+    #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
         self.check_on.set(0)
         self.my_canvas.delete("all")
@@ -985,8 +990,8 @@ class Gui():
             
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
-            matta = Tissue(points_copy, self.factor, dbit, self.num_chan)
-            self.arr,self.spot_dia, self.fud_dia = matta.thaanswer()
+            tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan)
+            self.arr,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
             for i in range(len(self.arr)):
                 for j in range(len(self.arr)):
                     position = str(j+1) + "x" + str(i)
@@ -1174,7 +1179,7 @@ class Gui():
         
 
 
-
+    #Creates files for spatial folder
     def create_files(self):
         try:
             path = os.path.join(self.folder_selected, "spatial")
@@ -1213,7 +1218,7 @@ class Gui():
         mb.showinfo("Congratulations!", "The spatial folder is created!")
         
 
-
+    #Creates Metadata.json
     def json_file(self,path):
         factorHigh = 0
         factorLow = 0
@@ -1258,8 +1263,7 @@ class Gui():
             outfile.close()
 
     
-        
-                
+    #Update changes to tissue_positions_list.csv
     def update_pos(self):
         barcode_file = "bc"+ str(self.num_chan)+".txt"
         my_file = open(barcode_file,"r")
@@ -1284,6 +1288,7 @@ class Gui():
             outfile.write(meta_json_object)
             outfile.close()
 
+    #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
     def count(self,which):
         name = ""
         if len(self.right_canvas.gettags("name0")) > 0:

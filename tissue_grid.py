@@ -70,7 +70,7 @@ class Tissue():
             prev[0] += slopeTO[1]
             prev[1] += slopeTO[0]
 
-        self.thaanswer()
+        self.theAnswer()
 
     def calculate_avg(self,pic, points, dist):
         sum = 0
@@ -111,6 +111,6 @@ class Tissue():
         dis = (x1-x2)**2 + (y1-y2)**2
         return math.sqrt(dis)
 
-    def thaanswer(self):
+    def theAnswer(self):
         return self.arr,self.spot_dia,self.fud_dia
     
