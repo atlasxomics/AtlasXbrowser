@@ -425,6 +425,7 @@ class Gui():
                          "collaborator": self.c_clicked.get(),
                          "trimming": self.tr_clicked.get(),
                          "numChannels": self.n_clicked.get(),
+                         "barcodes": self.b_clicked.get(),
                          "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * holder,"vertical_flip": self.flipped_vert}
                         }
 
@@ -608,6 +609,8 @@ class Gui():
                 self.tr_clicked.set(self.metadata['trimming'])
                 self.n_clicked = tk.StringVar()
                 self.n_clicked.set(self.metadata['numChannels'])
+                self.b_clicked = tk.StringVar()
+                self.b_clicked.set(1)
                 
 
             else:
@@ -627,6 +630,8 @@ class Gui():
                 self.tr_clicked.set("No")
                 self.n_clicked = tk.StringVar()
                 self.n_clicked.set(50)
+                self.b_clicked = tk.StringVar()
+                self.b_clicked.set(1)
                 
 
             
@@ -680,6 +685,13 @@ class Gui():
                 "100"
             ]
             n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=255)
+
+            b_label = tk.Label(self.qWindow, text="Barcode: ", font =("Courier", 14)).place(x=20, y=290)
+            barcodes = [
+                    "1",
+                    "2"
+            ]
+            b_drop = tk.OptionMenu(self.qWindow , self.b_clicked , *barcodes).place(x=200,y=290)
 
             
 
@@ -1188,7 +1200,12 @@ class Gui():
             path = self.folder_selected + "/spatial"
         
 
-        barcode_file = "bc"+ str(self.num_chan)+".txt"
+        versionBarcode = ""
+        if self.b_clicked.get() == "1":
+            versionBarcode = "bc"
+        else:
+            versionBarcode = "bcv"
+        barcode_file = versionBarcode+ str(self.num_chan)+".txt"
         my_file = open(barcode_file,"r")
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
