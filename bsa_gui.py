@@ -261,11 +261,7 @@ class Gui():
 
             for file in os.listdir(self.folder_selected):
                 if file.startswith(".") == False:
-                    try:
-                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True) and "postb" in file.lower():
-                            self.names.append(file)
-                    except IsADirectoryError:
-                        pass
+                     self.names.append(file)
 
             
 
@@ -1344,8 +1340,8 @@ class Gui():
         xvalues = np.linspace(15, 205, numsteps)
         yValue = 40
 
-        self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="5px")
-        self.cbframe.place(relx=.11, rely=.83)
+        self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="14px")
+        self.cbframe.place(relx=.11, rely=.42)
 
         c = tk.Canvas(self.cbframe, width=220, height=40)
         c.pack()
