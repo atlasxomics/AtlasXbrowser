@@ -106,6 +106,7 @@ class Gui():
         self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
         self.confirmCrop_button.pack()
 
+        #Rotation Panel
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
         self.rotateframe.place(relx=.11, rely=.10)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
@@ -450,17 +451,21 @@ class Gui():
         
 
     def cropping(self):
+        #creating cropping square on screen, defined as b
         self.b = DrawSquare(self.my_canvas)
-        self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
+        # self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
+             #DOES THIS NEED TO BE INCLUDED^^^
         self.my_canvas.bind('<Button1-Motion>', self.b.on_motion)
         self.my_canvas.bind('<ButtonRelease-1>', self.b.on_release)
+
+        #deactivating the 'activate' button, activating the 'confirm' button
+   
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
     #Confirm cropping and reinitalize images in the containers
     def square_image(self):
-        self.figure_folder = os.path.join(self.folder_selected, "figure")
-        print(self.figure_folder)
+        self.figure_folder = os.path.join(self.folder_selected, "figure") 
         #try making a figure folder
         try:
             os.mkdir(self.figure_folder)
@@ -859,7 +864,8 @@ class Gui():
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
         self.c = DrawShapes(self.my_canvas, self.quad_coords)
-        self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
+        # self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
+        #^^^DOES THIS NEED TO BE INCLUDED
         self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
 
         self.confirm_button["state"] = tk.ACTIVE
