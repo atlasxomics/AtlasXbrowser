@@ -228,6 +228,7 @@ class Gui():
             self.pWindow.update_idletasks()
             self.pWindow.update()
 
+            #appeding names of BSA image files to self.names
             for file in os.listdir(self.folder_selected):
                 if file.startswith(".") == False:
                     try:
@@ -455,22 +456,29 @@ class Gui():
     #Confirm cropping and reinitalize images in the containers
     def square_image(self):
         self.figure_folder = os.path.join(self.folder_selected, "figure")
+        print(self.figure_folder)
+        #try making a figure folder
         try:
             os.mkdir(self.figure_folder)
+        #exception if the folder already exists. If so, remove and remake
         except FileExistsError:
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
+        #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
+        #copying the image files into the figure folder in within the same larger folder
         for i in self.names:
             copy(source+"/"+i,self.figure_folder)
 
         for i in self.names:
+            #cropping the bsa image based on user cropping
             if "bsa" in i.lower():
                 image1 = Image.open(self.figure_folder+"/"+i)   
                 im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
                 bsa = im1.save(self.figure_folder+"/"+i)
+            #cropping the postb image based on user cropping
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 image = Image.open(self.figure_folder+"/"+i)
                 im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
@@ -486,11 +494,14 @@ class Gui():
         self.image_updated['state'] = tk.ACTIVE
         self.confirmCrop_button['state'] = tk.DISABLED
 
+        
         for i in self.names:
-            if "postb" in i.lower() and "bsa" not in i.lower():
-                beforeb_Name = self.figure_folder+"/"+i
-                beforeB = Image.open(beforeb_Name)
-                b = beforeB
+            #checking for the postb non-bsa image
+            if "bsa" in i.lower():
+                bsa_name = self.figure_folder+"/"+i
+                bsa_img = Image.open(bsa_name)
+                #storing non-bsa image as b
+                b = bsa_img
 
         w, h = (b.width, b.height)
         newH = self.screen_height - 60
@@ -501,7 +512,7 @@ class Gui():
         imgA = ImageTk.PhotoImage(floor)
         self.my_canvas.config(width = floor.width, height= floor.height)
 
-        img = cv2.imread(beforeb_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(bsa_name, cv2.IMREAD_UNCHANGED)
         self.cropped_image = img
 
         self.lmain.pack()
