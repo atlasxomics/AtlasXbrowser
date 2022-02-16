@@ -293,8 +293,10 @@ class Gui():
     def init_images(self):
         for i in self.names:
             if "bsa" in i.lower():
-                beforeA = Image.open(self.figure_folder + "/" + i)
+                BSA_name = self.figure_folder + "/" + i
+                beforeA = Image.open(BSA_name)
                 a = beforeA
+
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 postB_Name = self.figure_folder + "/" + i
                 beforeB = Image.open(postB_Name)
@@ -305,14 +307,15 @@ class Gui():
         self.width, self.height = (a.width, a.height)
         newH = self.screen_height - 60
         self.factor = newH/h
+
         newW = int(round(w*newH/h))
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
-        self.refactor = b
+        self.refactor = a
         self.newWidth = floor.width ; self.newHeight = floor.height
 
-        img = cv2.imread(postB_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(BSA_name, cv2.IMREAD_UNCHANGED)
 
         flippedImage = img
 
@@ -325,10 +328,10 @@ class Gui():
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgA, self.imgB]
 
-        self.my_canvas.config(width = postB.width, height= postB.height)
-        self.lmain.configure(image=self.imgB)
-        self.newWindow.geometry("{0}x{1}".format(postB.width + 300, self.screen_height))
-        self.right_canvas.config(width = postB.width + 300, height= h)
+        self.my_canvas.config(width = floor.width, height= floor.height)
+        self.lmain.configure(image=self.imgA)
+        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
+        self.right_canvas.config(width = floor.width + 300, height= h)
 
     #Rotate and flip the images
     def image_axis(self, num):
@@ -377,6 +380,7 @@ class Gui():
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
+        #obtaining how many rotations given to image
         iteration = self.rotated_degree/90
         holder = 0
         if abs(iteration) >= 4:
@@ -506,9 +510,9 @@ class Gui():
         w, h = (b.width, b.height)
         newH = self.screen_height - 60
         newW = int(round(w*newH/h))
+        #creating a new image of resized BSA image base don above calculations
         floor = b.resize((newW, newH), Image.ANTIALIAS)
         self.newWidth = floor.width ; self.newHeight = floor.height
-
         imgA = ImageTk.PhotoImage(floor)
         self.my_canvas.config(width = floor.width, height= floor.height)
 
@@ -523,7 +527,6 @@ class Gui():
         self.right_canvas.config(width = floor.width + 300, height= h)
 
 
-        
                         
     def activate_thresh(self):
         self.blockSize_scale['state'] = tk.ACTIVE
