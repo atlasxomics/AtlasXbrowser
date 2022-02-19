@@ -513,23 +513,31 @@ class Gui():
                 b = bsa_img
 
         w, h = (b.width, b.height)
+        #newH is 60 less than the image height
         newH = self.screen_height - 60
+        #newW is the ratio of newH to H times the width
         newW = int(round(w*newH/h))
         #creating a new image of resized BSA image base don above calculations
         floor = b.resize((newW, newH), Image.ANTIALIAS)
+
+        #setting object height and width to the BSA images
         self.newWidth = floor.width ; self.newHeight = floor.height
         imgA = ImageTk.PhotoImage(floor)
+
         self.my_canvas.config(width = floor.width, height= floor.height)
 
         img = cv2.imread(bsa_name, cv2.IMREAD_UNCHANGED)
         self.cropped_image = img
 
         self.lmain.pack()
+
+
         self.lmain.image = imgA
         self.lmain.configure(image=imgA)
         self.my_canvas.delete("image")
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
         self.right_canvas.config(width = floor.width + 300, height= h)
+
 
 
                         
@@ -554,6 +562,7 @@ class Gui():
         self.qWindow = tk.Toplevel(self.newWindow)
         self.qWindow.title("Meta Data")
         self.qWindow.geometry('%dx%d+%d+%d' % (400, 350, 500, 0))
+        #flag to test if both images are present
         both_images_flag = 0
         for i in self.names:
             if "bsa" in i.lower():
@@ -568,11 +577,16 @@ class Gui():
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 self.postB_Name = self.folder_selected + "/" + i
                 both_images_flag+=1
+        #if both BSA and postb images are present in the folder
         if both_images_flag==2:
+            #take width and height of the bsa
             w, h = (a.width, a.height)
             newH = self.screen_height - 60
+            #find ratio of 60 less than screenheight to the image height
             self.factor = newH/h
+            #use ratio to calcuate the new width
             newW = int(round(w*newH/h))
+            #resize the bsa image based on these calculations
             bsa = a.resize((newW, newH), Image.ANTIALIAS)
             self.qwimga = ImageTk.PhotoImage(bsa)
 
@@ -601,6 +615,8 @@ class Gui():
 
             
             #update canvas and frame
+            
+            #changing canvas width and height to be same as bsa images
             self.my_canvas.config(width = bsa.width, height= bsa.height)
             self.lmain.pack_forget()
             self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
