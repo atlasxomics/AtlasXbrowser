@@ -888,11 +888,14 @@ class Gui():
 
     #Confirms coordinates choosen 
     def confirm(self, none):
+        #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         tvalue = self.blockSize_value.get()
         svalue = self.cMean_value.get()
         if tvalue%2==0:
             tvalue +=1
+
+        #thresh now stores the image after the adaptive thresholding process has completed
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
         bwFile_Name = self.excelName + "BW.png"
         cv2.imwrite(bwFile_Name, thresh)
@@ -905,7 +908,7 @@ class Gui():
 
 
         self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgB, state="normal")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
         self.picNames.append(bw_Image)
