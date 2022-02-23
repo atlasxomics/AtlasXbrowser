@@ -843,43 +843,44 @@ class Gui():
     #Update Threshold sliders
     def showThresh(self, value):
         print(value)
-        if float(value) > 11:
-            self.my_canvas.delete("all")
-            #sel set to block size value
-            sel = int(self.blockSize_value.get())
-            #sec set to C value
-            sec = int(self.cMean_value.get())
-            if sel %2 == 0:
-                sel+=1
+        #if float(value) > 11:
+        self.my_canvas.delete("all")
+        #sel set to block size value
+        sel = int(self.blockSize_value.get())
+        #sec set to C value
+        sec = int(self.cMean_value.get())
+        if sel %2 == 0:
+            sel+=1
             #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
             #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
             
-            #re doing the thresholding for the newly set values
-            thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
-            bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(image=sized_bw) 
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
+        #re doing the thresholding for the newly set values
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
+        bw_image = Image.fromarray(thresh)
+        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        imgtk = ImageTk.PhotoImage(image=sized_bw) 
+        self.lmain.image = imgtk
+        self.lmain.configure(image=imgtk)
             
-        else:
-            self.my_canvas.delete("all")
-            #sel set to blocksize variable
-            sel = int(self.blockSize_value.get())
-            if sel %2 == 0:
-                sel+=1
-            #sec set to cMean variable
-            sec = int(self.cMean_value.get())
+        # else:
+        #     self.my_canvas.delete("all")
+        #     #sel set to blocksize variable
+        #     sel = int(self.blockSize_value.get())
+        #     if sel %2 == 0:
+        #         sel+=1
+        #     #sec set to cMean variable
+        #     sec = int(self.cMean_value.get())
 
-            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
-            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
+        #     #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
+        #     #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
-            thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
-            bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(image=sized_bw) 
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
+        #     #new threshold created and loaded onto screen
+        #     thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
+        #     bw_image = Image.fromarray(thresh)
+        #     sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        #     imgtk = ImageTk.PhotoImage(image=sized_bw) 
+        #     self.lmain.image = imgtk
+        #     self.lmain.configure(image=imgtk)
 
     #Find Roi coordinates
     def find_points(self):
