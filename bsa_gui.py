@@ -138,20 +138,23 @@ class Gui():
         self.adframe.place(relx=.11, rely=.23)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
         self.activateThresh_button.pack(anchor='e')
+        #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
 
         self.blockSize_value = tk.IntVar()
         self.cMean_value = tk.IntVar()
+        #initializing the blockSize and cMean values
         self.blockSize_value.set(13)
         self.cMean_value.set(11)
+        #blocksize scale
         self.blockSize_scale = ttk.Scale(self.adframe, variable = self.blockSize_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.blockSize_scale.pack(anchor='w')
-        self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
+        #creating cmean labels and cmean scales
+        self.cMean_label = tk.Label(self.adframe, text="C (to subtract from mean)", font =("Courier", 14))
         self.cMean_label.pack(anchor='w')
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
-
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
@@ -165,7 +168,7 @@ class Gui():
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
         self.shframe.place(relx=.11, rely=.51)
 
-        self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
 
         self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
@@ -549,6 +552,7 @@ class Gui():
         self.my_canvas.unbind('<B1-Motion>')
         self.my_canvas.unbind('<ButtonRelease-1>')
         
+        #finding the initial bw image from thresholding
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
@@ -838,15 +842,19 @@ class Gui():
         
     #Update Threshold sliders
     def showThresh(self, value):
+        print(value)
         if float(value) > 11:
             self.my_canvas.delete("all")
+            #sel set to block size value
             sel = int(self.blockSize_value.get())
+            #sec set to C value
             sec = int(self.cMean_value.get())
             if sel %2 == 0:
                 sel+=1
             #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
             #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
-
+            
+            #re doing the thresholding for the newly set values
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
             sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
@@ -856,9 +864,11 @@ class Gui():
             
         else:
             self.my_canvas.delete("all")
+            #sel set to blocksize variable
             sel = int(self.blockSize_value.get())
             if sel %2 == 0:
                 sel+=1
+            #sec set to cMean variable
             sec = int(self.cMean_value.get())
 
             #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
