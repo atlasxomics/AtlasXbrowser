@@ -85,6 +85,7 @@ class Gui():
         self.flipped_horz = False
 
         self.fromOverlay = False
+        self.fromTixelThresholding = False
 
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
@@ -550,7 +551,7 @@ class Gui():
                         
     def activate_thresh(self):
         #checking if this activate thresholding button is being pressed when the user was just at the tixel overlaying tab
-        if self.fromOverlay:
+        if self.fromOverlay or self.fromTixelThresholding:
             #removing images from the canvas
             self.my_canvas.delete("all")
             #re-creating the lmain tab which was previously destroyed
@@ -566,6 +567,13 @@ class Gui():
             if numb % 2 == 0:
                 self.blockSize_value = tk.IntVar()
                 self.blockSize_value.set(numb + 1)
+        
+        #if coming from tixel thresholding step, disable all the satelitte buttons from that step
+        if self.fromTixelThresholding:
+            if self.picNames[0] != None:
+                for child in self.labelframe.winfo_children():
+                    if child.winfo_class() == 'Radiobutton':
+                        child['state'] = 'disabled'
 
 
 
@@ -911,6 +919,7 @@ class Gui():
     def find_points(self):
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
+        self.activateThresh_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
@@ -1020,7 +1029,11 @@ class Gui():
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
-        self.activateThresh_button['state'] = tk.DISABLED
+        #setting flags to know program is not at overlaying stage and is at Tixel Thresholding stage
+        self.fromOverlay = False
+        self.fromTixelThresholding = True
+
+        #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
@@ -1061,6 +1074,7 @@ class Gui():
                     tR = [top[0],top[1]]
                     bL = [tL[0]+slope[1],tL[1]+slope[0]]
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
+
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
