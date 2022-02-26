@@ -84,6 +84,8 @@ class Gui():
         self.flipped_vert = False
         self.flipped_horz = False
 
+        self.fromOverlay = False
+
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
@@ -525,6 +527,8 @@ class Gui():
 
         #setting object height and width to the BSA images
         self.newWidth = floor.width ; self.newHeight = floor.height
+
+        #PhotoImage of the resized BSA
         imgA = ImageTk.PhotoImage(floor)
 
         self.my_canvas.config(width = floor.width, height= floor.height)
@@ -545,6 +549,27 @@ class Gui():
 
                         
     def activate_thresh(self):
+        #checking if this activate thresholding button is being pressed when the user was just at the tixel overlaying tab
+        if self.fromOverlay:
+            #removing images from the canvas
+            self.my_canvas.delete("all")
+            #re-creating the lmain tab which was previously destroyed
+            self.lmain = tk.Label(self.my_canvas)
+            self.lmain.pack()
+
+            #disabling the tixel overlaying buttons
+            self.gridA_button['state'] = tk.DISABLED
+            self.grid_button['state'] = tk.DISABLED
+
+            #ensuring the blockSize_value is odd
+            numb = round(self.blockSize_value.get())
+            if numb % 2 == 0:
+                self.blockSize_value = tk.IntVar()
+                self.blockSize_value.set(numb + 1)
+
+
+
+        
         self.blockSize_scale['state'] = tk.ACTIVE
         self.cMean_scale['state'] = tk.ACTIVE
         self.activateThresh_button['state'] = tk.DISABLED
@@ -553,6 +578,7 @@ class Gui():
         self.my_canvas.unbind('<ButtonRelease-1>')
         
         #finding the initial bw image from thresholding
+
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
@@ -842,45 +868,44 @@ class Gui():
         
     #Update Threshold sliders
     def showThresh(self, value):
-        print(value)
-        #if float(value) > 11:
-        self.my_canvas.delete("all")
+        if float(value) > 11:
+            self.my_canvas.delete("all")
         #sel set to block size value
-        sel = int(self.blockSize_value.get())
+            sel = int(self.blockSize_value.get())
         #sec set to C value
-        sec = int(self.cMean_value.get())
-        if sel %2 == 0:
-            sel+=1
+            sec = int(self.cMean_value.get())
+            if sel %2 == 0:
+                sel+=1
             #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
             #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
             
         #re doing the thresholding for the newly set values
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
-        bw_image = Image.fromarray(thresh)
-        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        imgtk = ImageTk.PhotoImage(image=sized_bw) 
-        self.lmain.image = imgtk
-        self.lmain.configure(image=imgtk)
+            thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
+            bw_image = Image.fromarray(thresh)
+            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(image=sized_bw) 
+            self.lmain.image = imgtk
+            self.lmain.configure(image=imgtk)
             
-        # else:
-        #     self.my_canvas.delete("all")
-        #     #sel set to blocksize variable
-        #     sel = int(self.blockSize_value.get())
-        #     if sel %2 == 0:
-        #         sel+=1
-        #     #sec set to cMean variable
-        #     sec = int(self.cMean_value.get())
+        else:
+            self.my_canvas.delete("all")
+            #sel set to blocksize variable
+            sel = int(self.blockSize_value.get())
+            if sel %2 == 0:
+                sel+=1
+            #sec set to cMean variable
+            sec = int(self.cMean_value.get())
 
-        #     #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
-        #     #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
+            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
+            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
-        #     #new threshold created and loaded onto screen
-        #     thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
-        #     bw_image = Image.fromarray(thresh)
-        #     sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        #     imgtk = ImageTk.PhotoImage(image=sized_bw) 
-        #     self.lmain.image = imgtk
-        #     self.lmain.configure(image=imgtk)
+            #new threshold created and loaded onto screen
+            thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
+            bw_image = Image.fromarray(thresh)
+            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            imgtk = ImageTk.PhotoImage(image=sized_bw) 
+            self.lmain.image = imgtk
+            self.lmain.configure(image=imgtk)
 
     #Find Roi coordinates
     def find_points(self):
@@ -899,6 +924,8 @@ class Gui():
 
     #Confirms coordinates choosen 
     def confirm(self, none):
+        self.fromOverlay = True
+        self.activateThresh_button['state'] = tk.ACTIVE
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         tvalue = self.blockSize_value.get()
@@ -922,7 +949,15 @@ class Gui():
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
-        self.picNames.append(bw_Image)
+
+        #checking if there is already an image in index 2 of picNames
+        if (len(self.picNames) >= 3):
+            #if it is replaced with the new bw_Image
+            self.picNames[2] = bw_Image
+        else:
+            #otherwise the new image is added to the end, which will be the 2nd index
+            self.picNames.append(bw_Image)
+        #self.picNames[len(self.picNames) -1] = bw_Image
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.ACTIVE
         self.grid_button["state"] = tk.ACTIVE
@@ -985,6 +1020,7 @@ class Gui():
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
+        self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
