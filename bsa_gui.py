@@ -373,21 +373,21 @@ class Gui():
     #Update postB and BSA images to new image orientation 
     def image_position(self):
         iteration = self.rotated_degree/90
-        holder = 0
         if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
             degree = int(abs(iteration)-(4*multiplier))
         else:
             degree = int(iteration)
+
         for i in self.names:
             try:
                 if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
                     img = cv2.imread(self.figure_folder+"/"+i, cv2.IMREAD_UNCHANGED)
-                    if iteration < 0 and iteration % 2 == 1:
+                    if iteration < 0:
                         for x in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
                             img = rotate
-                    elif iteration > 0 and iteration % 2 == 0:
+                    elif iteration > 0:
                         for y in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                             img = rotate
@@ -407,12 +407,9 @@ class Gui():
                     cv2.imwrite(self.figure_folder+"/"+i, flipped)
             except IsADirectoryError:
                 pass
+        if iteration < 0:
+            degree = -1 * degree
 
-        if iteration < 0 and iteration % 2 == 1:
-            holder = degree + 2
-        else:
-            holder = degree
-        
         self.metadata = {"run": self.r_clicked.get(),
                         "species": self.s_clicked.get(), 
                          "type": self.t_clicked.get(),
@@ -422,7 +419,7 @@ class Gui():
                          "trimming": self.tr_clicked.get(),
                          "numChannels": self.n_clicked.get(),
                          "barcodes": self.b_clicked.get(),
-                         "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * holder,"vertical_flip": self.flipped_vert}
+                         "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
                         }
 
         self.up['state'] = tk.DISABLED
@@ -1194,14 +1191,8 @@ class Gui():
             os.mkdir(path)
         except FileExistsError:
             path = self.folder_selected + "/spatial"
-        
 
-        versionBarcode = ""
-        if self.b_clicked.get() == "1":
-            versionBarcode = "bc"
-        else:
-            versionBarcode = "bcv"
-        barcode_file = versionBarcode+ str(self.num_chan)+".txt"
+        barcode_file = "bc" + str(self.num_chan) + "v" + self.b_clicked.get() +".txt"
         my_file = open(barcode_file,"r")
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
@@ -1278,7 +1269,9 @@ class Gui():
     
     #Update changes to tissue_positions_list.csv
     def update_pos(self):
-        barcode_file = "bc"+ str(self.num_chan)+".txt"
+        p = open(self.folder_selected + "/metadata.json")
+        meta = json.load(p)
+        barcode_file = "bc" + str(self.num_chan) + "v" + meta["barcodes"] + ".txt"
         my_file = open(barcode_file,"r")
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
@@ -1293,8 +1286,7 @@ class Gui():
               
         my_file.close()
         f.close()
-        p = open(self.folder_selected + "/metadata.json")
-        meta = json.load(p)
+
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
