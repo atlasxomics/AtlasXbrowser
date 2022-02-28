@@ -682,7 +682,8 @@ class Gui():
             b_label = tk.Label(self.qWindow, text="Barcode: ", font =("Courier", 14)).place(x=20, y=290)
             barcodes = [
                     "1",
-                    "2"
+                    "2",
+                    "3"
             ]
             b_drop = tk.OptionMenu(self.qWindow , self.b_clicked , *barcodes).place(x=200,y=290)
 
