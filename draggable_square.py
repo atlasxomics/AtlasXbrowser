@@ -9,8 +9,9 @@ class DrawSquare():
         self.my_canvas = my_canvas
         width = self.my_canvas.winfo_width()
         height = self.my_canvas.winfo_height()
-        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), height-(height*.10), width*.10, height-(height*.10)
-        self.rect = [width*.10, height*.10, width-(width*.10), height-(height*.10)]
+        dist = distance([width*.10, height*.10], [width-(width*.10), height*.10])
+        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), dist + height*.10, width*.10, dist + height*.10
+        self.rect = [width*.10, height*.10, width-(width*.10), dist + height*.10]
         self.my_canvas.create_rectangle(self.rect[0],self.rect[1],self.rect[2],self.rect[3], outline="red", fill="", width=2, tag='crop')
 
     def on_click_quad(self, event):
