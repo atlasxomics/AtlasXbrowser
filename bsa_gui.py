@@ -86,6 +86,7 @@ class Gui():
 
         self.fromOverlay = False
         self.fromTixelThresholding = False
+        self.ROILocated = False
 
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
@@ -136,11 +137,20 @@ class Gui():
         self.flip.pack(side=tk.LEFT)
         
 
+        # self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        # self.grid_button.pack(side=tk.LEFT)
+
+        # self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        # self.gridA_button.pack(anchor='w')
+
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, rely=.23)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
-        self.activateThresh_button.pack(anchor='e')
+        self.activateThresh_button.pack(anchor='w')
+
+        
+
         #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
@@ -159,9 +169,13 @@ class Gui():
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
 
+        self.confirm_thresh = tk.Button(self.adframe, text = "Confirm", command = self.save_thresholded_image, state=tk.DISABLED)
+        self.confirm_thresh.pack(anchor='e')
+
+
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .42)
+        self.thframe.place(relx=.11, rely= .44)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -550,17 +564,21 @@ class Gui():
 
                         
     def activate_thresh(self):
+        
         #checking if this activate thresholding button is being pressed when the user was just at the tixel overlaying tab
         if self.fromOverlay or self.fromTixelThresholding:
+            #disable all buttons except for the "confirm"
+            self.begin_button['state'] = tk.DISABLED
+            self.grid_button['state'] = tk.DISABLED
+            self.gridA_button['state'] = tk.DISABLED
+            self.onoff_button['state'] = tk.DISABLED
+
+
             #removing images from the canvas
             self.my_canvas.delete("all")
             #re-creating the lmain tab which was previously destroyed
             self.lmain = tk.Label(self.my_canvas)
             self.lmain.pack()
-
-            #disabling the tixel overlaying buttons
-            self.gridA_button['state'] = tk.DISABLED
-            self.grid_button['state'] = tk.DISABLED
 
             #ensuring the blockSize_value is odd
             numb = round(self.blockSize_value.get())
@@ -581,11 +599,14 @@ class Gui():
         self.blockSize_scale['state'] = tk.ACTIVE
         self.cMean_scale['state'] = tk.ACTIVE
         self.activateThresh_button['state'] = tk.DISABLED
+        self.confirm_thresh['state'] = tk.ACTIVE
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<B1-Motion>')
         self.my_canvas.unbind('<ButtonRelease-1>')
         
         #finding the initial bw image from thresholding
+
+
 
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
@@ -593,7 +614,7 @@ class Gui():
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
         self.lmain.configure(image=imgtk)
-        self.begin_button['state'] = tk.ACTIVE
+        
 
     #Show Metadata window
     def question_window(self):
@@ -917,9 +938,15 @@ class Gui():
 
     #Find Roi coordinates
     def find_points(self):
+        
+        #Disable  buttons that should not be activated
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
+        self.begin_button['state'] = tk.DISABLED
         self.activateThresh_button['state'] = tk.DISABLED
+        self.grid_button['state'] = tk.DISABLED
+        self.gridA_button['state'] = tk.DISABLED
+        self.onoff_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
@@ -933,22 +960,26 @@ class Gui():
 
     #Confirms coordinates choosen 
     def confirm(self, none):
+        self.ROILocated = True
         self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+      
         tvalue = self.blockSize_value.get()
         svalue = self.cMean_value.get()
         if tvalue%2==0:
             tvalue +=1
 
+        self.save_thresholded_image()
         #thresh now stores the image after the adaptive thresholding process has completed
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
-        bwFile_Name = self.excelName + "BW.png"
-        cv2.imwrite(bwFile_Name, thresh)
-        bw = Image.open(bwFile_Name)
-        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        bw_Image = ImageTk.PhotoImage(sized_bw)
+        # thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
+        # bwFile_Name = self.excelName + "BW.png"
+        # cv2.imwrite(bwFile_Name, thresh)
+        # bw = Image.open(bwFile_Name)
+        # sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        # bw_Image = ImageTk.PhotoImage(sized_bw)
+        #bw_Image = self.save_thresholded_image()
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
@@ -959,14 +990,14 @@ class Gui():
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
 
-        #checking if there is already an image in index 2 of picNames
-        if (len(self.picNames) >= 3):
-            #if it is replaced with the new bw_Image
-            self.picNames[2] = bw_Image
-        else:
-            #otherwise the new image is added to the end, which will be the 2nd index
-            self.picNames.append(bw_Image)
-        #self.picNames[len(self.picNames) -1] = bw_Image
+        # #checking if there is already an image in index 2 of picNames
+        # if (len(self.picNames) >= 3):
+        #     #if it is replaced with the new bw_Image
+        #     self.picNames[2] = bw_Image
+        # else:
+        #     #otherwise the new image is added to the end, which will be the 2nd index
+        #     self.picNames.append(bw_Image)
+
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.ACTIVE
         self.grid_button["state"] = tk.ACTIVE
@@ -974,10 +1005,52 @@ class Gui():
         self.onoff_button["state"] = tk.ACTIVE
             
 
+    def save_thresholded_image(self):
+
+        if self.ROILocated:
+            self.grid_button['state'] = tk.ACTIVE
+            self.gridA_button['state'] = tk.ACTIVE
+            self.onoff_button['state'] = tk.ACTIVE
+            self.activateThresh_button['state'] = tk.ACTIVE
+
+        #activating the button to beging ROI location
+        self.begin_button['state'] = tk.ACTIVE
+        self.confirm_thresh['state'] = tk.DISABLED
+        
+        tvalue = self.blockSize_value.get()
+        svalue = self.cMean_value.get()
+        if tvalue %2 ==0:
+            tvalue +=1
+
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
+        bwFile_Name = self.excelName + "BW.png"
+        cv2.imwrite(bwFile_Name, thresh)
+        bw = Image.open(bwFile_Name)
+        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        bw_Image = ImageTk.PhotoImage(sized_bw)
+
+        if (len(self.picNames) >= 3):
+            #if it is replaced with the new bw_Image
+            self.picNames[2] = bw_Image
+        else:
+            #otherwise the new image is added to the end, which will be the 2nd index
+            self.picNames.append(bw_Image)
+
+        return bw_Image
+
     def grid(self,pic):
+        #if the lmain label exists, we are coming from thresholding
+        if self.lmain.winfo_exists() == 1:
+            self.lmain.destroy()
+            self.activateThresh_button['state'] = "active"
+            self.blockSize_scale['state'] = "disabled"
+            self.cMean_scale['state'] = "disabled"
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
+        
+            
+        
 
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
@@ -1029,6 +1102,11 @@ class Gui():
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
+
+        #if the lmain label still exists, destroy it
+        if self.lmain.winfo_exists() == 1:
+            self.lmain.destroy()
+
         #setting flags to know program is not at overlaying stage and is at Tixel Thresholding stage
         self.fromOverlay = False
         self.fromTixelThresholding = True
