@@ -84,8 +84,6 @@ class Gui():
         self.flipped_vert = False
         self.flipped_horz = False
 
-        self.fromOverlay = False
-        self.fromTixelThresholding = False
         self.ROILocated = False
 
         #containers
@@ -102,7 +100,7 @@ class Gui():
         self.lmain.image = bg
         self.lmain.configure(image=bg)
 
-        #rotation/crop
+        #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
         self.cropframe.place(relx=.11, rely=.01)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
@@ -137,19 +135,12 @@ class Gui():
         self.flip.pack(side=tk.LEFT)
         
 
-        # self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
-        # self.grid_button.pack(side=tk.LEFT)
-
-        # self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
-        # self.gridA_button.pack(anchor='w')
-
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, rely=.23)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
         self.activateThresh_button.pack(anchor='w')
 
-        
 
         #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
@@ -312,6 +303,7 @@ class Gui():
 
     #Initalize images that will be in container 
     def init_images(self):
+        #obtaining BSA and postb images from folder
         for i in self.names:
             if "bsa" in i.lower():
                 BSA_name = self.figure_folder + "/" + i
@@ -349,6 +341,7 @@ class Gui():
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgA, self.imgB]
 
+        #my_canvas populated with the BSA stained image instead of the post-B image
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
@@ -461,14 +454,8 @@ class Gui():
         self.flip['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateThresh_button['state'] = tk.ACTIVE
+
         self.init_images()
-
-
-    
-        
-                
-        
-        
 
     def cropping(self):
         #creating cropping square on screen, defined as b
@@ -553,7 +540,6 @@ class Gui():
 
         self.lmain.pack()
 
-
         self.lmain.image = imgA
         self.lmain.configure(image=imgA)
         self.my_canvas.delete("image")
@@ -565,8 +551,8 @@ class Gui():
                         
     def activate_thresh(self):
         
-        #checking if this activate thresholding button is being pressed when the user was just at the tixel overlaying tab
-        if self.fromOverlay or self.fromTixelThresholding:
+        #boolean returns true if lmain does not exist
+        if self.lmain.winfo_exists() == 0:
             #disable all buttons except for the "confirm"
             self.begin_button['state'] = tk.DISABLED
             self.grid_button['state'] = tk.DISABLED
@@ -586,12 +572,12 @@ class Gui():
                 self.blockSize_value = tk.IntVar()
                 self.blockSize_value.set(numb + 1)
         
-        #if coming from tixel thresholding step, disable all the satelitte buttons from that step
-        if self.fromTixelThresholding:
-            if self.picNames[0] != None:
-                for child in self.labelframe.winfo_children():
-                    if child.winfo_class() == 'Radiobutton':
-                        child['state'] = 'disabled'
+        #disable all the satelitte buttons from that step
+        #only relevent if coming from tixel thresholding step
+        if self.picNames[0] != None:
+            for child in self.labelframe.winfo_children():
+                if child.winfo_class() == 'Radiobutton':
+                    child['state'] = 'disabled'
 
 
 
@@ -925,8 +911,6 @@ class Gui():
             #sec set to cMean variable
             sec = int(self.cMean_value.get())
 
-            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
-            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
             #new threshold created and loaded onto screen
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
@@ -952,8 +936,8 @@ class Gui():
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
         self.c = DrawShapes(self.my_canvas, self.quad_coords)
-        # self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
-        #^^^DOES THIS NEED TO BE INCLUDED
+        self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
+        
         self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
 
         self.confirm_button["state"] = tk.ACTIVE
@@ -961,7 +945,7 @@ class Gui():
     #Confirms coordinates choosen 
     def confirm(self, none):
         self.ROILocated = True
-        self.fromOverlay = True
+        #self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
@@ -972,14 +956,6 @@ class Gui():
             tvalue +=1
 
         self.save_thresholded_image()
-        #thresh now stores the image after the adaptive thresholding process has completed
-        # thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
-        # bwFile_Name = self.excelName + "BW.png"
-        # cv2.imwrite(bwFile_Name, thresh)
-        # bw = Image.open(bwFile_Name)
-        # sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        # bw_Image = ImageTk.PhotoImage(sized_bw)
-        #bw_Image = self.save_thresholded_image()
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
@@ -990,13 +966,6 @@ class Gui():
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
 
-        # #checking if there is already an image in index 2 of picNames
-        # if (len(self.picNames) >= 3):
-        #     #if it is replaced with the new bw_Image
-        #     self.picNames[2] = bw_Image
-        # else:
-        #     #otherwise the new image is added to the end, which will be the 2nd index
-        #     self.picNames.append(bw_Image)
 
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.ACTIVE
@@ -1108,8 +1077,8 @@ class Gui():
             self.lmain.destroy()
 
         #setting flags to know program is not at overlaying stage and is at Tixel Thresholding stage
-        self.fromOverlay = False
-        self.fromTixelThresholding = True
+        #self.fromOverlay = False
+        #self.fromTixelThresholding = True
 
         #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
