@@ -955,7 +955,7 @@ class Gui():
         if tvalue%2==0:
             tvalue +=1
 
-        self.save_thresholded_image()
+        #self.save_thresholded_image()
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
@@ -976,16 +976,19 @@ class Gui():
 
     def save_thresholded_image(self):
 
+        #if ROI is located enable tixel overlays, activate thresh button, and tixel thersholding
         if self.ROILocated:
             self.grid_button['state'] = tk.ACTIVE
             self.gridA_button['state'] = tk.ACTIVE
             self.onoff_button['state'] = tk.ACTIVE
             self.activateThresh_button['state'] = tk.ACTIVE
 
+
         #activating the button to beging ROI location
         self.begin_button['state'] = tk.ACTIVE
         self.confirm_thresh['state'] = tk.DISABLED
         
+        #ensuring blocksize is odd
         tvalue = self.blockSize_value.get()
         svalue = self.cMean_value.get()
         if tvalue %2 ==0:
@@ -998,6 +1001,7 @@ class Gui():
         sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
         bw_Image = ImageTk.PhotoImage(sized_bw)
 
+        #checking if there is already a bw_image and replacing it if so
         if (len(self.picNames) >= 3):
             #if it is replaced with the new bw_Image
             self.picNames[2] = bw_Image
@@ -1076,9 +1080,6 @@ class Gui():
         if self.lmain.winfo_exists() == 1:
             self.lmain.destroy()
 
-        #setting flags to know program is not at overlaying stage and is at Tixel Thresholding stage
-        #self.fromOverlay = False
-        #self.fromTixelThresholding = True
 
         #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
@@ -1139,6 +1140,7 @@ class Gui():
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
                     child['state'] = 'active'
+                    
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.position_file["state"] = tk.ACTIVE
