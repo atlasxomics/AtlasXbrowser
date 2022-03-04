@@ -77,6 +77,7 @@ class Gui():
         self.points = []
         self.Rpoints = []
         self.coords = None
+        self.arr = None
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         self.quad_coords = [0]
@@ -847,6 +848,7 @@ class Gui():
     #Confirms coordinates choosen 
     def confirm(self, none):
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+        self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
         tvalue = self.blockSize_value.get()
         svalue = self.cMean_value.get()
         if tvalue%2==0:
@@ -924,6 +926,12 @@ class Gui():
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
+                if self.arr[j][i] == 1:
+                    try:
+                        tags = self.my_canvas.find_withtag(position)
+                        self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                    except IndexError:
+                        self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
             prev[0] += slopeTO[1]
             prev[1] += slopeTO[0]
 
@@ -991,8 +999,6 @@ class Gui():
             self.position_file["state"] = tk.ACTIVE
             self.begin_button['state'] = tk.DISABLED
             self.onoff_button["state"] = tk.DISABLED
-            self.grid_button["state"] = tk.DISABLED
-            self.gridA_button["state"] = tk.DISABLED
             
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
@@ -1021,8 +1027,6 @@ class Gui():
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.update_file["state"] = tk.ACTIVE
-            self.grid_button["state"] = tk.DISABLED
-            self.gridA_button["state"] = tk.DISABLED
             if self.sendinfo_flag == False:
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                     csv_reader = csv.reader(csv_file)
@@ -1051,6 +1055,7 @@ class Gui():
                             except IndexError:
                                 self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
             self.onoff_button["state"] = tk.DISABLED
+
             
 
     """Functions used to update On/off Tissue ... creates a new quadrilateral"""
@@ -1212,6 +1217,8 @@ class Gui():
               
         my_file.close()
         self.json_file(path)
+        self.grid_button["state"] = tk.DISABLED
+        self.gridA_button["state"] = tk.DISABLED
         try: 
             move(self.figure_folder,path)
         except shutil.Error:
