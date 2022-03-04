@@ -85,6 +85,8 @@ class Gui():
         self.flipped_vert = False
         self.flipped_horz = False
 
+        self.ROILocated = False
+
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
         self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
@@ -99,7 +101,7 @@ class Gui():
         self.lmain.image = bg
         self.lmain.configure(image=bg)
 
-        #rotation/crop
+        #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
         self.cropframe.place(relx=.11, rely=.01)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
@@ -107,6 +109,7 @@ class Gui():
         self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
         self.confirmCrop_button.pack()
 
+        #Rotation Panel
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
         self.rotateframe.place(relx=.11, rely=.10)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
@@ -137,25 +140,34 @@ class Gui():
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, rely=.23)
         self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
-        self.activateThresh_button.pack(anchor='e')
+        self.activateThresh_button.pack(anchor='w')
+
+
+        #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
         self.blockSize_label.pack(anchor='w')
 
         self.blockSize_value = tk.IntVar()
         self.cMean_value = tk.IntVar()
+        #initializing the blockSize and cMean values
         self.blockSize_value.set(13)
         self.cMean_value.set(11)
+        #blocksize scale
         self.blockSize_scale = ttk.Scale(self.adframe, variable = self.blockSize_value, from_ = 3, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.blockSize_scale.pack(anchor='w')
-        self.cMean_label = tk.Label(self.adframe, text="Mean (to subtract)", font =("Courier", 14))
+        #creating cmean labels and cmean scales
+        self.cMean_label = tk.Label(self.adframe, text="C (to subtract from mean)", font =("Courier", 14))
         self.cMean_label.pack(anchor='w')
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
 
+        self.confirm_thresh = tk.Button(self.adframe, text = "Confirm", command = self.save_thresholded_image, state=tk.DISABLED)
+        self.confirm_thresh.pack(anchor='e')
+
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .42)
+        self.thframe.place(relx=.11, rely= .44)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -165,7 +177,7 @@ class Gui():
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
         self.shframe.place(relx=.11, rely=.51)
 
-        self.grid_button = tk.Button(self.shframe, text = "Tixels", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
 
         self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
@@ -229,6 +241,7 @@ class Gui():
             self.pWindow.update_idletasks()
             self.pWindow.update()
 
+            #appeding names of BSA image files to self.names
             for file in os.listdir(self.folder_selected):
                 if file.startswith(".") == False:
                     try:
@@ -287,10 +300,13 @@ class Gui():
 
     #Initalize images that will be in container 
     def init_images(self):
+        #obtaining BSA and postb images from folder
         for i in self.names:
             if "bsa" in i.lower():
-                beforeA = Image.open(self.figure_folder + "/" + i)
+                BSA_name = self.figure_folder + "/" + i
+                beforeA = Image.open(BSA_name)
                 a = beforeA
+
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 postB_Name = self.figure_folder + "/" + i
                 beforeB = Image.open(postB_Name)
@@ -301,14 +317,15 @@ class Gui():
         self.width, self.height = (a.width, a.height)
         newH = self.screen_height - 60
         self.factor = newH/h
+
         newW = int(round(w*newH/h))
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
-        self.refactor = b
+        self.refactor = a
         self.newWidth = floor.width ; self.newHeight = floor.height
 
-        img = cv2.imread(postB_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(BSA_name, cv2.IMREAD_UNCHANGED)
 
         flippedImage = img
 
@@ -321,10 +338,11 @@ class Gui():
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgA, self.imgB]
 
-        self.my_canvas.config(width = postB.width, height= postB.height)
-        self.lmain.configure(image=self.imgB)
-        self.newWindow.geometry("{0}x{1}".format(postB.width + 300, self.screen_height))
-        self.right_canvas.config(width = postB.width + 300, height= h)
+        #my_canvas populated with the BSA stained image instead of the post-B image
+        self.my_canvas.config(width = floor.width, height= floor.height)
+        self.lmain.configure(image=self.imgA)
+        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
+        self.right_canvas.config(width = floor.width + 300, height= h)
 
     #Rotate and flip the images
     def image_axis(self, num):
@@ -373,6 +391,7 @@ class Gui():
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
+        #obtaining how many rotations given to image
         iteration = self.rotated_degree/90
         if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
@@ -429,42 +448,47 @@ class Gui():
         self.flip['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateThresh_button['state'] = tk.ACTIVE
+
         self.init_images()
 
-
-    
-        
-                
-        
-        
-
     def cropping(self):
+        #creating cropping square on screen, defined as b
         self.b = DrawSquare(self.my_canvas)
-        self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
+        # self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
+             #DOES THIS NEED TO BE INCLUDED^^^
         self.my_canvas.bind('<Button1-Motion>', self.b.on_motion)
         self.my_canvas.bind('<ButtonRelease-1>', self.b.on_release)
+
+        #deactivating the 'activate' button, activating the 'confirm' button
+   
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
     #Confirm cropping and reinitalize images in the containers
     def square_image(self):
-        self.figure_folder = os.path.join(self.folder_selected, "figure")
+        self.figure_folder = os.path.join(self.folder_selected, "figure") 
+        #try making a figure folder
         try:
             os.mkdir(self.figure_folder)
+        #exception if the folder already exists. If so, remove and remake
         except FileExistsError:
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
+        #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
+        #copying the image files into the figure folder in within the same larger folder
         for i in self.names:
             copy(source+"/"+i,self.figure_folder)
 
         for i in self.names:
+            #cropping the bsa image based on user cropping
             if "bsa" in i.lower():
                 image1 = Image.open(self.figure_folder+"/"+i)   
                 im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
                 bsa = im1.save(self.figure_folder+"/"+i)
+            #cropping the postb image based on user cropping
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 image = Image.open(self.figure_folder+"/"+i)
                 im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
@@ -480,25 +504,36 @@ class Gui():
         self.image_updated['state'] = tk.ACTIVE
         self.confirmCrop_button['state'] = tk.DISABLED
 
+        
         for i in self.names:
-            if "postb" in i.lower() and "bsa" not in i.lower():
-                beforeb_Name = self.figure_folder+"/"+i
-                beforeB = Image.open(beforeb_Name)
-                b = beforeB
+            #checking for the postb non-bsa image
+            if "bsa" in i.lower():
+                bsa_name = self.figure_folder+"/"+i
+                bsa_img = Image.open(bsa_name)
+                #storing non-bsa image as b
+                b = bsa_img
 
         w, h = (b.width, b.height)
+        #newH is 60 less than the image height
         newH = self.screen_height - 60
+        #newW is the ratio of newH to H times the width
         newW = int(round(w*newH/h))
+        #creating a new image of resized BSA image base don above calculations
         floor = b.resize((newW, newH), Image.ANTIALIAS)
+
+        #setting object height and width to the BSA images
         self.newWidth = floor.width ; self.newHeight = floor.height
 
+        #PhotoImage of the resized BSA
         imgA = ImageTk.PhotoImage(floor)
+
         self.my_canvas.config(width = floor.width, height= floor.height)
 
-        img = cv2.imread(beforeb_Name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(bsa_name, cv2.IMREAD_UNCHANGED)
         self.cropped_image = img
 
         self.lmain.pack()
+
         self.lmain.image = imgA
         self.lmain.configure(image=imgA)
         self.my_canvas.delete("image")
@@ -506,29 +541,67 @@ class Gui():
         self.right_canvas.config(width = floor.width + 300, height= h)
 
 
-        
+
                         
     def activate_thresh(self):
+        
+        #boolean returns true if lmain does not exist
+        if self.lmain.winfo_exists() == 0:
+            #disable all buttons except for the "confirm"
+            self.begin_button['state'] = tk.DISABLED
+            self.grid_button['state'] = tk.DISABLED
+            self.gridA_button['state'] = tk.DISABLED
+            self.onoff_button['state'] = tk.DISABLED
+
+
+            #removing images from the canvas
+            self.my_canvas.delete("all")
+            #re-creating the lmain tab which was previously destroyed
+            self.lmain = tk.Label(self.my_canvas)
+            self.lmain.pack()
+
+            #ensuring the blockSize_value is odd
+            numb = round(self.blockSize_value.get())
+            if numb % 2 == 0:
+                self.blockSize_value = tk.IntVar()
+                self.blockSize_value.set(numb + 1)
+        
+        #disable all the satelitte buttons from that step
+        #only relevent if coming from tixel thresholding step
+        if self.picNames[0] != None:
+            for child in self.labelframe.winfo_children():
+                if child.winfo_class() == 'Radiobutton':
+                    child['state'] = 'disabled'
+
+
+
+        
         self.blockSize_scale['state'] = tk.ACTIVE
         self.cMean_scale['state'] = tk.ACTIVE
         self.activateThresh_button['state'] = tk.DISABLED
+        self.confirm_thresh['state'] = tk.ACTIVE
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<B1-Motion>')
         self.my_canvas.unbind('<ButtonRelease-1>')
         
+        #finding the initial bw image from thresholding
+
+
+
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
         self.lmain.configure(image=imgtk)
-        self.begin_button['state'] = tk.ACTIVE
+        
 
     #Show Metadata window
     def question_window(self):
         self.qWindow = tk.Toplevel(self.newWindow)
         self.qWindow.title("Meta Data")
         self.qWindow.geometry('%dx%d+%d+%d' % (400, 350, 500, 0))
+        #flag to test if both images are present
         both_images_flag = 0
         for i in self.names:
             if "bsa" in i.lower():
@@ -543,11 +616,16 @@ class Gui():
             elif "postb" in i.lower() and "bsa" not in i.lower():
                 self.postB_Name = self.folder_selected + "/" + i
                 both_images_flag+=1
+        #if both BSA and postb images are present in the folder
         if both_images_flag==2:
+            #take width and height of the bsa
             w, h = (a.width, a.height)
             newH = self.screen_height - 60
+            #find ratio of 60 less than screenheight to the image height
             self.factor = newH/h
+            #use ratio to calcuate the new width
             newW = int(round(w*newH/h))
+            #resize the bsa image based on these calculations
             bsa = a.resize((newW, newH), Image.ANTIALIAS)
             self.qwimga = ImageTk.PhotoImage(bsa)
 
@@ -576,6 +654,8 @@ class Gui():
 
             
             #update canvas and frame
+            
+            #changing canvas width and height to be same as bsa images
             self.my_canvas.config(width = bsa.width, height= bsa.height)
             self.lmain.pack_forget()
             self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
@@ -800,13 +880,16 @@ class Gui():
     def showThresh(self, value):
         if float(value) > 11:
             self.my_canvas.delete("all")
+        #sel set to block size value
             sel = int(self.blockSize_value.get())
+        #sec set to C value
             sec = int(self.cMean_value.get())
             if sel %2 == 0:
                 sel+=1
             #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
             #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
-
+            
+        #re doing the thresholding for the newly set values
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
             sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
@@ -816,14 +899,15 @@ class Gui():
             
         else:
             self.my_canvas.delete("all")
+            #sel set to blocksize variable
             sel = int(self.blockSize_value.get())
             if sel %2 == 0:
                 sel+=1
+            #sec set to cMean variable
             sec = int(self.cMean_value.get())
 
-            #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
-            #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
 
+            #new threshold created and loaded onto screen
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
             sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
@@ -833,42 +917,53 @@ class Gui():
 
     #Find Roi coordinates
     def find_points(self):
+        
+        #Disable  buttons that should not be activated
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
+        self.begin_button['state'] = tk.DISABLED
+        self.activateThresh_button['state'] = tk.DISABLED
+        self.grid_button['state'] = tk.DISABLED
+        self.gridA_button['state'] = tk.DISABLED
+        self.onoff_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
         self.c = DrawShapes(self.my_canvas, self.quad_coords)
         self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
+        
         self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
 
         self.confirm_button["state"] = tk.ACTIVE
 
     #Confirms coordinates choosen 
     def confirm(self, none):
+        self.ROILocated = True
+        #self.fromOverlay = True
+        self.activateThresh_button['state'] = tk.ACTIVE
+        #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+
         tvalue = self.blockSize_value.get()
         svalue = self.cMean_value.get()
         if tvalue%2==0:
             tvalue +=1
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
-        bwFile_Name = self.excelName + "BW.png"
-        cv2.imwrite(bwFile_Name, thresh)
-        bw = Image.open(bwFile_Name)
-        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        bw_Image = ImageTk.PhotoImage(sized_bw)
+
+        #self.save_thresholded_image()
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
 
 
         self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgB, state="normal")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
-        self.picNames.append(bw_Image)
+
+
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.ACTIVE
         self.grid_button["state"] = tk.ACTIVE
@@ -876,10 +971,56 @@ class Gui():
         self.onoff_button["state"] = tk.ACTIVE
             
 
+    def save_thresholded_image(self):
+
+        #if ROI is located enable tixel overlays, activate thresh button, and tixel thersholding
+        if self.ROILocated:
+            self.grid_button['state'] = tk.ACTIVE
+            self.gridA_button['state'] = tk.ACTIVE
+            self.onoff_button['state'] = tk.ACTIVE
+            self.activateThresh_button['state'] = tk.ACTIVE
+
+
+        #activating the button to beging ROI location
+        self.begin_button['state'] = tk.ACTIVE
+        self.confirm_thresh['state'] = tk.DISABLED
+        
+        #ensuring blocksize is odd
+        tvalue = self.blockSize_value.get()
+        svalue = self.cMean_value.get()
+        if tvalue %2 ==0:
+            tvalue +=1
+
+        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
+        bwFile_Name = self.excelName + "BW.png"
+        cv2.imwrite(bwFile_Name, thresh)
+        bw = Image.open(bwFile_Name)
+        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        bw_Image = ImageTk.PhotoImage(sized_bw)
+
+        #checking if there is already a bw_image and replacing it if so
+        if (len(self.picNames) >= 3):
+            #if it is replaced with the new bw_Image
+            self.picNames[2] = bw_Image
+        else:
+            #otherwise the new image is added to the end, which will be the 2nd index
+            self.picNames.append(bw_Image)
+
+        return bw_Image
+
     def grid(self,pic):
+        #if the lmain label exists, we are coming from thresholding
+        if self.lmain.winfo_exists() == 1:
+            self.lmain.destroy()
+            self.activateThresh_button['state'] = "active"
+            self.blockSize_scale['state'] = "disabled"
+            self.cMean_scale['state'] = "disabled"
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
+        
+            
+        
 
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
@@ -937,6 +1078,13 @@ class Gui():
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
+
+        #if the lmain label still exists, destroy it
+        if self.lmain.winfo_exists() == 1:
+            self.lmain.destroy()
+
+
+        #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
@@ -977,6 +1125,7 @@ class Gui():
                     tR = [top[0],top[1]]
                     bL = [tL[0]+slope[1],tL[1]+slope[0]]
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
+
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
@@ -994,6 +1143,7 @@ class Gui():
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
                     child['state'] = 'active'
+                    
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.position_file["state"] = tk.ACTIVE
