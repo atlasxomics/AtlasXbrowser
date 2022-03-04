@@ -77,6 +77,7 @@ class Gui():
         self.points = []
         self.Rpoints = []
         self.coords = None
+        self.arr = None
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         self.quad_coords = [0]
@@ -274,11 +275,7 @@ class Gui():
 
             for file in os.listdir(self.folder_selected):
                 if file.startswith(".") == False:
-                    try:
-                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True) and "postb" in file.lower():
-                            self.names.append(file)
-                    except IsADirectoryError:
-                        pass
+                     self.names.append(file)
 
             
 
@@ -396,21 +393,21 @@ class Gui():
     def image_position(self):
         #obtaining how many rotations given to image
         iteration = self.rotated_degree/90
-        holder = 0
         if abs(iteration) >= 4:
             multiplier = abs(int(iteration/4))
             degree = int(abs(iteration)-(4*multiplier))
         else:
             degree = int(iteration)
+
         for i in self.names:
             try:
                 if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
                     img = cv2.imread(self.figure_folder+"/"+i, cv2.IMREAD_UNCHANGED)
-                    if iteration < 0 and iteration % 2 == 1:
+                    if iteration < 0:
                         for x in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
                             img = rotate
-                    elif iteration > 0 and iteration % 2 == 0:
+                    elif iteration > 0:
                         for y in range(abs(degree)):
                             rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                             img = rotate
@@ -430,12 +427,9 @@ class Gui():
                     cv2.imwrite(self.figure_folder+"/"+i, flipped)
             except IsADirectoryError:
                 pass
+        if iteration < 0:
+            degree = -1 * degree
 
-        if iteration < 0 and iteration % 2 == 1:
-            holder = degree + 2
-        else:
-            holder = degree
-        
         self.metadata = {"run": self.r_clicked.get(),
                         "species": self.s_clicked.get(), 
                          "type": self.t_clicked.get(),
@@ -445,7 +439,7 @@ class Gui():
                          "trimming": self.tr_clicked.get(),
                          "numChannels": self.n_clicked.get(),
                          "barcodes": self.b_clicked.get(),
-                         "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * holder,"vertical_flip": self.flipped_vert}
+                         "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
                         }
 
         self.up['state'] = tk.DISABLED
@@ -769,7 +763,8 @@ class Gui():
             b_label = tk.Label(self.qWindow, text="Barcode: ", font =("Courier", 14)).place(x=20, y=290)
             barcodes = [
                     "1",
-                    "2"
+                    "2",
+                    "3"
             ]
             b_drop = tk.OptionMenu(self.qWindow , self.b_clicked , *barcodes).place(x=200,y=290)
 
@@ -949,7 +944,9 @@ class Gui():
         self.activateThresh_button['state'] = tk.ACTIVE
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-      
+
+        self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+
         tvalue = self.blockSize_value.get()
         svalue = self.cMean_value.get()
         if tvalue%2==0:
@@ -1070,6 +1067,12 @@ class Gui():
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
+                if self.arr[j][i] == 1:
+                    try:
+                        tags = self.my_canvas.find_withtag(position)
+                        self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                    except IndexError:
+                        self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
             prev[0] += slopeTO[1]
             prev[1] += slopeTO[0]
 
@@ -1146,8 +1149,6 @@ class Gui():
             self.position_file["state"] = tk.ACTIVE
             self.begin_button['state'] = tk.DISABLED
             self.onoff_button["state"] = tk.DISABLED
-            self.grid_button["state"] = tk.DISABLED
-            self.gridA_button["state"] = tk.DISABLED
             
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
@@ -1176,8 +1177,6 @@ class Gui():
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.update_file["state"] = tk.ACTIVE
-            self.grid_button["state"] = tk.DISABLED
-            self.gridA_button["state"] = tk.DISABLED
             if self.sendinfo_flag == False:
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                     csv_reader = csv.reader(csv_file)
@@ -1206,6 +1205,7 @@ class Gui():
                             except IndexError:
                                 self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
             self.onoff_button["state"] = tk.DISABLED
+
             
 
     """Functions used to update On/off Tissue ... creates a new quadrilateral"""
@@ -1347,14 +1347,8 @@ class Gui():
             os.mkdir(path)
         except FileExistsError:
             path = self.folder_selected + "/spatial"
-        
 
-        versionBarcode = ""
-        if self.b_clicked.get() == "1":
-            versionBarcode = "bc"
-        else:
-            versionBarcode = "bcv"
-        barcode_file = versionBarcode+ str(self.num_chan)+".txt"
+        barcode_file = "bc" + str(self.num_chan) + "v" + self.b_clicked.get() +".txt"
         my_file = open(barcode_file,"r")
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
@@ -1373,6 +1367,8 @@ class Gui():
               
         my_file.close()
         self.json_file(path)
+        self.grid_button["state"] = tk.DISABLED
+        self.gridA_button["state"] = tk.DISABLED
         try: 
             move(self.figure_folder,path)
         except shutil.Error:
@@ -1431,7 +1427,9 @@ class Gui():
     
     #Update changes to tissue_positions_list.csv
     def update_pos(self):
-        barcode_file = "bc"+ str(self.num_chan)+".txt"
+        p = open(self.folder_selected + "/metadata.json")
+        meta = json.load(p)
+        barcode_file = "bc" + str(self.num_chan) + "v" + meta["barcodes"] + ".txt"
         my_file = open(barcode_file,"r")
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
@@ -1446,8 +1444,7 @@ class Gui():
               
         my_file.close()
         f.close()
-        p = open(self.folder_selected + "/metadata.json")
-        meta = json.load(p)
+
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
@@ -1493,8 +1490,8 @@ class Gui():
         xvalues = np.linspace(15, 205, numsteps)
         yValue = 40
 
-        self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="5px")
-        self.cbframe.place(relx=.11, rely=.83)
+        self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="14px")
+        self.cbframe.place(relx=.11, rely=.42)
 
         c = tk.Canvas(self.cbframe, width=220, height=40)
         c.pack()

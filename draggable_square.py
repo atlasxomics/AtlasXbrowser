@@ -13,16 +13,12 @@ class DrawSquare():
         width = self.my_canvas.winfo_width()
         height = self.my_canvas.winfo_height()
 
+        dist = distance([width*.10, height*.10], [width-(width*.10), height*.10])
         #Defining self.points as the four corners of the initial 
-
-        self.points = width*.10, height*.10, width*.90, height*.10, width*.90, height*.90, width*.10, height*.90
-        #self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), height-(height*.10), width*.10, height-(height*.10)
-        #old version^
-        
-        self.rect = [width*.10, height*.10, width-(width*.10), height-(height*.10)]
-
+        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), dist + height*.10, width*.10, dist + height*.10
+        self.rect = [width*.10, height*.10, width-(width*.10), dist + height*.10]
         #outputting square on screen
-        # "crop" tage designated for the newly created rectangle
+
         self.my_canvas.create_rectangle(self.rect[0],self.rect[1],self.rect[2],self.rect[3], outline="red", fill="", width=2, tag='crop')
 
     def on_click_quad(self, event):
