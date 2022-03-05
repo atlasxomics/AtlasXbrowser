@@ -139,9 +139,6 @@ class Gui():
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
         self.adframe.place(relx=.11, rely=.23)
-        self.activateThresh_button = tk.Button(self.adframe, text = "Activate", command = self.activate_thresh, state=tk.DISABLED)
-        self.activateThresh_button.pack(anchor='w')
-
 
         #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
@@ -161,13 +158,16 @@ class Gui():
         self.cMean_scale = ttk.Scale(self.adframe, variable = self.cMean_value, from_ = 0, to = 17, orient = tk.HORIZONTAL, command= self.showThresh, length=200, state=tk.DISABLED)
         self.cMean_scale.pack(anchor='w')
 
-        self.confirm_thresh = tk.Button(self.adframe, text = "Confirm", command = self.save_thresholded_image, state=tk.DISABLED)
-        self.confirm_thresh.pack(anchor='e')
-
+        self.activateThresh_button = tk.Button(self.adframe, text="Activate", command=self.activate_thresh,
+                                               state=tk.DISABLED)
+        self.activateThresh_button.pack(side=tk.LEFT)
+        self.confirm_thresh = tk.Button(self.adframe, text="Confirm", command=self.save_thresholded_image,
+                                        state=tk.DISABLED)
+        self.confirm_thresh.pack()
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .44)
+        self.thframe.place(relx=.11, rely= .42)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
