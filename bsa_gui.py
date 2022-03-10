@@ -261,9 +261,7 @@ class Gui():
         self.folder_selected = filedialog.askdirectory()
         
         if self.folder_selected != '':
-            temp = re.compile("/([a-zA-Z]+)([0-9]+)")
-            res = temp.search(self.folder_selected).groups() 
-            self.excelName = res[0]+ res[1]
+            
             self.pWindow = tk.Toplevel(self.newWindow)
             self.pWindow.title("Loading images...")
             self.pWindow.geometry("400x90")
@@ -793,7 +791,6 @@ class Gui():
 
             elif "list" in i:
                 self.position = self.folder_selected + "/" + i
-
 
         try:
             self.excelName = self.metadata['run']
