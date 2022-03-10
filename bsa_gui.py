@@ -229,10 +229,6 @@ class Gui():
         self.folder_selected = filedialog.askdirectory()
         
         if self.folder_selected != '':
-            # temp = re.compile("/([a-zA-Z]+)([0-9]+)")
-            # res = temp.search(self.folder_selected).groups() 
-            # self.excelName = res[0]+ res[1]
-            print(self.folder_selected)
             self.pWindow = tk.Toplevel(self.newWindow)
             self.pWindow.title("Loading images...")
             self.pWindow.geometry("400x90")
@@ -632,11 +628,14 @@ class Gui():
             self.pWindow.update()
 
             temp = re.compile("/(d[0-9]+)")
-            res = temp.search(self.bsa_Name.lower()).groups() 
-            for i in range(len(res)):
-                print(res[i])
+            try:
+                res = temp.search(self.bsa_Name.lower()).groups()
+                self.excelName = res[0].upper() 
+            except:
+                self.excelName = "Test"
+
             #name at top of atlasbrowser will be frist name group from image
-            self.excelName = res[0].upper()
+            
             self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
             self.bar["value"] = 70
