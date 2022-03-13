@@ -547,6 +547,9 @@ class Gui():
             self.grid_button['state'] = tk.DISABLED
             self.gridA_button['state'] = tk.DISABLED
             self.onoff_button['state'] = tk.DISABLED
+            
+            #Changing the selected radio button to display the first option of a point flip
+            self.value_labelFrame.set(1)
 
 
             #removing images from the canvas
