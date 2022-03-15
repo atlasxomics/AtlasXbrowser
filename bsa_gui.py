@@ -953,28 +953,19 @@ class Gui():
         self.ROILocated = True
         #self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
+        
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
-
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-
-        tvalue = self.blockSize_value.get()
-        svalue = self.cMean_value.get()
-        if tvalue%2==0:
-            tvalue +=1
-
-        #self.save_thresholded_image()
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
-
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
-
 
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.ACTIVE
@@ -1027,14 +1018,13 @@ class Gui():
             self.activateThresh_button['state'] = "active"
             self.blockSize_scale['state'] = "disabled"
             self.cMean_scale['state'] = "disabled"
-                
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
         
             
-        
-
+        print(self.Rpoints)
+    
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
         topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
@@ -1103,8 +1093,6 @@ class Gui():
             self.lmain.destroy()
 
         
-
-
         #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
         self.my_canvas.delete("all")
