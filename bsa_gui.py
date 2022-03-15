@@ -86,6 +86,9 @@ class Gui():
         self.flipped_horz = False
 
         self.ROILocated = False
+        
+        #flag to determine if user is currently in the tixel classification step
+        self.classification_active = False
 
         #containers
         self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
@@ -215,6 +218,7 @@ class Gui():
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.11, rely= .9)
 
+
         
 
     def restart(self):
@@ -229,9 +233,6 @@ class Gui():
         self.folder_selected = filedialog.askdirectory()
         
         if self.folder_selected != '':
-            temp = re.compile("/([a-zA-Z]+)([0-9]+)")
-            res = temp.search(self.folder_selected).groups() 
-            self.excelName = res[0]+ res[1]
             self.pWindow = tk.Toplevel(self.newWindow)
             self.pWindow.title("Loading images...")
             self.pWindow.geometry("400x90")
@@ -261,9 +262,7 @@ class Gui():
         self.folder_selected = filedialog.askdirectory()
         
         if self.folder_selected != '':
-            temp = re.compile("/([a-zA-Z]+)([0-9]+)")
-            res = temp.search(self.folder_selected).groups() 
-            self.excelName = res[0]+ res[1]
+            
             self.pWindow = tk.Toplevel(self.newWindow)
             self.pWindow.title("Loading images...")
             self.pWindow.geometry("400x90")
@@ -544,6 +543,8 @@ class Gui():
 
                         
     def activate_thresh(self):
+
+        self.classification_active = False
         
         #boolean returns true if lmain does not exist
         if self.lmain.winfo_exists() == 0:
@@ -552,7 +553,9 @@ class Gui():
             self.grid_button['state'] = tk.DISABLED
             self.gridA_button['state'] = tk.DISABLED
             self.onoff_button['state'] = tk.DISABLED
-
+            
+            #Changing the selected radio button to display the first option of a point flip
+            self.value_labelFrame.set(1)
 
             #removing images from the canvas
             self.my_canvas.delete("all")
@@ -633,8 +636,14 @@ class Gui():
             self.pWindow.update()
 
             temp = re.compile("/(d[0-9]+)")
-            res = temp.search(self.bsa_Name.lower()).groups() 
-            self.excelName = res[0].upper()
+            try:
+                res = temp.search(self.bsa_Name.lower()).groups()
+                self.excelName = res[0].upper() 
+            except:
+                self.excelName = "Test"
+
+            #name at top of atlasbrowser will be frist name group from image
+            
             self.newWindow.title("Atlas Browser (" + self.excelName+")")
 
             self.bar["value"] = 70
@@ -794,7 +803,6 @@ class Gui():
             elif "list" in i:
                 self.position = self.folder_selected + "/" + i
 
-
         try:
             self.excelName = self.metadata['run']
         except KeyError:
@@ -886,6 +894,7 @@ class Gui():
             sec = int(self.cMean_value.get())
             if sel %2 == 0:
                 sel+=1
+            
             #self.blockSize_label_value.config(text = str(sel), font =("Courier", 14))
             #self.cMean_label_value.config(text = str(sec), font =("Courier", 14))
             
@@ -917,7 +926,7 @@ class Gui():
 
     #Find Roi coordinates
     def find_points(self):
-        
+
         #Disable  buttons that should not be activated
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
@@ -937,32 +946,26 @@ class Gui():
 
         self.confirm_button["state"] = tk.ACTIVE
 
+       
+
     #Confirms coordinates choosen 
     def confirm(self, none):
         self.ROILocated = True
         #self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
+        
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
-        tvalue = self.blockSize_value.get()
-        svalue = self.cMean_value.get()
-        if tvalue%2==0:
-            tvalue +=1
-
-        #self.save_thresholded_image()
-
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
-
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
-
 
         self.confirm_button["state"] = tk.DISABLED
         self.begin_button["state"] = tk.ACTIVE
@@ -1020,8 +1023,8 @@ class Gui():
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
         
             
-        
-
+        print(self.Rpoints)
+    
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
         topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
@@ -1067,23 +1070,29 @@ class Gui():
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
-                if self.arr[j][i] == 1:
-                    try:
-                        tags = self.my_canvas.find_withtag(position)
-                        self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
-                    except IndexError:
-                        self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
+
+                #allowing on and off tissues on overlay
+                #if self.classification_active:
+                if self.classification_active:
+                    if self.arr[j][i] == 1:
+                        try:
+                            tags = self.my_canvas.find_withtag(position)
+                            self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                        except IndexError:
+                            self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
             prev[0] += slopeTO[1]
             prev[1] += slopeTO[0]
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
+        
+        self.classification_active = True
 
         #if the lmain label still exists, destroy it
         if self.lmain.winfo_exists() == 1:
             self.lmain.destroy()
 
-
+        
         #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
         self.my_canvas.delete("all")
@@ -1140,10 +1149,12 @@ class Gui():
 
 
         if self.picNames[0] != None:
+            #setting all tixel chaning radio buttons to on
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
                     child['state'] = 'active'
-                    
+            
+            #setting the mouse to flip a single tixel at time, in accordance with option 1
             self.my_canvas.bind('<Button-1>',self.on_off)
 
             self.position_file["state"] = tk.ACTIVE
@@ -1152,11 +1163,13 @@ class Gui():
             
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
+
             tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan)
             self.arr,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
             for i in range(len(self.arr)):
                 for j in range(len(self.arr)):
                     position = str(j+1) + "x" + str(i)
+
                     if self.arr[j][i] == 1:
                         try:
                             tags = self.my_canvas.find_withtag(position)
@@ -1429,6 +1442,7 @@ class Gui():
     def update_pos(self):
         p = open(self.folder_selected + "/metadata.json")
         meta = json.load(p)
+
         barcode_file = "bc" + str(self.num_chan) + "v" + meta["barcodes"] + ".txt"
         my_file = open(barcode_file,"r")
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
