@@ -400,10 +400,14 @@ class Gui():
         if num == 0:
             self.user_selected_bsa = file
 
+            if self.user_selected_postB != "":
+                same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
 
         #for postB
         else:
             self.user_selected_postB = file
+            if self.user_selected_bsa != "":
+                same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
 
         #finding last / in the path
         val = file.rfind("/")
@@ -422,6 +426,14 @@ class Gui():
         #updating the label to display name
         label.config(text = display_name)
 
+    def check_dirs(self, bsa_path, postB_path):
+        last_back = bsa_path.rfind("/")
+        bsa_folder = bsa_path[:last_back]
+        print(bsa_folder)
+
+        last_back = postB_path.rfind("/")
+        postB_folder = postB_path[:last_back]
+        print(postB_folder)
 
     def configure_metadata(self, species, tissue_prep, assay, trimming, numchannels, barcode): 
         runID = self.run_identifier.get()
@@ -443,6 +455,26 @@ class Gui():
         self.starting_window.destroy()
         self.activateCrop_button['state'] = tk.ACTIVE
 
+    def configure_images(self):
+
+        a = Image.open(self.user_selected_bsa)
+        w, h = (a.width, a.height)
+        newH = self.screen_height - 60
+        #find ratio of 60 less than screenheight to the image height
+        self.factor = newH/h
+        #use ratio to calcuate the new width
+        newW = int(round(w*newH/h))
+        #resize the bsa image based on these calculations
+        bsa = a.resize((newW, newH), Image.ANTIALIAS)
+        self.qwimga = ImageTk.PhotoImage(bsa)
+
+        self.my_canvas.config(width = bsa.width, height= bsa.height)
+        self.lmain.pack_forget()
+        self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
+        self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
+        self.right_canvas.config(width = bsa.width + 300, height= h)
+
+   #Ability to grab files from specified folder 'Image folder'
     def get_folder(self):
         #accessing user specified image folder
         self.folder_selected = filedialog.askdirectory()
