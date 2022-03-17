@@ -578,16 +578,20 @@ class Gui():
     #Initalize images that will be in container 
     def init_images(self):
         #obtaining BSA and postb images from folder
-        for i in self.names:
-            if "bsa" in i.lower():
-                BSA_name = self.figure_folder + "/" + i
-                beforeA = Image.open(BSA_name)
-                a = beforeA
+        # for i in self.names:
+        #     if "bsa" in i.lower():
+        #         BSA_name = self.figure_folder + "/" + i
+        #         beforeA = Image.open(BSA_name)
+        #         a = beforeA
 
-            elif "postb" in i.lower() and "bsa" not in i.lower():
-                postB_Name = self.figure_folder + "/" + i
-                beforeB = Image.open(postB_Name)
-                b = beforeB
+        #     elif "postb" in i.lower() and "bsa" not in i.lower():
+        #         postB_Name = self.figure_folder + "/" + i
+        #         beforeB = Image.open(postB_Name)
+        #         b = beforeB
+
+        a = Image.open(self.bsa_figure_path)
+        b = Image.open(self.postB_figure_path)
+
 
         w, h = (a.width, a.height)
         self.rawHeight = h
@@ -602,7 +606,7 @@ class Gui():
         self.refactor = a
         self.newWidth = floor.width ; self.newHeight = floor.height
 
-        img = cv2.imread(BSA_name, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
 
         flippedImage = img
 
@@ -676,48 +680,52 @@ class Gui():
         else:
             degree = int(iteration)
 
-        for i in self.names:
+        pic_names = [self.bsa_figure_path, self.postB_figure_path]
+
+        for i in pic_names:
             try:
-                if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
-                    img = cv2.imread(self.figure_folder+"/"+i, cv2.IMREAD_UNCHANGED)
-                    if iteration < 0:
-                        for x in range(abs(degree)):
-                            rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                            img = rotate
-                    elif iteration > 0:
-                        for y in range(abs(degree)):
-                            rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-                            img = rotate
-                    else:
-                        rotate = img
+                # if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
+                img = cv2.imread(i, cv2.IMREAD_UNCHANGED)
+                if iteration < 0:
+                    for x in range(abs(degree)):
+                        rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                        img = rotate
+                elif iteration > 0:
+                    for y in range(abs(degree)):
+                        rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+                        img = rotate
+                else:
+                    rotate = img
 
-                    if self.flipped_vert == True and self.flipped_horz == True:
-                        once = cv2.flip(rotate,0)
-                        flipped = cv2.flip(once,1)
-                    elif self.flipped_horz == True and self.flipped_vert == False:
-                        flipped = cv2.flip(rotate,1)
-                    elif self.flipped_vert == True and self.flipped_horz == False:
-                        flipped = cv2.flip(rotate,0)
-                    elif self.flipped_vert == False and self.flipped_horz == False:
-                        flipped = rotate
+                if self.flipped_vert == True and self.flipped_horz == True:
+                    once = cv2.flip(rotate,0)
+                    flipped = cv2.flip(once,1)
+                elif self.flipped_horz == True and self.flipped_vert == False:
+                    flipped = cv2.flip(rotate,1)
+                elif self.flipped_vert == True and self.flipped_horz == False:
+                    flipped = cv2.flip(rotate,0)
+                elif self.flipped_vert == False and self.flipped_horz == False:
+                    flipped = rotate
 
-                    cv2.imwrite(self.figure_folder+"/"+i, flipped)
+                cv2.imwrite(i, flipped)
+
             except IsADirectoryError:
                 pass
         if iteration < 0:
             degree = -1 * degree
 
-        self.metadata = {"run": self.r_clicked.get(),
-                        "species": self.s_clicked.get(), 
-                         "type": self.t_clicked.get(),
-                         "tissue": self.o_clicked.get(),
-                         "assay": self.a_clicked.get(),
-                         "collaborator": self.c_clicked.get(),
-                         "trimming": self.tr_clicked.get(),
-                         "numChannels": self.n_clicked.get(),
-                         "barcodes": self.b_clicked.get(),
-                         "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
-                        }
+        # self.metadata = {"run": self.r_clicked.get(),
+        #                 "species": self.s_clicked.get(), 
+        #                  "type": self.t_clicked.get(),
+        #                  "tissue": self.o_clicked.get(),
+        #                  "assay": self.a_clicked.get(),
+        #                  "collaborator": self.c_clicked.get(),
+        #                  "trimming": self.tr_clicked.get(),
+        #                  "numChannels": self.n_clicked.get(),
+        #                  "barcodes": self.b_clicked.get(),
+        #                  "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
+        #                 }
+        self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
         self.up['state'] = tk.DISABLED
         self.left['state'] = tk.DISABLED
@@ -753,7 +761,7 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
-        print(self.folder_selected + "figure")
+        print(self.figure_folder)
 
         #source is the source folder of the spatial images
         source = self.folder_selected
@@ -778,15 +786,15 @@ class Gui():
         #         im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         #         post = im2.save(self.figure_folder+"/"+i)
             
-        bsa_figure_path = self.figure_folder + "/" + self.bsa_short
-        image1 = Image.open(bsa_figure_path)
+        self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
+        image1 = Image.open(self.bsa_figure_path)
         im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-        bsa = im1.save(bsa_figure_path)
+        bsa = im1.save(self.bsa_figure_path)
 
-        postB_figure_path = self.figure_folder + "/" + self.postB_short
-        image2 = Image.open(postB_figure_path)
+        self.postB_figure_path = self.figure_folder + "/" + self.postB_short
+        image2 = Image.open(self.postB_figure_path)
         im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
-        post = im2.save(postB_figure_path)
+        post = im2.save(self.postB_figure_path)
 
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
@@ -825,8 +833,8 @@ class Gui():
 
         self.my_canvas.config(width = floor.width, height= floor.height)
 
-        # img = cv2.imread(bsa_path, cv2.IMREAD_UNCHANGED)
-        # self.cropped_image = img
+        img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
+        self.cropped_image = img
 
         self.lmain.pack()
 
