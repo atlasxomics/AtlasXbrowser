@@ -445,11 +445,18 @@ class Gui():
         postB_folder = postB_path[:last_back]
 
         if bsa_folder == postB_folder:
+            self.folder_selected = bsa_folder
             return True
         else:
             return False
 
     def configure_metadata(self, species, tissue_prep, assay, trimming, numchannels, barcode): 
+        
+        #adding the names of the two images into the self.names list
+        self.names.append(self.user_selected_bsa)
+        self.names.append(self.user_selected_postB)
+
+        #retrieving variables from stored StringVar variables
         runID = self.run_identifier.get()
         tissue = self.tissue_var.get()
         collabor = self.collaborator.get()
@@ -464,11 +471,13 @@ class Gui():
             "numChannels" : numchannels,
             "barcodes" : barcode
         }
+        #calling method that puts images on canvas
         self.configure_images()
 
         self.starting_window.destroy()
         self.activateCrop_button['state'] = tk.ACTIVE
 
+    #populates the canvas of the main page with the BSA image
     def configure_images(self):
 
         a = Image.open(self.user_selected_bsa)
@@ -729,6 +738,7 @@ class Gui():
 
     #Confirm cropping and reinitalize images in the containers
     def square_image(self):
+  
         self.figure_folder = os.path.join(self.folder_selected, "figure") 
         #try making a figure folder
         try:
@@ -741,21 +751,32 @@ class Gui():
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
+
         #copying the image files into the figure folder in within the same larger folder
         for i in self.names:
-            copy(source+"/"+i,self.figure_folder)
+            copy(i,self.figure_folder)
 
-        for i in self.names:
-            #cropping the bsa image based on user cropping
-            if "bsa" in i.lower():
-                image1 = Image.open(self.figure_folder+"/"+i)   
-                im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-                bsa = im1.save(self.figure_folder+"/"+i)
-            #cropping the postb image based on user cropping
-            elif "postb" in i.lower() and "bsa" not in i.lower():
-                image = Image.open(self.figure_folder+"/"+i)
-                im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-                post = im2.save(self.figure_folder+"/"+i)
+        # for i in self.names:
+        #     #cropping the bsa image based on user cropping
+        #     if "bsa" in i.lower():
+        #         image1 = Image.open(self.figure_folder+"/"+i)   
+        #         im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        #         bsa = im1.save(self.figure_folder+"/"+i)
+        #     #cropping the postb image based on user cropping
+        #     elif "postb" in i.lower() and "bsa" not in i.lower():
+        #         image = Image.open(self.figure_folder+"/"+i)
+        #         im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        #         post = im2.save(self.figure_folder+"/"+i)
+            
+            #bsa_path = self.user_selected_bsa
+            image1 = Image.open(self.user_selected_bsa)
+            im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+            bsa = im1.save(self.user_selected_bsa)
+
+           # postB_path = self.figure_folder + "/" + self.user_selected_postB
+            image2 = Image.open(self.user_selected_postB)
+            im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
+            post = im2.save(self.user_selected_postB)
 
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
@@ -768,13 +789,15 @@ class Gui():
         self.confirmCrop_button['state'] = tk.DISABLED
 
         
-        for i in self.names:
-            #checking for the postb non-bsa image
-            if "bsa" in i.lower():
-                bsa_name = self.figure_folder+"/"+i
-                bsa_img = Image.open(bsa_name)
-                #storing non-bsa image as b
-                b = bsa_img
+        # for i in self.names:
+        #     #checking for the postb non-bsa image
+        #     if "bsa" in i.lower():
+        #         bsa_name = self.figure_folder+"/"+i
+        #         bsa_img = Image.open(bsa_name)
+        #         #storing non-bsa image as b
+        #         b = bsa_img
+
+        b = im1
 
         w, h = (b.width, b.height)
         #newH is 60 less than the image height
@@ -792,8 +815,8 @@ class Gui():
 
         self.my_canvas.config(width = floor.width, height= floor.height)
 
-        img = cv2.imread(bsa_name, cv2.IMREAD_UNCHANGED)
-        self.cropped_image = img
+        # img = cv2.imread(bsa_path, cv2.IMREAD_UNCHANGED)
+        # self.cropped_image = img
 
         self.lmain.pack()
 
