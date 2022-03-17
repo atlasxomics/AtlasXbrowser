@@ -452,9 +452,14 @@ class Gui():
 
     def configure_metadata(self, species, tissue_prep, assay, trimming, numchannels, barcode): 
         
-        #adding the names of the two images into the self.names list
-        self.names.append(self.user_selected_bsa)
-        self.names.append(self.user_selected_postB)
+        val = self.user_selected_bsa.rfind("/")
+        self.bsa_short = self.user_selected_bsa[val + 1: ]
+
+        val = self.user_selected_postB.rfind("/")
+        self.postB_short = self.user_selected_postB[val + 1: ]
+
+        # self.names.append(bsa_filename)
+        # self.names.append(postb_filename)
 
         #retrieving variables from stored StringVar variables
         runID = self.run_identifier.get()
@@ -748,13 +753,18 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
+        print(self.folder_selected + "figure")
+
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
 
         #copying the image files into the figure folder in within the same larger folder
-        for i in self.names:
-            copy(i,self.figure_folder)
+        # for i in self.names:
+        #     copy(source + "/" + i, self.figure_folder)
+
+        copy(source + "/" + self.bsa_short, self.figure_folder)
+        copy(source + "/" + self.postB_short, self.figure_folder)
 
         # for i in self.names:
         #     #cropping the bsa image based on user cropping
@@ -768,15 +778,15 @@ class Gui():
         #         im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         #         post = im2.save(self.figure_folder+"/"+i)
             
-            #bsa_path = self.user_selected_bsa
-            image1 = Image.open(self.user_selected_bsa)
-            im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-            bsa = im1.save(self.user_selected_bsa)
+        bsa_figure_path = self.figure_folder + "/" + self.bsa_short
+        image1 = Image.open(bsa_figure_path)
+        im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        bsa = im1.save(bsa_figure_path)
 
-           # postB_path = self.figure_folder + "/" + self.user_selected_postB
-            image2 = Image.open(self.user_selected_postB)
-            im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
-            post = im2.save(self.user_selected_postB)
+        postB_figure_path = self.figure_folder + "/" + self.postB_short
+        image2 = Image.open(postB_figure_path)
+        im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
+        post = im2.save(postB_figure_path)
 
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
