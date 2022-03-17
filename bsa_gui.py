@@ -398,42 +398,56 @@ class Gui():
 
         #for BSA
         if num == 0:
+
             self.user_selected_bsa = file
 
             if self.user_selected_postB != "":
                 same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-
+                if same_dir == False:
+                    file = "Error! Images must be from the same folder!"
+                    self.user_selected_bsa = ""
+                    print("Dif FOlder")
+                   
         #for postB
         else:
             self.user_selected_postB = file
+
             if self.user_selected_bsa != "":
                 same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
+                if same_dir == False:
+                    file = "Error! Images must be from the same folder!"
+                    print("diff folders")
+                    
 
         #finding last / in the path
         val = file.rfind("/")
         #slicing string to only be image name, not full path
         display_name = file[val + 1: ]
-
         leng = len(display_name)
         
+        #upon selecting image, checking to see if the window should enlarged to accomidate the text on screen
         potential_width  = self.starting_window_origwidth + (leng * 4)
         if potential_width > self.starting_window_width:
             self.starting_window_width = potential_width
             new_dims = str(self.starting_window_width) + "x" + str(self.starting_window_height)
-            print(new_dims)
+    
             self.starting_window.geometry(new_dims)
 
         #updating the label to display name
         label.config(text = display_name)
 
+    #method for checking whether the two photos selected by the the user are within the same folder
     def check_dirs(self, bsa_path, postB_path):
         last_back = bsa_path.rfind("/")
         bsa_folder = bsa_path[:last_back]
-        print(bsa_folder)
-
+        
         last_back = postB_path.rfind("/")
         postB_folder = postB_path[:last_back]
-        print(postB_folder)
+
+        if bsa_folder == postB_folder:
+            return True
+        else:
+            return False
 
     def configure_metadata(self, species, tissue_prep, assay, trimming, numchannels, barcode): 
         runID = self.run_identifier.get()
@@ -468,8 +482,10 @@ class Gui():
         bsa = a.resize((newW, newH), Image.ANTIALIAS)
         self.qwimga = ImageTk.PhotoImage(bsa)
 
+        #setting canvas height and width based on the size of images
         self.my_canvas.config(width = bsa.width, height= bsa.height)
         self.lmain.pack_forget()
+        #loading the bsa image onto screen
         self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
         self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
         self.right_canvas.config(width = bsa.width + 300, height= h)
