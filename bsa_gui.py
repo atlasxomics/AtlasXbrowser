@@ -476,6 +476,12 @@ class Gui():
             "numChannels" : numchannels,
             "barcodes" : barcode
         }
+
+        #setting excelName var, used later, to equal the user specifed run ID
+        self.excelName = runID
+        self.num_chan = int(numchannels)
+        self.barcodes = barcode
+
         #calling method that puts images on canvas
         self.configure_images()
 
@@ -589,6 +595,7 @@ class Gui():
         #         beforeB = Image.open(postB_Name)
         #         b = beforeB
 
+        #opening images directly from previously stored path
         a = Image.open(self.bsa_figure_path)
         b = Image.open(self.postB_figure_path)
 
@@ -850,7 +857,6 @@ class Gui():
     def activate_thresh(self):
 
         self.classification_active = False
-        
         #boolean returns true if lmain does not exist
         if self.lmain.winfo_exists() == 0:
             #disable all buttons except for the "confirm"
@@ -1325,9 +1331,6 @@ class Gui():
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
-        
-            
-        print(self.Rpoints)
     
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
@@ -1389,7 +1392,6 @@ class Gui():
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
-        
         self.classification_active = True
 
         #if the lmain label still exists, destroy it
@@ -1665,7 +1667,7 @@ class Gui():
         except FileExistsError:
             path = self.folder_selected + "/spatial"
 
-        barcode_file = "bc" + str(self.num_chan) + "v" + self.b_clicked.get() +".txt"
+        barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         my_file = open(barcode_file,"r")
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
