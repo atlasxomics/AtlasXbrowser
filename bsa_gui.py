@@ -693,6 +693,7 @@ class Gui():
             try:
                 # if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
                 img = cv2.imread(i, cv2.IMREAD_UNCHANGED)
+                rotate = img
                 if iteration < 0:
                     for x in range(abs(degree)):
                         rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -701,8 +702,6 @@ class Gui():
                     for y in range(abs(degree)):
                         rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                         img = rotate
-                else:
-                    rotate = img
 
                 if self.flipped_vert == True and self.flipped_horz == True:
                     once = cv2.flip(rotate,0)
