@@ -62,7 +62,7 @@ class Gui():
         filemenu = tk.Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
  
-        filemenu.add_command(label="Open Image Folder", command=self.load_images)
+        filemenu.add_command(label="Begin Image Processing", command=self.load_images)
         filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
         filemenu.add_command(label="New Instance", command=self.restart)
         filemenu.add_separator()
@@ -232,6 +232,7 @@ class Gui():
 
 
     def load_images(self):
+        self.both_images_selected = False
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
@@ -327,43 +328,70 @@ class Gui():
         b_label.grid(row = 4, column = 0, sticky = "e")
         b_drop.grid(row = 4, column = 1, sticky = "w", padx = x_padding)    
         
-        #button = tk.Button(self.starting_window, text = "Submit", command = print(entry_box.get()))
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata(
             numchannels= num_channels.get(),
             barcode=barcode_choice.get()
             ))
 
-        
         button.grid(row = 5, column = 1, sticky = "w", pady = 20)
+
+        self.error_label = tk.Label(self.starting_window)
+        self.error_label.grid(row = 6, column = 1, sticky = "w")
+
 
     #method used to allow users to retrieve required image file. num is a 0 or 1 referring to whether the user is selecting a 
     #BSA or postB image respectively, and the label refers to the Label object to be updated by the name upon retrieval
     def get_file(self, num, label):
+        
+        
+
         #allow user to select file
         file = askopenfilename()
 
-        #for BSA
-        if num == 0:
+        #if the user selects to cancel file selection then nothing changes
+        if file == "":
+            print("selection cancelled")
+            return
 
-            self.user_selected_bsa = file
+        #flag set to false, as unsure what the user will select
+        self.both_images_selected = False
 
-            if self.user_selected_postB != "":
-                same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-                if same_dir == False:
-                    file = "Error! Images must be from the same folder!"
-                    self.user_selected_bsa = ""
-                    print("Dif FOlder")
-                   
-        #for postB
+
+        if file.lower().endswith(".TIF"):
+            print("ITS A TIF")
         else:
-            self.user_selected_postB = file
+            print("NOT A TIF")
 
-            if self.user_selected_bsa != "":
-                same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-                if same_dir == False:
-                    file = "Error! Images must be from the same folder!"
-                    print("diff folders")
-                    
+        #ensuring that the selected file is an image file
+        if file.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".tif")):
+            #for BSA
+            if num == 0:
+                self.user_selected_bsa = file
+                if self.user_selected_postB != "":
+                    same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
+                    if same_dir == False:
+                        file = "Error! Images must be stored in the same folder!"
+                        self.user_selected_bsa = ""
+                    else:
+                        self.both_images_selected = True
+                   
+            #for postB
+            else:
+                self.user_selected_postB = file
+
+                if self.user_selected_bsa != "":
+                    same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
+                    if same_dir == False:
+                        self.user_selected_postB = ""
+                        file = "Error! Images must be from the same folder!"
+                    else:
+                        self.both_images_selected = True
+        else:
+            if num == 0:
+                self.user_selected_postB = ""
+            else:
+                self.user_selected_bsa = ""
+            file = "Error! Must select an image of type .png .jpg, .jpeg .tiff or .TIF"        
 
         #finding last / in the path
         val = file.rfind("/")
@@ -396,32 +424,38 @@ class Gui():
         else:
             return False
 
-    def configure_metadata(self,numchannels, barcode): 
-        
-        val = self.user_selected_bsa.rfind("/")
-        self.bsa_short = self.user_selected_bsa[val + 1: ]
-
-        val = self.user_selected_postB.rfind("/")
-        self.postB_short = self.user_selected_postB[val + 1: ]
-
+    def configure_metadata(self,numchannels, barcode):
         #retrieving variables from stored StringVar variables
         runID = self.run_identifier.get()
-        self.metadata = {
+        if runID != "" and self.both_images_selected:
+            val = self.user_selected_bsa.rfind("/")
+            self.bsa_short = self.user_selected_bsa[val + 1: ]
+
+            val = self.user_selected_postB.rfind("/")
+            self.postB_short = self.user_selected_postB[val + 1: ]
+
+            self.metadata = {
             "run": runID,
             "numChannels" : numchannels,
             "barcodes" : barcode
-        }
+            }
 
-        #setting excelName var, used later, to equal the user specifed run ID
-        self.excelName = runID
-        self.num_chan = int(numchannels)
-        self.barcodes = barcode
+            #setting excelName var, used later, to equal the user specifed run ID
+            self.excelName = runID
+            self.num_chan = int(numchannels)
+            self.barcodes = barcode
 
-        #calling method that puts images on canvas
-        self.configure_images()
+            #calling method that puts images on canvas
+            self.configure_images()
 
-        self.starting_window.destroy()
-        self.activateCrop_button['state'] = tk.ACTIVE
+            self.starting_window.destroy()
+            self.activateCrop_button['state'] = tk.ACTIVE
+
+        elif runID == "":
+            self.error_label.config(text = "Error! Enter a Run Identifier")
+
+        elif self.both_images_selected == False:
+            self.error_label.config(text = "Error! Must select proper BSA and postB Images!")
 
     #populates the canvas of the main page with the BSA image
     def configure_images(self):
@@ -1375,7 +1409,10 @@ class Gui():
             path = os.path.join(self.folder_selected, "spatial")
             os.mkdir(path)
         except FileExistsError:
+            print("there was an error")
             path = self.folder_selected + "/spatial"
+
+        print(path)
 
         barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         my_file = open(barcode_file,"r")
