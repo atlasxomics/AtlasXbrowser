@@ -61,7 +61,7 @@ class Gui():
         self.newWindow.config(menu=menu)
         filemenu = tk.Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-        #filemenu.add_command(label="Open Image Folder", command=self.get_folder)
+ 
         filemenu.add_command(label="Open Image Folder", command=self.load_images)
         filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
         filemenu.add_command(label="New Instance", command=self.restart)
@@ -232,142 +232,91 @@ class Gui():
 
 
     def load_images(self):
-
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
         self.starting_window_height = 400
         self.starting_window_width = self.starting_window_origwidth
         self.starting_window.geometry("600x400")
-       
+
+        x_padding = 2
+
         #defining a label to identify the option of selecting the BSA stained image
-        label1 = tk.Label(self.starting_window, text = "Select BSA stained image.", font = ("Courier", 14))
-        label1.grid(row = 0, column = 0)
+        label1 = tk.Label(self.starting_window, 
+        text = "Select BSA stained image:", 
+        font = ("Courier", 14),
+        # width = 25
+        )
+        label1.grid(row = 0, column = 0, sticky = "e")
 
-        label2 = tk.Label(self.starting_window, text = "Select PostB image.", font = ("Courier", 14))
-        label2.grid(row = 1, column = 0)
-
-        #label to display the name of the selected BSA file to the user
-        label1a = tk.Label(self.starting_window)
-        label1a.grid(row = 0, column = 2)
-
-        #label to display the name of the selected postB file to user
-        label2a = tk.Label(self.starting_window)
-        label2a.grid(row = 1, column =2)
-
-
-         #initializing an attibute to be modifed by get_file command upon button click
+        #initializing an attibute to be modifed by get_file command upon button click
         self.user_selected_bsa = ""
         #button where user can select BSA
         bsa_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_file(0, label1a))
-        bsa_button.grid(row = 0, column = 1)
+        bsa_button.grid(row = 0, column = 1, sticky = "w")
+
+        #label to display the name of the selected BSA file to the user
+        label1a = tk.Label(self.starting_window)
+        label1a.grid(row = 0, column = 2, sticky = "w")
+
+
+        label2 = tk.Label(self.starting_window, 
+        text = "Select PostB image:", 
+        font = ("Courier", 14),
+        # width = 25,
+        )
+        label2.grid(row = 1, column = 0, sticky = "e")
 
         #attibute to store postB image file name
         self.user_selected_postB = ""
         #button where user can select postB
         postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_file(1, label2a))
-        postB_button.grid(row = 1, column = 1)
+        postB_button.grid(row = 1, column = 1, sticky = "w")
+
+        #label to display the name of the selected postB file to user
+        label2a = tk.Label(self.starting_window)
+        label2a.grid(row = 1, column =2, sticky = "w")
+
 
         self.run_identifier = tk.StringVar()
-        label3 = tk.Label(self.starting_window, text = "Run ID", font = ("Courier", 14))
-        entry_box = tk.Entry(self.starting_window, textvariable = self.run_identifier)
+        label3 = tk.Label(self.starting_window, 
+        text = "Run ID:", 
+        font = ("Courier", 14)
+        # width = 25
+        )
 
-        label3.grid(row = 2, column = 0)
-        entry_box.grid(row = 2, column = 1)
+        entry_box = tk.Entry(self.starting_window, textvariable = self.run_identifier,
+        )
 
-        # r_label = tk.Label(self.qWindow, text="Run: ", font =("Courier", 14)).place(x=20, y=10)
-        # r_entry = tk.Entry(self.qWindow, textvariable=self.r_clicked).place(x=200,y=10)
-
-        #variable to hold selected species
-        selected_species = tk.StringVar()
-        selected_species.set("Mouse")
-        #label to indicate the proper species should be selected
-        s_label = tk.Label(self.starting_window, text="Species: ", font =("Courier", 14))
-        #lising the available species to be chosen
-        species = [
-                "Mouse",
-                "Human",
-                "Rat",
-                "Hamster"
-            ]
-        #creating the option menu to allow user to choose species
-        s_drop = tk.OptionMenu(self.starting_window, selected_species, *species)
-
-        #placing species label and option menu
-        s_label.grid(row = 3, column = 0)
-        s_drop.grid(row = 3, column = 1)
-
-        tissue_type = tk.StringVar()
-        tissue_type.set("FF")
-        t_label = tk.Label(self.starting_window, text="Type: ", font =("Courier", 14))
-        type = [
-                "FF",
-                "FFPE",
-                "EFPE"
-        ]
-        t_drop = tk.OptionMenu(self.starting_window , tissue_type , *type)
-
-        t_label.grid(row = 4, column = 0)
-        t_drop.grid(row = 4, column = 1)
-
-        self.tissue_var = tk.StringVar()
-        self.tissue_var.set("Embryo")
-        o_label = tk.Label(self.starting_window, text="Tissue: ", font=("Courier", 14))
-        self.o_entry = tk.Entry(self.starting_window, textvariable=self.tissue_var)
-
-        o_label.grid(row = 5, column = 0)
-        self.o_entry.grid(row = 5, column = 1)
-
-        assay_selected = tk.StringVar()
-        assay_selected.set("mRNA")
-        a_label = tk.Label(self.starting_window, text="Assay: ", font =("Courier", 14))
-        assay = [
-                "mRNA",
-                "Protein",
-                "ATAC",
-                "H3K27me3",
-                "H3K4me3",
-                "H3K27ac"
-        ]
-        a_drop = tk.OptionMenu(self.starting_window , assay_selected , *assay)
-
-        a_label.grid(row = 6, column = 0)
-        a_drop.grid(row = 6, column = 1)
-
-        self.collaborator = tk.StringVar()
-        self.collaborator.set("AtlasXomics")
-        c_label = tk.Label(self.starting_window, text="Collaborator: ", font=("Courier", 14))
-        c_entry = tk.Entry(self.starting_window, textvariable=self.collaborator)
-
-        c_label.grid(row = 7, column = 0)
-        c_entry.grid(row = 7, column = 1)
-
-        trimming_status = tk.StringVar()
-        trimming_status.set("Yes")
-        tr_label = tk.Label(self.starting_window, text="Trimming: ", font =("Courier", 14))
-        trim = [
-                "Yes",
-                "No"
-        ]
-        tr_drop = tk.OptionMenu(self.starting_window , trimming_status, *trim)
-        tr_label.grid(row = 8, column = 0)
-        tr_drop.grid(row = 8, column = 1)
+        label3.grid(row = 2, column = 0, sticky = "e")
+        entry_box.grid(row = 2, column = 1, sticky = "w")
         
         num_channels = tk.StringVar()
         num_channels.set("50")
-        n_label = tk.Label(self.starting_window, text="Num Channels: ", font =("Courier", 14))
+        n_label = tk.Label(self.starting_window, text="Num Channels: ", 
+        font =("Courier", 14)
+        # width = 25,
+        # anchor = "e"
+        )
+
         chan = [
                 "50",
                 "100"
         ]
         n_drop = tk.OptionMenu(self.starting_window , num_channels , *chan)
 
-        n_label.grid(row = 9, column = 0)
-        n_drop.grid(row = 9, column = 1)
+        n_label.grid(row = 3, column = 0, sticky = "e")
+        n_drop.grid(row = 3, column = 1, sticky = "w", padx = x_padding)
 
         barcode_choice = tk.StringVar()
         barcode_choice.set("1")
-        b_label = tk.Label(self.starting_window, text="Barcode: ", font =("Courier", 14))
+        b_label = tk.Label(self.starting_window, 
+        text="Barcode: ", 
+        font =("Courier", 14)
+        # width = 25,
+        # anchor = "e"
+        )
+
         barcodes = [
                     "1",
                     "2",
@@ -375,20 +324,17 @@ class Gui():
         ]
         b_drop = tk.OptionMenu(self.starting_window , barcode_choice , *barcodes)
 
-        b_label.grid(row = 10, column = 0)
-        b_drop.grid(row = 10, column = 1)    
+        b_label.grid(row = 4, column = 0, sticky = "e")
+        b_drop.grid(row = 4, column = 1, sticky = "w", padx = x_padding)    
         
         #button = tk.Button(self.starting_window, text = "Submit", command = print(entry_box.get()))
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata(
-            species = selected_species.get(),
-            tissue_prep = tissue_type.get(),
-            assay = assay_selected.get(),
-            trimming = trimming_status.get(),
             numchannels= num_channels.get(),
             barcode=barcode_choice.get()
             ))
-        button.grid(row = 12, column = 1)
-        # button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=320, anchor=tk.SE)
+
+        
+        button.grid(row = 5, column = 1, sticky = "w", pady = 20)
 
     #method used to allow users to retrieve required image file. num is a 0 or 1 referring to whether the user is selecting a 
     #BSA or postB image respectively, and the label refers to the Label object to be updated by the name upon retrieval
@@ -450,7 +396,7 @@ class Gui():
         else:
             return False
 
-    def configure_metadata(self, species, tissue_prep, assay, trimming, numchannels, barcode): 
+    def configure_metadata(self,numchannels, barcode): 
         
         val = self.user_selected_bsa.rfind("/")
         self.bsa_short = self.user_selected_bsa[val + 1: ]
@@ -458,21 +404,10 @@ class Gui():
         val = self.user_selected_postB.rfind("/")
         self.postB_short = self.user_selected_postB[val + 1: ]
 
-        # self.names.append(bsa_filename)
-        # self.names.append(postb_filename)
-
         #retrieving variables from stored StringVar variables
         runID = self.run_identifier.get()
-        tissue = self.tissue_var.get()
-        collabor = self.collaborator.get()
         self.metadata = {
             "run": runID,
-            "species": species,
-            "type" : tissue_prep,
-            "tissue": tissue,
-            "assay": assay,
-            "collaborator": collabor,
-            "trimming" : trimming,
             "numChannels" : numchannels,
             "barcodes" : barcode
         }
@@ -720,17 +655,6 @@ class Gui():
         if iteration < 0:
             degree = -1 * degree
 
-        # self.metadata = {"run": self.r_clicked.get(),
-        #                 "species": self.s_clicked.get(), 
-        #                  "type": self.t_clicked.get(),
-        #                  "tissue": self.o_clicked.get(),
-        #                  "assay": self.a_clicked.get(),
-        #                  "collaborator": self.c_clicked.get(),
-        #                  "trimming": self.tr_clicked.get(),
-        #                  "numChannels": self.n_clicked.get(),
-        #                  "barcodes": self.b_clicked.get(),
-        #                  "orientation": {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
-        #                 }
         self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
         self.up['state'] = tk.DISABLED
@@ -779,18 +703,6 @@ class Gui():
 
         copy(source + "/" + self.bsa_short, self.figure_folder)
         copy(source + "/" + self.postB_short, self.figure_folder)
-
-        # for i in self.names:
-        #     #cropping the bsa image based on user cropping
-        #     if "bsa" in i.lower():
-        #         image1 = Image.open(self.figure_folder+"/"+i)   
-        #         im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-        #         bsa = im1.save(self.figure_folder+"/"+i)
-        #     #cropping the postb image based on user cropping
-        #     elif "postb" in i.lower() and "bsa" not in i.lower():
-        #         image = Image.open(self.figure_folder+"/"+i)
-        #         im2 = image.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-        #         post = im2.save(self.figure_folder+"/"+i)
             
         self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
         image1 = Image.open(self.bsa_figure_path)
@@ -812,14 +724,6 @@ class Gui():
         self.image_updated['state'] = tk.ACTIVE
         self.confirmCrop_button['state'] = tk.DISABLED
 
-        
-        # for i in self.names:
-        #     #checking for the postb non-bsa image
-        #     if "bsa" in i.lower():
-        #         bsa_name = self.figure_folder+"/"+i
-        #         bsa_img = Image.open(bsa_name)
-        #         #storing non-bsa image as b
-        #         b = bsa_img
 
         b = im1
 
@@ -907,200 +811,7 @@ class Gui():
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
         self.lmain.configure(image=imgtk)
-        
 
-    #Show Metadata window
-    def question_window(self):
-        self.qWindow = tk.Toplevel(self.newWindow)
-        self.qWindow.title("Meta Data")
-        self.qWindow.geometry('%dx%d+%d+%d' % (400, 350, 500, 0))
-        #flag to test if both images are present
-        both_images_flag = 0
-        for i in self.names:
-            if "bsa" in i.lower():
-                beforeA = Image.open(self.folder_selected + "/" + i)
-                a = beforeA
-                self.bsa_Name = self.folder_selected + "/" + i
-                self.bar["value"] = 20
-                self.pWindow.update()
-                self.bar["value"] = 30
-                self.pWindow.update()
-                both_images_flag+=1
-            elif "postb" in i.lower() and "bsa" not in i.lower():
-                self.postB_Name = self.folder_selected + "/" + i
-                both_images_flag+=1
-        #if both BSA and postb images are present in the folder
-        if both_images_flag==2:
-            #take width and height of the bsa
-            w, h = (a.width, a.height)
-            newH = self.screen_height - 60
-            #find ratio of 60 less than screenheight to the image height
-            self.factor = newH/h
-            #use ratio to calcuate the new width
-            newW = int(round(w*newH/h))
-            #resize the bsa image based on these calculations
-            bsa = a.resize((newW, newH), Image.ANTIALIAS)
-            self.qwimga = ImageTk.PhotoImage(bsa)
-
-            self.bar["value"] = 60
-            self.pWindow.update()
-
-            temp = re.compile("/(d[0-9]+)")
-            try:
-                res = temp.search(self.bsa_Name.lower()).groups()
-                self.excelName = res[0].upper() 
-            except:
-                self.excelName = "Test"
-
-            #name at top of atlasbrowser will be frist name group from image
-            self.newWindow.title("Atlas Browser (" + self.excelName+")")
-
-            self.bar["value"] = 70
-            self.pWindow.update()
-
-            img = cv2.imread(self.bsa_Name, cv2.IMREAD_UNCHANGED)
-            self.bar["value"] = 80
-            self.pWindow.update()
-
-            self.bar["value"] = 90
-            self.pWindow.update()
-            
-
-            self.bar["value"] = 100
-            self.pWindow.update()
-            self.pWindow.destroy()
-
-            
-            #update canvas and frame
-            
-            #changing canvas width and height to be same as bsa images
-            self.my_canvas.config(width = bsa.width, height= bsa.height)
-            self.lmain.pack_forget()
-            self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
-            self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
-            self.right_canvas.config(width = bsa.width + 300, height= h)
-
-            if 'metadata.json' in self.names:
-                f = open(self.folder_selected + "/metadata.json")
-                self.metadata = json.load(f)
-                self.num_chan = int(self.metadata['numChannels'])
-                os.remove(self.folder_selected + "/metadata.json")
-                self.r_clicked = tk.StringVar()
-                self.r_clicked.set(self.metadata['run'])
-                self.s_clicked = tk.StringVar()
-                self.s_clicked.set(self.metadata['species'])
-                self.t_clicked = tk.StringVar()
-                self.t_clicked.set(self.metadata['type'])
-                self.o_clicked = tk.StringVar()
-                self.o_clicked.set(self.metadata['tissue'])
-                self.a_clicked = tk.StringVar()
-                self.a_clicked.set(self.metadata['assay'])
-                self.c_clicked = tk.StringVar()
-                self.c_clicked.set(self.metadata['collaborator'])
-                self.tr_clicked = tk.StringVar()
-                self.tr_clicked.set(self.metadata['trimming'])
-                self.n_clicked = tk.StringVar()
-                self.n_clicked.set(self.metadata['numChannels'])
-                self.b_clicked = tk.StringVar()
-                self.b_clicked.set(1)
-                
-
-            else:
-                self.r_clicked = tk.StringVar()
-                self.r_clicked.set(self.excelName)
-                self.s_clicked = tk.StringVar()
-                self.s_clicked.set("Mouse")
-                self.t_clicked = tk.StringVar()
-                self.t_clicked.set("FF")
-                self.o_clicked = tk.StringVar()
-                self.o_clicked.set("Embryo")
-                self.a_clicked = tk.StringVar()
-                self.a_clicked.set("mRNA")
-                self.c_clicked = tk.StringVar()
-                self.c_clicked.set("Atlas")
-                self.tr_clicked = tk.StringVar()
-                self.tr_clicked.set("No")
-                self.n_clicked = tk.StringVar()
-                self.n_clicked.set(50)
-                self.b_clicked = tk.StringVar()
-                self.b_clicked.set(1)
-                
-
-            
-            r_label = tk.Label(self.qWindow, text="Run: ", font =("Courier", 14)).place(x=20, y=10)
-            r_entry = tk.Entry(self.qWindow, textvariable=self.r_clicked).place(x=200,y=10)
-
-            s_label = tk.Label(self.qWindow, text="Species: ", font =("Courier", 14)).place(x=20, y=45)
-            species = [
-                "Mouse",
-                "Human",
-                "Rat",
-                "Hamster"
-            ]
-            s_drop = tk.OptionMenu(self.qWindow , self.s_clicked , *species).place(x=200,y=45)
-
-            t_label = tk.Label(self.qWindow, text="Type: ", font =("Courier", 14)).place(x=20, y=80)
-            type = [
-                "FF",
-                "FFPE",
-                "EFPE"
-            ]
-            t_drop = tk.OptionMenu(self.qWindow , self.t_clicked , *type).place(x=200,y=80)
-
-            o_label = tk.Label(self.qWindow, text="Tissue: ", font=("Courier", 14)).place(x=20, y=115)
-            o_entry = tk.Entry(self.qWindow, textvariable=self.o_clicked).place(x=200, y=115)
-
-            a_label = tk.Label(self.qWindow, text="Assay: ", font =("Courier", 14)).place(x=20, y=150)
-            assay = [
-                "mRNA",
-                "Protein",
-                "ATAC",
-                "H3K27me3",
-                "H3K4me3",
-                "H3K27ac"
-            ]
-            a_drop = tk.OptionMenu(self.qWindow , self.a_clicked , *assay).place(x=200,y=150)
-
-            c_label = tk.Label(self.qWindow, text="Collaborator: ", font=("Courier", 14)).place(x=20, y=185)
-            c_entry = tk.Entry(self.qWindow, textvariable=self.c_clicked).place(x=200, y=185)
-
-            tr_label = tk.Label(self.qWindow, text="Trimming: ", font =("Courier", 14)).place(x=20, y=220)
-            trim = [
-                "Yes",
-                "No"
-            ]
-            tr_drop = tk.OptionMenu(self.qWindow , self.tr_clicked , *trim).place(x=200,y=220)
-
-            n_label = tk.Label(self.qWindow, text="Num Channels: ", font =("Courier", 14)).place(x=20, y=255)
-            chan = [
-                "50",
-                "100"
-            ]
-            n_drop = tk.OptionMenu(self.qWindow , self.n_clicked , *chan).place(x=200,y=255)
-
-            b_label = tk.Label(self.qWindow, text="Barcode: ", font =("Courier", 14)).place(x=20, y=290)
-            barcodes = [
-                    "1",
-                    "2",
-                    "3"
-            ]
-            b_drop = tk.OptionMenu(self.qWindow , self.b_clicked , *barcodes).place(x=200,y=290)
-
-            
-
-            button = tk.Button(self.qWindow, text='Submit', font =("Courier", 14), command = self.update_meta).place(x=370, y=320, anchor=tk.SE)
-
-        else:
-            mb.showwarning("Error", "The necessary images (postB and BSA) are not present")
-            self.pWindow.destroy()
-        
-
-    def update_meta(self):
-        if self.r_clicked.get() == "":
-            self.r_clicked.set("Test")
-        self.num_chan = int(self.n_clicked.get())
-        self.qWindow.destroy()
-        self.activateCrop_button['state'] = tk.ACTIVE
 
     # "Open spatial folder" window
     def second_window(self):
