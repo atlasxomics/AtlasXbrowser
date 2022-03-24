@@ -220,6 +220,9 @@ class Gui():
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
         self.position_file.place(relx=.11, rely= .9)
 
+        #A list to store the order in which rotations and reflections are complete
+        self.rotation_order = []
+
 
         
 
@@ -342,9 +345,6 @@ class Gui():
     #method used to allow users to retrieve required image file. num is a 0 or 1 referring to whether the user is selecting a 
     #BSA or postB image respectively, and the label refers to the Label object to be updated by the name upon retrieval
     def get_file(self, num, label):
-        
-        
-
         #allow user to select file
         file = askopenfilename()
 
@@ -356,11 +356,6 @@ class Gui():
         #flag set to false, as unsure what the user will select
         self.both_images_selected = False
 
-
-        if file.lower().endswith(".TIF"):
-            print("ITS A TIF")
-        else:
-            print("NOT A TIF")
 
         #ensuring that the selected file is an image file
         if file.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".tif")):
@@ -459,10 +454,14 @@ class Gui():
 
     #populates the canvas of the main page with the BSA image
     def configure_images(self):
-
         a = Image.open(self.user_selected_bsa)
         w, h = (a.width, a.height)
         newH = self.screen_height - 60
+
+        self.image_array = cv2.imread(self.user_selected_bsa, 0)
+        print(len(self.image_array))
+        self.rotation_matrix = np.identity(len(self.image_array))
+
         #find ratio of 60 less than screenheight to the image height
         self.factor = newH/h
         #use ratio to calcuate the new width
@@ -470,7 +469,6 @@ class Gui():
         #resize the bsa image based on these calculations
         bsa = a.resize((newW, newH), Image.ANTIALIAS)
         self.qwimga = ImageTk.PhotoImage(bsa)
-
         #setting canvas height and width based on the size of images
         self.my_canvas.config(width = bsa.width, height= bsa.height)
         self.lmain.pack_forget()
@@ -529,8 +527,6 @@ class Gui():
                 if file.startswith(".") == False:
                      self.names.append(file)
 
-            
-
             try:
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
@@ -552,17 +548,6 @@ class Gui():
 
     #Initalize images that will be in container 
     def init_images(self):
-        #obtaining BSA and postb images from folder
-        # for i in self.names:
-        #     if "bsa" in i.lower():
-        #         BSA_name = self.figure_folder + "/" + i
-        #         beforeA = Image.open(BSA_name)
-        #         a = beforeA
-
-        #     elif "postb" in i.lower() and "bsa" not in i.lower():
-        #         postB_Name = self.figure_folder + "/" + i
-        #         beforeB = Image.open(postB_Name)
-        #         b = beforeB
 
         #opening images directly from previously stored path
         a = Image.open(self.bsa_figure_path)
@@ -580,7 +565,8 @@ class Gui():
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
         self.refactor = a
-        self.newWidth = floor.width ; self.newHeight = floor.height
+        self.newWidth = floor.width 
+        self.newHeight = floor.height
 
         img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
 
@@ -612,6 +598,8 @@ class Gui():
             self.lmain.configure(image=imgtk)
             self.cropped_image = updated
             self.rotated_degree+=-90
+            self.rotation_order.append(90)
+
         if num == 1:
             updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
             formatted = Image.fromarray(updated)
@@ -621,6 +609,8 @@ class Gui():
             self.lmain.configure(image=imgtk)
             self.cropped_image = updated
             self.rotated_degree+=90
+            self.rotation_order.append(270)
+
         if num == 2:
             updated = cv2.flip(self.cropped_image, 0)
             formatted = Image.fromarray(updated)
@@ -633,6 +623,8 @@ class Gui():
                 self.flipped_vert = True
             else: 
                 self.flipped_vert = False
+            
+            self.rotation_order.append("x")
         if num == 3:
             updated = cv2.flip(self.cropped_image, 1)
             formatted = Image.fromarray(updated)
@@ -646,6 +638,8 @@ class Gui():
             else: 
                 self.flipped_horz = False
 
+            self.rotation_order.append("y")
+
     #Update postB and BSA images to new image orientation 
     def image_position(self):
         #obtaining how many rotations given to image
@@ -658,36 +652,118 @@ class Gui():
 
         pic_names = [self.bsa_figure_path, self.postB_figure_path]
 
-        for i in pic_names:
-            try:
-                # if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
-                img = cv2.imread(i, cv2.IMREAD_UNCHANGED)
-                rotate = img
-                if iteration < 0:
-                    for x in range(abs(degree)):
-                        rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                        img = rotate
-                elif iteration > 0:
-                    for y in range(abs(degree)):
-                        rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-                        img = rotate
+        image = cv2.imread(self.bsa_figure_path)
+        image1 = cv2.imread(self.postB_figure_path)
+        (h,w) = image.shape[:2]
+        print(h)
+        print(w)
+        cX, cY = (w // 2, h//2)
 
-                if self.flipped_vert == True and self.flipped_horz == True:
-                    once = cv2.flip(rotate,0)
-                    flipped = cv2.flip(once,1)
-                elif self.flipped_horz == True and self.flipped_vert == False:
-                    flipped = cv2.flip(rotate,1)
-                elif self.flipped_vert == True and self.flipped_horz == False:
-                    flipped = cv2.flip(rotate,0)
-                elif self.flipped_vert == False and self.flipped_horz == False:
-                    flipped = rotate
 
-                cv2.imwrite(i, flipped)
+        integer = True
+        if (len(self.rotation_order) != 0):
+            if isinstance(self.rotation_order[0], str):
+                integer = False
+                print("INTEGER IS FALSE")
+        index = 0
+        degrees_rotated = 0
+        x_flip = False
+        y_flip = False
+        while index < len(self.rotation_order):
+            #checking if the current element being read in is an integer (meaning a rotation)
+            if isinstance(self.rotation_order[index], int):
+                #adding the degrees of rotation to the running total
+                degrees_rotated += self.rotation_order[index]
+                
+                if integer == False:
+                    #must flip image according to x,y_flip
+                    if x_flip and y_flip:
+                        image = cv2.flip(image, -1)
+                        print("flipping both")
+                    elif y_flip:
+                        image = cv2.flip(image, 1)
+                        print("flipping y axis")
+                    elif x_flip:
+                        image = cv2.flip(image, 0)
+                        print("flipping x axis")
 
-            except IsADirectoryError:
-                pass
-        if iteration < 0:
-            degree = -1 * degree
+                    x_flip = False
+                    y_flip = False
+
+                if index == len(self.rotation_order) - 1:
+                    degrees = degrees_rotated % 360
+                    if degrees != 0:
+                        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+                        print("rotating" + str(degrees))
+                        image = cv2.warpAffine(image, M, (w,h))
+
+
+            #else meaning the current element is a string
+            else:
+                if self.rotation_order[index] == "x":
+                    x_flip = not x_flip
+                    print(x_flip)
+                else:
+                    y_flip = not y_flip
+                #coming from integer
+                if integer:
+                    #must rotate degrees_rotated degrees
+                    degrees = self.rotated_degree % 360
+                    if degrees != 0:
+                        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+                        image = cv2.warpAffine(image, M, (w,h))
+                        print("rotating" + str(degrees))
+                        degrees_rotated = 0
+
+                if index == len(self.rotation_order) - 1:
+                    if x_flip and y_flip:
+                        print("flipping box axes")
+                        image = cv2.flip(image, -1)
+                    elif y_flip:
+                        print("flipping y axis")
+                        image = cv2.flip(image, 1)
+                    elif x_flip:
+                        print("flipping x axis")
+                        image = cv2.flip(image, 0)
+
+            index+=1
+
+                
+
+        # for i in pic_names:
+        #     try:
+        #         # if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
+        #         img = cv2.imread(i, cv2.IMREAD_UNCHANGED)
+        #         rotate = img
+
+        #         if iteration < 0:
+        #             for x in range(abs(degree)):
+        #                 rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        #                 img = rotate
+        #         elif iteration > 0:
+        #             for y in range(abs(degree)):
+        #                 rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        #                 img = rotate
+
+        #         if self.flipped_vert == True and self.flipped_horz == True:
+        #             once = cv2.flip(rotate,0)
+        #             flipped = cv2.flip(once,1)
+        #         elif self.flipped_horz == True and self.flipped_vert == False:
+        #             flipped = cv2.flip(rotate,1)
+        #         elif self.flipped_vert == True and self.flipped_horz == False:
+        #             flipped = cv2.flip(rotate,0)
+        #         elif self.flipped_vert == False and self.flipped_horz == False:
+        #             flipped = rotate
+
+
+
+        #         cv2.imwrite(i, flipped)
+
+        #     except IsADirectoryError:
+        #         pass
+        # if iteration < 0:
+        #     degree = -1 * degree
+        cv2.imwrite(self.bsa_figure_path, image)
 
         self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
