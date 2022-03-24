@@ -459,7 +459,6 @@ class Gui():
         newH = self.screen_height - 60
 
         self.image_array = cv2.imread(self.user_selected_bsa, 0)
-        print(len(self.image_array))
         self.rotation_matrix = np.identity(len(self.image_array))
 
         #find ratio of 60 less than screenheight to the image height
@@ -643,22 +642,21 @@ class Gui():
     #Update postB and BSA images to new image orientation 
     def image_position(self):
         #obtaining how many rotations given to image
-        iteration = self.rotated_degree/90
-        if abs(iteration) >= 4:
-            multiplier = abs(int(iteration/4))
-            degree = int(abs(iteration)-(4*multiplier))
-        else:
-            degree = int(iteration)
+        # iteration = self.rotated_degree/90
+        # if abs(iteration) >= 4:
+        #     multiplier = abs(int(iteration/4))
+        #     degree = int(abs(iteration)-(4*multiplier))
+        # else:
+        #     degree = int(iteration)
 
-        pic_names = [self.bsa_figure_path, self.postB_figure_path]
+        #pic_names = [self.bsa_figure_path, self.postB_figure_path]
 
         image = cv2.imread(self.bsa_figure_path)
         image1 = cv2.imread(self.postB_figure_path)
         (h,w) = image.shape[:2]
-        print(h)
-        print(w)
         cX, cY = (w // 2, h//2)
 
+        print(self.rotation_order)
 
         integer = True
         if (len(self.rotation_order) != 0):
@@ -669,6 +667,7 @@ class Gui():
         degrees_rotated = 0
         x_flip = False
         y_flip = False
+
         while index < len(self.rotation_order):
             #checking if the current element being read in is an integer (meaning a rotation)
             if isinstance(self.rotation_order[index], int):
@@ -679,52 +678,61 @@ class Gui():
                     #must flip image according to x,y_flip
                     if x_flip and y_flip:
                         image = cv2.flip(image, -1)
-                        print("flipping both")
+                        image1 = cv2.flip(image1, -1)
+
                     elif y_flip:
                         image = cv2.flip(image, 1)
-                        print("flipping y axis")
+                        image1 = cv2.flip(image1, 1)
+
                     elif x_flip:
                         image = cv2.flip(image, 0)
-                        print("flipping x axis")
+                        image1 = cv2.flip(image1, 0)
+
 
                     x_flip = False
                     y_flip = False
 
                 if index == len(self.rotation_order) - 1:
+                    
                     degrees = degrees_rotated % 360
                     if degrees != 0:
                         M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-                        print("rotating" + str(degrees))
                         image = cv2.warpAffine(image, M, (w,h))
+                        image1 = cv2.warpAffine(image1, M, (w,h))
 
-
+                integer = True
+                    
             #else meaning the current element is a string
             else:
                 if self.rotation_order[index] == "x":
                     x_flip = not x_flip
-                    print(x_flip)
                 else:
                     y_flip = not y_flip
                 #coming from integer
                 if integer:
                     #must rotate degrees_rotated degrees
-                    degrees = self.rotated_degree % 360
+                    degrees = degrees_rotated % 360
+                    
                     if degrees != 0:
                         M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
                         image = cv2.warpAffine(image, M, (w,h))
-                        print("rotating" + str(degrees))
+                        image1 = cv2.warpAffine(image1, M, (w,h))
                         degrees_rotated = 0
 
                 if index == len(self.rotation_order) - 1:
                     if x_flip and y_flip:
-                        print("flipping box axes")
+
                         image = cv2.flip(image, -1)
+                        image1 = cv2.flip(image1, -1)
                     elif y_flip:
-                        print("flipping y axis")
+  
                         image = cv2.flip(image, 1)
+                        image1 = cv2.flip(image1, 1)
                     elif x_flip:
-                        print("flipping x axis")
+ 
                         image = cv2.flip(image, 0)
+                        image1 = cv2.flip(image1, 0)
+                integer = False
 
             index+=1
 
@@ -764,8 +772,9 @@ class Gui():
         # if iteration < 0:
         #     degree = -1 * degree
         cv2.imwrite(self.bsa_figure_path, image)
+        cv2.imwrite(self.postB_figure_path, image1)
 
-        self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
+        #self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
         self.up['state'] = tk.DISABLED
         self.left['state'] = tk.DISABLED
@@ -801,7 +810,6 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
-        print(self.figure_folder)
 
         #source is the source folder of the spatial images
         source = self.folder_selected
@@ -1488,7 +1496,6 @@ class Gui():
             print("there was an error")
             path = self.folder_selected + "/spatial"
 
-        print(path)
 
         barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         my_file = open(barcode_file,"r")
