@@ -129,16 +129,16 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
-        uparrow = Image.open("up.png")
-        bg3 = ImageTk.PhotoImage(uparrow)
-        self.up = tk.Button(self.rotateframe, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
-        self.up.image = bg3
-        self.up.pack(side=tk.LEFT)
-        leftarrow = Image.open("leftarrow.png")
-        bg4 = ImageTk.PhotoImage(leftarrow)
-        self.flip = tk.Button(self.rotateframe, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
-        self.flip.image = bg4
-        self.flip.pack(side=tk.LEFT)
+        # uparrow = Image.open("up.png")
+        # bg3 = ImageTk.PhotoImage(uparrow)
+        # self.up = tk.Button(self.rotateframe, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
+        # self.up.image = bg3
+        # self.up.pack(side=tk.LEFT)
+        # leftarrow = Image.open("leftarrow.png")
+        # bg4 = ImageTk.PhotoImage(leftarrow)
+        # self.flip = tk.Button(self.rotateframe, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
+        # self.flip.image = bg4
+        # self.flip.pack(side=tk.LEFT)
         
 
         #create Scales
@@ -596,7 +596,8 @@ class Gui():
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
             self.cropped_image = updated
-            self.rotated_degree+=-90
+            # self.rotated_degree+=-90
+            self.rotated_degree += 90
             self.rotation_order.append(90)
 
         if num == 1:
@@ -607,37 +608,38 @@ class Gui():
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
             self.cropped_image = updated
-            self.rotated_degree+=90
+            # self.rotated_degree+=90
+            self.rotated_degree += 270
             self.rotation_order.append(270)
 
-        if num == 2:
-            updated = cv2.flip(self.cropped_image, 0)
-            formatted = Image.fromarray(updated)
-            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(sized)
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
-            self.cropped_image = updated
-            if self.flipped_vert == False:
-                self.flipped_vert = True
-            else: 
-                self.flipped_vert = False
+        # if num == 2:
+        #     updated = cv2.flip(self.cropped_image, 0)
+        #     formatted = Image.fromarray(updated)
+        #     sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        #     imgtk = ImageTk.PhotoImage(sized)
+        #     self.lmain.image = imgtk
+        #     self.lmain.configure(image=imgtk)
+        #     self.cropped_image = updated
+        #     if self.flipped_vert == False:
+        #         self.flipped_vert = True
+        #     else: 
+        #         self.flipped_vert = False
             
-            self.rotation_order.append("x")
-        if num == 3:
-            updated = cv2.flip(self.cropped_image, 1)
-            formatted = Image.fromarray(updated)
-            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(sized)
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
-            self.cropped_image = updated
-            if self.flipped_horz == False:
-                self.flipped_horz = True
-            else: 
-                self.flipped_horz = False
+        #     self.rotation_order.append("x")
+        # if num == 3:
+        #     updated = cv2.flip(self.cropped_image, 1)
+        #     formatted = Image.fromarray(updated)
+        #     sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        #     imgtk = ImageTk.PhotoImage(sized)
+        #     self.lmain.image = imgtk
+        #     self.lmain.configure(image=imgtk)
+        #     self.cropped_image = updated
+        #     if self.flipped_horz == False:
+        #         self.flipped_horz = True
+        #     else:
+        #         self.flipped_horz = False
 
-            self.rotation_order.append("y")
+        #     self.rotation_order.append("y")
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
@@ -654,87 +656,97 @@ class Gui():
         image = cv2.imread(self.bsa_figure_path)
         image1 = cv2.imread(self.postB_figure_path)
         (h,w) = image.shape[:2]
-        cX, cY = (w // 2, h//2)
 
-        print(self.rotation_order)
+        (h1, w1) = image.shape[:2]
 
-        integer = True
-        if (len(self.rotation_order) != 0):
-            if isinstance(self.rotation_order[0], str):
-                integer = False
-                print("INTEGER IS FALSE")
-        index = 0
-        degrees_rotated = 0
-        x_flip = False
-        y_flip = False
+        print("BSA: " + str(h) + " " + str(w))
+        print("postB: " + str(h1) + " " + str(w1))
 
-        while index < len(self.rotation_order):
-            #checking if the current element being read in is an integer (meaning a rotation)
-            if isinstance(self.rotation_order[index], int):
-                #adding the degrees of rotation to the running total
-                degrees_rotated += self.rotation_order[index]
+        cX, cY = (w // 2, h //2)
+        degrees = self.rotated_degree % 360
+        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        image = cv2.warpAffine(image, M, (w,h))
+        image1 = cv2.warpAffine(image1, M, (w,h))
+
+        # print(self.rotation_order)
+
+        # integer = True
+        # if (len(self.rotation_order) != 0):
+        #     if isinstance(self.rotation_order[0], str):
+        #         integer = False
+        #         print("INTEGER IS FALSE")
+        # index = 0
+        # degrees_rotated = 0
+        # x_flip = False
+        # y_flip = False
+
+        # while index < len(self.rotation_order):
+        #     #checking if the current element being read in is an integer (meaning a rotation)
+        #     if isinstance(self.rotation_order[index], int):
+        #         #adding the degrees of rotation to the running total
+        #         degrees_rotated += self.rotation_order[index]
                 
-                if integer == False:
-                    #must flip image according to x,y_flip
-                    if x_flip and y_flip:
-                        image = cv2.flip(image, -1)
-                        image1 = cv2.flip(image1, -1)
+        #         if integer == False:
+        #             #must flip image according to x,y_flip
+        #             if x_flip and y_flip:
+        #                 image = cv2.flip(image, -1)
+        #                 image1 = cv2.flip(image1, -1)
 
-                    elif y_flip:
-                        image = cv2.flip(image, 1)
-                        image1 = cv2.flip(image1, 1)
+        #             elif y_flip:
+        #                 image = cv2.flip(image, 1)
+        #                 image1 = cv2.flip(image1, 1)
 
-                    elif x_flip:
-                        image = cv2.flip(image, 0)
-                        image1 = cv2.flip(image1, 0)
+        #             elif x_flip:
+        #                 image = cv2.flip(image, 0)
+        #                 image1 = cv2.flip(image1, 0)
 
 
-                    x_flip = False
-                    y_flip = False
+        #             x_flip = False
+        #             y_flip = False
 
-                if index == len(self.rotation_order) - 1:
+        #         if index == len(self.rotation_order) - 1:
                     
-                    degrees = degrees_rotated % 360
-                    if degrees != 0:
-                        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-                        image = cv2.warpAffine(image, M, (w,h))
-                        image1 = cv2.warpAffine(image1, M, (w,h))
+        #             degrees = degrees_rotated % 360
+        #             if degrees != 0:
+        #                 M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        #                 image = cv2.warpAffine(image, M, (w,h))
+        #                 image1 = cv2.warpAffine(image1, M, (w,h))
 
-                integer = True
+        #         integer = True
                     
-            #else meaning the current element is a string
-            else:
-                if self.rotation_order[index] == "x":
-                    x_flip = not x_flip
-                else:
-                    y_flip = not y_flip
-                #coming from integer
-                if integer:
-                    #must rotate degrees_rotated degrees
-                    degrees = degrees_rotated % 360
+        #     #else meaning the current element is a string
+        #     else:
+        #         if self.rotation_order[index] == "x":
+        #             x_flip = not x_flip
+        #         else:
+        #             y_flip = not y_flip
+        #         #coming from integer
+        #         if integer:
+        #             #must rotate degrees_rotated degrees
+        #             degrees = degrees_rotated % 360
                     
-                    if degrees != 0:
-                        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-                        image = cv2.warpAffine(image, M, (w,h))
-                        image1 = cv2.warpAffine(image1, M, (w,h))
-                        degrees_rotated = 0
+        #             if degrees != 0:
+        #                 M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        #                 image = cv2.warpAffine(image, M, (w,h))
+        #                 image1 = cv2.warpAffine(image1, M, (w,h))
+        #                 degrees_rotated = 0
 
-                if index == len(self.rotation_order) - 1:
-                    if x_flip and y_flip:
+        #         if index == len(self.rotation_order) - 1:
+        #             if x_flip and y_flip:
 
-                        image = cv2.flip(image, -1)
-                        image1 = cv2.flip(image1, -1)
-                    elif y_flip:
+        #                 image = cv2.flip(image, -1)
+        #                 image1 = cv2.flip(image1, -1)
+        #             elif y_flip:
   
-                        image = cv2.flip(image, 1)
-                        image1 = cv2.flip(image1, 1)
-                    elif x_flip:
+        #                 image = cv2.flip(image, 1)
+        #                 image1 = cv2.flip(image1, 1)
+        #             elif x_flip:
  
-                        image = cv2.flip(image, 0)
-                        image1 = cv2.flip(image1, 0)
-                integer = False
+        #                 image = cv2.flip(image, 0)
+        #                 image1 = cv2.flip(image1, 0)
+        #         integer = False
 
-            index+=1
+        #     index+=1
 
                 
 
@@ -776,10 +788,10 @@ class Gui():
 
         #self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
-        self.up['state'] = tk.DISABLED
+        # self.up['state'] = tk.DISABLED
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
-        self.flip['state'] = tk.DISABLED
+        # self.flip['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateThresh_button['state'] = tk.ACTIVE
 
@@ -835,10 +847,10 @@ class Gui():
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
 
-        self.up['state'] = tk.ACTIVE
+        # self.up['state'] = tk.ACTIVE
         self.left['state'] = tk.ACTIVE
         self.right['state'] = tk.ACTIVE
-        self.flip['state'] = tk.ACTIVE
+        # self.flip['state'] = tk.ACTIVE
         self.image_updated['state'] = tk.ACTIVE
         self.confirmCrop_button['state'] = tk.DISABLED
 
@@ -1493,7 +1505,6 @@ class Gui():
             path = os.path.join(self.folder_selected, "spatial")
             os.mkdir(path)
         except FileExistsError:
-            print("there was an error")
             path = self.folder_selected + "/spatial"
 
 
