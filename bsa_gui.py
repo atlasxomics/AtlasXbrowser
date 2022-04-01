@@ -247,7 +247,7 @@ class Gui():
 
         #defining a label to identify the option of selecting the BSA stained image
         label1 = tk.Label(self.starting_window, 
-        text = "Select BSA stained image:", 
+        text = "Select BSA image:", 
         font = ("Courier", 14),
         # width = 25
         )
@@ -363,29 +363,20 @@ class Gui():
             if num == 0:
                 self.user_selected_bsa = file
                 if self.user_selected_postB != "":
-                    same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-                    if same_dir == False:
-                        file = "Error! Images must be stored in the same folder!"
-                        self.user_selected_bsa = ""
-                    else:
-                        self.both_images_selected = True
+                    self.both_images_selected = True
                    
             #for postB
             else:
                 self.user_selected_postB = file
 
                 if self.user_selected_bsa != "":
-                    same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-                    if same_dir == False:
-                        self.user_selected_postB = ""
-                        file = "Error! Images must be from the same folder!"
-                    else:
-                        self.both_images_selected = True
+                    self.both_images_selected = True
+                        
         else:
             if num == 0:
-                self.user_selected_postB = ""
-            else:
                 self.user_selected_bsa = ""
+            else:
+                self.user_selected_postB = ""
             file = "Error! Must select an image of type .png .jpg, .jpeg .tiff or .TIF"        
 
         #finding last / in the path
@@ -405,6 +396,8 @@ class Gui():
         #updating the label to display name
         label.config(text = display_name)
 
+        print(file)
+
     #method for checking whether the two photos selected by the the user are within the same folder
     def check_dirs(self, bsa_path, postB_path):
         last_back = bsa_path.rfind("/")
@@ -413,6 +406,9 @@ class Gui():
         last_back = postB_path.rfind("/")
         postB_folder = postB_path[:last_back]
 
+        print("bsa folder " + bsa_folder)
+        print("postB folder " + postB_folder)
+
         if bsa_folder == postB_folder:
             self.folder_selected = bsa_folder
             return True
@@ -420,37 +416,47 @@ class Gui():
             return False
 
     def configure_metadata(self,numchannels, barcode):
-        #retrieving variables from stored StringVar variables
-        runID = self.run_identifier.get()
-        if runID != "" and self.both_images_selected:
-            val = self.user_selected_bsa.rfind("/")
-            self.bsa_short = self.user_selected_bsa[val + 1: ]
 
-            val = self.user_selected_postB.rfind("/")
-            self.postB_short = self.user_selected_postB[val + 1: ]
+        same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
+        print(same_dir)
 
-            self.metadata = {
-            "run": runID,
-            "numChannels" : numchannels,
-            "barcodes" : barcode
-            }
+        if same_dir:
+            #retrieving variables from stored StringVar variables
+            runID = self.run_identifier.get()
+            print("runID " + runID)
+            if runID != "" and self.both_images_selected:
+                val = self.user_selected_bsa.rfind("/")
+                self.bsa_short = self.user_selected_bsa[val + 1: ]
 
-            #setting excelName var, used later, to equal the user specifed run ID
-            self.excelName = runID
-            self.num_chan = int(numchannels)
-            self.barcodes = barcode
+                val = self.user_selected_postB.rfind("/")
+                self.postB_short = self.user_selected_postB[val + 1: ]
 
-            #calling method that puts images on canvas
-            self.configure_images()
+                self.metadata = {
+                "run": runID,
+                "numChannels" : numchannels,
+                "barcodes" : barcode
+                }
 
-            self.starting_window.destroy()
-            self.activateCrop_button['state'] = tk.ACTIVE
+                #setting excelName var, used later, to equal the user specifed run ID
+                self.excelName = runID
+                self.num_chan = int(numchannels)
+                self.barcodes = barcode
 
-        elif runID == "":
-            self.error_label.config(text = "Error! Enter a Run Identifier")
+                #calling method that puts images on canvas
+                self.configure_images()
 
-        elif self.both_images_selected == False:
-            self.error_label.config(text = "Error! Must select proper BSA and postB Images!")
+                self.starting_window.destroy()
+                self.activateCrop_button['state'] = tk.ACTIVE
+
+                self.newWindow.title("Atlas Browser (" + runID + ")")
+
+            elif runID == "":
+                self.error_label.config(text = "Error! Enter a Run Identifier")
+
+            elif self.both_images_selected == False:
+                self.error_label.config(text = "Error! Must select BSA and postB Images!")
+        else:
+            self.error_label.config(text = "Images must be located in the same directory!")
 
     #populates the canvas of the main page with the BSA image
     def configure_images(self):
