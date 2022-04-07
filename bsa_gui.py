@@ -649,16 +649,6 @@ class Gui():
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
-        #obtaining how many rotations given to image
-        # iteration = self.rotated_degree/90
-        # if abs(iteration) >= 4:
-        #     multiplier = abs(int(iteration/4))
-        #     degree = int(abs(iteration)-(4*multiplier))
-        # else:
-        #     degree = int(iteration)
-
-        #pic_names = [self.bsa_figure_path, self.postB_figure_path]
-
         image = cv2.imread(self.bsa_figure_path)
         image1 = cv2.imread(self.postB_figure_path)
         (h,w) = image.shape[:2]
@@ -674,130 +664,15 @@ class Gui():
         image = cv2.warpAffine(image, M, (w,h))
         image1 = cv2.warpAffine(image1, M, (w,h))
 
-        # print(self.rotation_order)
-
-        # integer = True
-        # if (len(self.rotation_order) != 0):
-        #     if isinstance(self.rotation_order[0], str):
-        #         integer = False
-        #         print("INTEGER IS FALSE")
-        # index = 0
-        # degrees_rotated = 0
-        # x_flip = False
-        # y_flip = False
-
-        # while index < len(self.rotation_order):
-        #     #checking if the current element being read in is an integer (meaning a rotation)
-        #     if isinstance(self.rotation_order[index], int):
-        #         #adding the degrees of rotation to the running total
-        #         degrees_rotated += self.rotation_order[index]
-                
-        #         if integer == False:
-        #             #must flip image according to x,y_flip
-        #             if x_flip and y_flip:
-        #                 image = cv2.flip(image, -1)
-        #                 image1 = cv2.flip(image1, -1)
-
-        #             elif y_flip:
-        #                 image = cv2.flip(image, 1)
-        #                 image1 = cv2.flip(image1, 1)
-
-        #             elif x_flip:
-        #                 image = cv2.flip(image, 0)
-        #                 image1 = cv2.flip(image1, 0)
-
-
-        #             x_flip = False
-        #             y_flip = False
-
-        #         if index == len(self.rotation_order) - 1:
-                    
-        #             degrees = degrees_rotated % 360
-        #             if degrees != 0:
-        #                 M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-        #                 image = cv2.warpAffine(image, M, (w,h))
-        #                 image1 = cv2.warpAffine(image1, M, (w,h))
-
-        #         integer = True
-                    
-        #     #else meaning the current element is a string
-        #     else:
-        #         if self.rotation_order[index] == "x":
-        #             x_flip = not x_flip
-        #         else:
-        #             y_flip = not y_flip
-        #         #coming from integer
-        #         if integer:
-        #             #must rotate degrees_rotated degrees
-        #             degrees = degrees_rotated % 360
-                    
-        #             if degrees != 0:
-        #                 M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-        #                 image = cv2.warpAffine(image, M, (w,h))
-        #                 image1 = cv2.warpAffine(image1, M, (w,h))
-        #                 degrees_rotated = 0
-
-        #         if index == len(self.rotation_order) - 1:
-        #             if x_flip and y_flip:
-
-        #                 image = cv2.flip(image, -1)
-        #                 image1 = cv2.flip(image1, -1)
-        #             elif y_flip:
-  
-        #                 image = cv2.flip(image, 1)
-        #                 image1 = cv2.flip(image1, 1)
-        #             elif x_flip:
- 
-        #                 image = cv2.flip(image, 0)
-        #                 image1 = cv2.flip(image1, 0)
-        #         integer = False
-
-        #     index+=1
-
-                
-
-        # for i in pic_names:
-        #     try:
-        #         # if 'image' in magic.from_file(self.figure_folder+"/"+i,mime= True):
-        #         img = cv2.imread(i, cv2.IMREAD_UNCHANGED)
-        #         rotate = img
-
-        #         if iteration < 0:
-        #             for x in range(abs(degree)):
-        #                 rotate = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        #                 img = rotate
-        #         elif iteration > 0:
-        #             for y in range(abs(degree)):
-        #                 rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        #                 img = rotate
-
-        #         if self.flipped_vert == True and self.flipped_horz == True:
-        #             once = cv2.flip(rotate,0)
-        #             flipped = cv2.flip(once,1)
-        #         elif self.flipped_horz == True and self.flipped_vert == False:
-        #             flipped = cv2.flip(rotate,1)
-        #         elif self.flipped_vert == True and self.flipped_horz == False:
-        #             flipped = cv2.flip(rotate,0)
-        #         elif self.flipped_vert == False and self.flipped_horz == False:
-        #             flipped = rotate
-
-
-
-        #         cv2.imwrite(i, flipped)
-
-        #     except IsADirectoryError:
-        #         pass
-        # if iteration < 0:
-        #     degree = -1 * degree
         cv2.imwrite(self.bsa_figure_path, image)
         cv2.imwrite(self.postB_figure_path, image1)
 
+        self.metadata["orientation"] = {"rotation": degrees}
+
         #self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
-        # self.up['state'] = tk.DISABLED
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
-        # self.flip['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateThresh_button['state'] = tk.ACTIVE
 
