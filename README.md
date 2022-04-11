@@ -1,14 +1,14 @@
-# AtlasBrowser
+# AtlasXBrowser
 #################################################################################
 
 Interactive browser for AtlasXomics Data
 
-This is designed as an interactive browser for processing AtlasXomics image Data
+This software is designed as an interactive browser for processing AtlasXomics image Data
 
 ## Download
 
-    git clone https://github.com/atlasxomics/AtlasBrowser.git
-    cd AtlasBrowser
+    git clone https://github.com/atlasxomics/AtlasXBrowser.git
+    cd AtlasXBrowser
     git clone https://github.com/formazione/Azure-ttk-theme
 
 ## Dependencies
@@ -41,8 +41,8 @@ To get python installed:
 
 Update to the latest version before running
 
-    cd AtlasBrowser
-    git pull https://github.com/atlasxomics/AtlasBrowser.git
+    cd AtlasXBrowser
+    git pull https://github.com/atlasxomics/AtlasXBrowser.git
     
 Run the program with following command:
 
