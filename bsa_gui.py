@@ -46,7 +46,7 @@ class Gui():
         self.newWindow = root
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
-        self.newWindow.title("Atlas Browser")
+        self.newWindow.title("AtlasXbrowser")
         self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
 
         style = ttk.Style(root)
@@ -404,7 +404,7 @@ class Gui():
                 self.starting_window.destroy()
                 self.activateCrop_button['state'] = tk.ACTIVE
 
-                self.newWindow.title("Atlas Browser (" + runID + ")")
+                self.newWindow.title("AtlasXbrowser (" + runID + ")")
 
             elif runID == "":
                 self.error_label.config(text = "Error! Enter a Run Identifier")
@@ -530,7 +530,7 @@ class Gui():
         self.newHeight = floor.height 
 
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
-        
+
         flippedImage = img
 
         try:
@@ -793,7 +793,7 @@ class Gui():
         except KeyError:
             self.excelName = "Test"
 
-        self.newWindow.title("Atlas Browser (" + self.excelName+")")
+        self.newWindow.title("AtlasXbrowser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
         a = Image.open(self.postB_Name)
