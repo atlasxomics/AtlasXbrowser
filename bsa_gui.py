@@ -527,10 +527,10 @@ class Gui():
 
         self.refactor = a
         self.newWidth = floor.width 
-        self.newHeight = floor.height
+        self.newHeight = floor.height 
 
-        img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
-
+        img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
+        
         flippedImage = img
 
         try:
