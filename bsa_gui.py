@@ -19,7 +19,6 @@ import numpy as np
 import matplotlib
 import matplotlib.cm
 from shutil import copy, move, rmtree, copytree
-import magic
 from tkinter.filedialog import askopenfile, askopenfilename
 Image.MAX_IMAGE_PIXELS = None
 
@@ -438,36 +437,6 @@ class Gui():
         self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
         self.right_canvas.config(width = bsa.width + 300, height= h)
 
-   #Ability to grab files from specified folder 'Image folder'
-    def get_folder(self):
-        #accessing user specified image folder
-        self.folder_selected = filedialog.askdirectory()
-        
-        #checking to ensure folder is not empty
-        if self.folder_selected != '':
-            self.pWindow = tk.Toplevel(self.newWindow)
-            self.pWindow.title("Loading images...")
-            self.pWindow.geometry("400x90")
-            self.bar = ttk.Progressbar(self.pWindow, orient="horizontal", length=360)
-            self.bar.pack(pady=30)
-            self.bar["value"] += 10
-            self.pWindow.update_idletasks()
-            self.pWindow.update()
-
-            #appending names of BSA image files to self.names
-            for file in os.listdir(self.folder_selected):
-                if file.startswith(".") == False:
-                    try:
-                        if 'image' in magic.from_file(self.folder_selected+"/"+file,mime= True) and "postb" in file.lower():
-                            self.names.append(file)
-                    except IsADirectoryError:
-                        pass
-
-            self.question_window()
-            
-        else:
-            #Add error mesage
-            pass
 
     #Ability to grab files from specified folder 'Spatial folder'
     def get_spatial(self):
