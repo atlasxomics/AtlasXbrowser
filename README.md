@@ -9,33 +9,46 @@ This software is designed as an interactive browser for processing AtlasXomics i
 
     git clone https://github.com/atlasxomics/AtlasXBrowser.git
     cd AtlasXBrowser
-    git clone https://github.com/formazione/Azure-ttk-theme
 
 ## Dependencies
+Due to the numerous dependencies as well as the requirement of running Python 3.7, we reccomend the usage of Anaconda.
+If Anaconda is not currently installed on your system see the following https://docs.anaconda.com/anaconda/install/index.html.
 
-Need python 3.7. Follow steps below to install required libraries (Mac OS X):
-  
-    sudo easy_install pip (admin)
-    pip install scipy
-    pip install seaborn
-    pip install tifffile
-    pip install jsbeautifier
-    pip install pandas
-    pip install pillow
-    pip install matplotlib
-    pip install opencv-python
+To ensure conda is installed run:
 
-Get pip installed if not admin
+    conda --version
 
-    curl https://bootstrap.pypa.io/get-pip.py -o ~/Downloads/get-pip.py
-    python3 ~/Downloads/get-pip.py --user
-    export PATH="/Users/YOUR_USAER_NAME/.local/bin:$PATH"
+Upon running the command with no errors, ensure conda is running the latest distribution by running:
+    
+    conda update conda
 
-To get python installed:
+To create an enviroment running Python 3.7, run:
 
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    export PATH="/usr/local/opt/python/libexec/bin:$PATH"
-    brew install python@3.7
+    conda create --name py37 python=3.7
+    
+Where "py37" is any desired name of the enviroment.
+
+To activate the enviroment:
+    
+    conda deactivate
+    conda activate py37
+    
+To ensure the proper version of python is being run enter:
+
+    python --version
+
+This should return Python 3.7.xx. If If this is not the case, deactivate the conda enviroment using "conda deactivate'. Repeat this command until there is no conda enviorment listed at the left side of the terminal and then reactivate the enviroment.
+
+Once the conda enviroment is setup and running, run the following commands to install the required packages.
+
+      conda install -c conda-forge scipy
+      conda install -c conda-forge seaborn
+      conda install -c conda-forge tifffile
+      conda install -c conda-forge jsbeautifier
+      conda install -c conda-forge pandas
+      conda install -c conda-forge pillow
+      conda install -c conda-forge matplotlib
+      conda install -c fastai opencv-python-headless
     
 ## Usage
 
@@ -48,30 +61,4 @@ Run the program with following command:
 
     python ABrowser.py
 
-## Input data
-
-The input image folder contains either
-
-    Dxx_postB.tif
-    Dxx_postB_BSA.tif
-
-or a 'spatial' folder contains following files for updating the position file
-
-    tissue_hires_image.png
-    tissue_lowres_image.png
-    scalefactors_json.json
-    tissue_positions_list.csv
-    metadata.json
-    
- ## Operation tips
- 
-1. Image filenames have to be Dxx_postB and Dxx_postB_BSA with extentisions
-2. If the ROI is too small in the image, you may want to crop both images then register them in the terminal
-   
-   ```
-   python regimg.py -r Dxx_postB.tif -i Dxx_postB_BSA.tif -o registered_BSA.tif
-   mv registered_BSA.tif Dxx_postB_BSA.tif
-   ```
-   
-3. Images are automatically flipped from left to right by the software, no need to flip them manually
-4. You will need to rotate both images 90 degree counter-clockwise if it is from keyence
+See the documentation for more details about using AtlasXbrowser
