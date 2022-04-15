@@ -46,7 +46,7 @@ class Gui():
         self.newWindow = root
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
-        self.newWindow.title("Atlas Browser")
+        self.newWindow.title("AtlasXbrowser")
         self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
 
         style = ttk.Style(root)
@@ -129,16 +129,6 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
-        # uparrow = Image.open("up.png")
-        # bg3 = ImageTk.PhotoImage(uparrow)
-        # self.up = tk.Button(self.rotateframe, image=bg3, command= lambda:self.image_axis(2), state=tk.DISABLED)
-        # self.up.image = bg3
-        # self.up.pack(side=tk.LEFT)
-        # leftarrow = Image.open("leftarrow.png")
-        # bg4 = ImageTk.PhotoImage(leftarrow)
-        # self.flip = tk.Button(self.rotateframe, image=bg4, command= lambda:self.image_axis(3), state=tk.DISABLED)
-        # self.flip.image = bg4
-        # self.flip.pack(side=tk.LEFT)
         
 
         #create Scales
@@ -297,39 +287,9 @@ class Gui():
         
         num_channels = tk.StringVar()
         num_channels.set("50")
-        n_label = tk.Label(self.starting_window, text="Num Channels: ", 
-        font =("Courier", 14)
-        # width = 25,
-        # anchor = "e"
-        )
-
-        chan = [
-                "50",
-                "100"
-        ]
-        n_drop = tk.OptionMenu(self.starting_window , num_channels , *chan)
-
-        n_label.grid(row = 3, column = 0, sticky = "e")
-        n_drop.grid(row = 3, column = 1, sticky = "w", padx = x_padding)
 
         barcode_choice = tk.StringVar()
         barcode_choice.set("1")
-        b_label = tk.Label(self.starting_window, 
-        text="Barcode: ", 
-        font =("Courier", 14)
-        # width = 25,
-        # anchor = "e"
-        )
-
-        barcodes = [
-                    "1",
-                    "2",
-                    "3"
-        ]
-        b_drop = tk.OptionMenu(self.starting_window , barcode_choice , *barcodes)
-
-        b_label.grid(row = 4, column = 0, sticky = "e")
-        b_drop.grid(row = 4, column = 1, sticky = "w", padx = x_padding)    
         
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata(
             numchannels= num_channels.get(),
@@ -350,7 +310,6 @@ class Gui():
 
         #if the user selects to cancel file selection then nothing changes
         if file == "":
-            print("selection cancelled")
             return
 
         #flag set to false, as unsure what the user will select
@@ -396,7 +355,7 @@ class Gui():
         #updating the label to display name
         label.config(text = display_name)
 
-        print(file)
+
 
     #method for checking whether the two photos selected by the the user are within the same folder
     def check_dirs(self, bsa_path, postB_path):
@@ -406,8 +365,6 @@ class Gui():
         last_back = postB_path.rfind("/")
         postB_folder = postB_path[:last_back]
 
-        print("bsa folder " + bsa_folder)
-        print("postB folder " + postB_folder)
 
         if bsa_folder == postB_folder:
             self.folder_selected = bsa_folder
@@ -418,12 +375,11 @@ class Gui():
     def configure_metadata(self,numchannels, barcode):
 
         same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-        print(same_dir)
+
 
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
-            print("runID " + runID)
             if runID != "" and self.both_images_selected:
                 val = self.user_selected_bsa.rfind("/")
                 self.bsa_short = self.user_selected_bsa[val + 1: ]
@@ -448,7 +404,7 @@ class Gui():
                 self.starting_window.destroy()
                 self.activateCrop_button['state'] = tk.ACTIVE
 
-                self.newWindow.title("Atlas Browser (" + runID + ")")
+                self.newWindow.title("AtlasXbrowser (" + runID + ")")
 
             elif runID == "":
                 self.error_label.config(text = "Error! Enter a Run Identifier")
@@ -571,9 +527,9 @@ class Gui():
 
         self.refactor = a
         self.newWidth = floor.width 
-        self.newHeight = floor.height
+        self.newHeight = floor.height 
 
-        img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
 
         flippedImage = img
 
@@ -655,8 +611,6 @@ class Gui():
 
         (h1, w1) = image.shape[:2]
 
-        print("BSA: " + str(h) + " " + str(w))
-        print("postB: " + str(h1) + " " + str(w1))
 
         cX, cY = (w // 2, h //2)
         degrees = self.rotated_degree % 360
@@ -839,7 +793,7 @@ class Gui():
         except KeyError:
             self.excelName = "Test"
 
-        self.newWindow.title("Atlas Browser (" + self.excelName+")")
+        self.newWindow.title("AtlasXbrowser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
         a = Image.open(self.postB_Name)
