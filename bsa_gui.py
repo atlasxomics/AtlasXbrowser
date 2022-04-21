@@ -574,8 +574,13 @@ class Gui():
 
     #Rotate and flip the images
     def image_axis(self, num):
+        (h,w) = self.cropped_image.shape[:2]
+        cX, cY = (w // 2, h //2)
+
         if num == 0:
-            updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
+            updated = cv2.warpAffine(self.cropped_image, M, (w,h))
+            # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
             formatted = Image.fromarray(updated)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
@@ -587,7 +592,9 @@ class Gui():
             self.rotation_order.append(90)
 
         if num == 1:
-            updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
+            M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
+            updated = cv2.warpAffine(self.cropped_image, M, (w,h))
+            # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
             formatted = Image.fromarray(updated)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
@@ -597,35 +604,6 @@ class Gui():
             # self.rotated_degree+=90
             self.rotated_degree += 270
             self.rotation_order.append(270)
-
-        # if num == 2:
-        #     updated = cv2.flip(self.cropped_image, 0)
-        #     formatted = Image.fromarray(updated)
-        #     sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        #     imgtk = ImageTk.PhotoImage(sized)
-        #     self.lmain.image = imgtk
-        #     self.lmain.configure(image=imgtk)
-        #     self.cropped_image = updated
-        #     if self.flipped_vert == False:
-        #         self.flipped_vert = True
-        #     else: 
-        #         self.flipped_vert = False
-            
-        #     self.rotation_order.append("x")
-        # if num == 3:
-        #     updated = cv2.flip(self.cropped_image, 1)
-        #     formatted = Image.fromarray(updated)
-        #     sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        #     imgtk = ImageTk.PhotoImage(sized)
-        #     self.lmain.image = imgtk
-        #     self.lmain.configure(image=imgtk)
-        #     self.cropped_image = updated
-        #     if self.flipped_horz == False:
-        #         self.flipped_horz = True
-        #     else:
-        #         self.flipped_horz = False
-
-        #     self.rotation_order.append("y")
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
