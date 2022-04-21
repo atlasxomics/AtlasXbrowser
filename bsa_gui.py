@@ -579,8 +579,9 @@ class Gui():
         if num == 0:
             M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
             updated = cv2.warpAffine(self.cropped_image, M, (w,h))
+            I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
             # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            formatted = Image.fromarray(updated)
+            formatted = Image.fromarray(I)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
             self.lmain.image = imgtk
@@ -593,8 +594,9 @@ class Gui():
         if num == 1:
             M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
             updated = cv2.warpAffine(self.cropped_image, M, (w,h))
+            I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
             # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
-            formatted = Image.fromarray(updated)
+            formatted = Image.fromarray(I)
             sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(sized)
             self.lmain.image = imgtk
