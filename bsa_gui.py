@@ -315,14 +315,14 @@ class Gui():
             f = open(file, "r")
             contents = f.readlines()
             total_num = len(contents)
-            print(total_num)
+
             #taking square root of number of barcodes
             barcodes = math.sqrt(total_num)
-            print(barcodes)
+
 
             #ensuring this is a whole number, indicating proper barcode file
             if barcodes - int(barcodes) == 0:
-                print("square num")
+
                 self.num_chan = int(barcodes)
                 #finding name of file
                 val = file.rfind("/")
@@ -332,7 +332,7 @@ class Gui():
                 self.resize_popup(display_name, label)
                 #setting class variable
                 self.barcode_filename = file
-                print(self.barcode_filename)
+   
                 self.barcode_file_selected = True
 
             # if the sqrt is not a whole number, we know this is not a proper barcode file
@@ -512,6 +512,7 @@ class Gui():
                      self.names.append(file)
 
             try:
+                self.barcode_file_spatial = open(self.folder_selected + "/barcode_file.txt")
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
                 self.num_chan = int(self.metadata['numChannels'])
@@ -1394,6 +1395,7 @@ class Gui():
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
+        shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
         mb.showinfo("Congratulations!", "The spatial folder is created!")
         
 
@@ -1429,7 +1431,8 @@ class Gui():
                     "blockSize": sel,
                     "threshold": sec,
                     "numTixels": self.numTixels,
-                    "rawHeight": self.rawHeight}
+                    "rawHeight": self.rawHeight,
+                    "numChannels": self.num_chan}
         metaDict.update(self.metadata)
         
         json_object = json.dumps(dictionary, indent = 4)
