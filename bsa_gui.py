@@ -6,6 +6,8 @@ from tkinter.constants import DISABLED
 from PIL import Image, ImageTk, ImageGrab
 import os
 import csv
+
+from sympy import false
 from draggable_quad import DrawShapes
 from draggable_square import DrawSquare
 from tkinter import filedialog
@@ -83,8 +85,7 @@ class Gui():
         self.check_on.set(0)
         self.quad_coords = [0]
         self.rotated_degree = 0
-        self.flipped_vert = False
-        self.flipped_horz = False
+
 
         self.ROILocated = False
         
@@ -225,6 +226,7 @@ class Gui():
 
     def load_images(self):
         self.both_images_selected = False
+        self.barcode_file_selected = False
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
@@ -242,10 +244,10 @@ class Gui():
         )
         label1.grid(row = 0, column = 0, sticky = "e")
 
-        #initializing an attibute to be modifed by get_file command upon button click
+        #initializing an attibute to be modifed by get_image_file command upon button click
         self.user_selected_bsa = ""
         #button where user can select BSA
-        bsa_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_file(0, label1a))
+        bsa_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(0, label1a))
         bsa_button.grid(row = 0, column = 1, sticky = "w")
 
         #label to display the name of the selected BSA file to the user
@@ -259,20 +261,32 @@ class Gui():
         # width = 25,
         )
         label2.grid(row = 1, column = 0, sticky = "e")
+        #label to display the name of the selected postB file to user
+
+        label2a = tk.Label(self.starting_window)
+        label2a.grid(row = 1, column =2, sticky = "w")
 
         #attibute to store postB image file name
         self.user_selected_postB = ""
         #button where user can select postB
-        postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_file(1, label2a))
+        postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
         postB_button.grid(row = 1, column = 1, sticky = "w")
 
-        #label to display the name of the selected postB file to user
-        label2a = tk.Label(self.starting_window)
-        label2a.grid(row = 1, column =2, sticky = "w")
+
+        label3 = tk.Label(self.starting_window,
+        text = "Select Barcode File:",
+        font = ("Courier", 14))
+        label3.grid(row = 2, column = 0, sticky = "e")
+
+        label3a = tk.Label(self.starting_window)
+        label3a.grid(row = 2, column = 2, sticky = "w")
+
+        barcode_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_barcode_file(label3a))
+        barcode_button.grid(row = 2, column = 1, sticky = "w")
 
 
         self.run_identifier = tk.StringVar()
-        label3 = tk.Label(self.starting_window, 
+        label4 = tk.Label(self.starting_window, 
         text = "Run ID:", 
         font = ("Courier", 14)
         # width = 25
@@ -281,29 +295,83 @@ class Gui():
         entry_box = tk.Entry(self.starting_window, textvariable = self.run_identifier,
         )
 
-        label3.grid(row = 2, column = 0, sticky = "e")
-        entry_box.grid(row = 2, column = 1, sticky = "w")
+        label4.grid(row = 3, column = 0, sticky = "e")
+        entry_box.grid(row = 3, column = 1, sticky = "w")
         
-        num_channels = tk.StringVar()
-        num_channels.set("50")
-
-        barcode_choice = tk.StringVar()
-        barcode_choice.set("1")
-        
-        button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata(
-            numchannels= num_channels.get(),
-            barcode=barcode_choice.get()
-            ))
-
+        button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
         button.grid(row = 5, column = 1, sticky = "w", pady = 20)
 
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
 
+    def get_barcode_file(self, label):
+        #taking file path
+        file = askopenfilename()
+        if file == "":
+            return 
+
+        #checking if able to readlines of file
+        try:
+            f = open(file, "r")
+            contents = f.readlines()
+            total_num = len(contents)
+            print(total_num)
+            #taking square root of number of barcodes
+            barcodes = math.sqrt(total_num)
+            print(barcodes)
+
+            #ensuring this is a whole number, indicating proper barcode file
+            if barcodes - int(barcodes) == 0:
+                print("square num")
+                self.num_chan = int(barcodes)
+                #finding name of file
+                val = file.rfind("/")
+                #slicing string to only be image name, not full path
+                display_name = file[val + 1: ]
+                #resizing popup accordingly
+                self.resize_popup(display_name, label)
+                #setting class variable
+                self.barcode_filename = file
+                print(self.barcode_filename)
+                self.barcode_file_selected = True
+
+            # if the sqrt is not a whole number, we know this is not a proper barcode file
+            else:
+                print("Not valid barcode")
+                message = "Invalid barcode file, must include a proper number of barcodes."
+                self.resize_popup(message, label)
+                label.config(text = message)
+                self.barcode_file_selected = False
+
+        # if not output error message on screen and ask to select text file
+        except UnicodeDecodeError:
+            print("Unable to open file")
+            msg ="Invalid file type, must be of type .txt" 
+            self.resize_popup(msg, label)
+            label.config(text = msg)
+            self.barcode_file_selected = False
+        
+
+
+
+            
+    #method used to resize the popup window to ensure the user is able to see the name of the file they selected
+    def resize_popup(self, message, label):
+        leng = len(message)
+        #checking whether the length accomidated to this name is longer than current
+        potential_width  = self.starting_window_origwidth + (leng * 4)
+        current_width = self.starting_window.winfo_width()
+        if potential_width > current_width:
+            #if so the window is resized to this potential length
+            self.starting_window_width = potential_width
+            new_dims = str(self.starting_window_width) + "x" + str(self.starting_window_height)
+            self.starting_window.geometry(new_dims)
+        #adding the name of the message to the popup
+        label.config(text = message)
 
     #method used to allow users to retrieve required image file. num is a 0 or 1 referring to whether the user is selecting a 
     #BSA or postB image respectively, and the label refers to the Label object to be updated by the name upon retrieval
-    def get_file(self, num, label):
+    def get_image_file(self, num, label):
         #allow user to select file
         file = askopenfilename()
 
@@ -341,18 +409,8 @@ class Gui():
         val = file.rfind("/")
         #slicing string to only be image name, not full path
         display_name = file[val + 1: ]
-        leng = len(display_name)
         
-        #upon selecting image, checking to see if the window should enlarged to accomidate the text on screen
-        potential_width  = self.starting_window_origwidth + (leng * 4)
-        if potential_width > self.starting_window_width:
-            self.starting_window_width = potential_width
-            new_dims = str(self.starting_window_width) + "x" + str(self.starting_window_height)
-    
-            self.starting_window.geometry(new_dims)
-
-        #updating the label to display name
-        label.config(text = display_name)
+        self.resize_popup(display_name, label)
 
 
 
@@ -371,7 +429,7 @@ class Gui():
         else:
             return False
 
-    def configure_metadata(self,numchannels, barcode):
+    def configure_metadata(self):
 
         same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
 
@@ -379,7 +437,7 @@ class Gui():
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
-            if runID != "" and self.both_images_selected:
+            if runID != "" and self.both_images_selected and self.barcode_file_selected:
                 val = self.user_selected_bsa.rfind("/")
                 self.bsa_short = self.user_selected_bsa[val + 1: ]
 
@@ -387,15 +445,11 @@ class Gui():
                 self.postB_short = self.user_selected_postB[val + 1: ]
 
                 self.metadata = {
-                "run": runID,
-                "numChannels" : numchannels,
-                "barcodes" : barcode
+                "run": runID
                 }
 
                 #setting excelName var, used later, to equal the user specifed run ID
                 self.excelName = runID
-                self.num_chan = int(numchannels)
-                self.barcodes = barcode
 
                 #calling method that puts images on canvas
                 self.configure_images()
@@ -1311,9 +1365,8 @@ class Gui():
         except FileExistsError:
             path = self.folder_selected + "/spatial"
 
-
-        barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
-        my_file = open(barcode_file,"r")
+        #barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
+        my_file = open(self.barcode_filename,"r")
         excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
