@@ -7,7 +7,6 @@ from PIL import Image, ImageTk, ImageGrab
 import os
 import csv
 
-from sympy import false
 from draggable_quad import DrawShapes
 from draggable_square import DrawSquare
 from tkinter import filedialog
