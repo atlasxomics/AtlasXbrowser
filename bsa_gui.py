@@ -511,7 +511,7 @@ class Gui():
                      self.names.append(file)
 
             try:
-                self.barcode_file_spatial = open(self.folder_selected + "/barcode_file.txt")
+                # self.barcode_file_spatial = open(self.folder_selected + "/barcode_file.txt")
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
                 self.num_chan = int(self.metadata['numChannels'])
