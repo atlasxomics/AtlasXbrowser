@@ -1374,7 +1374,7 @@ class Gui():
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
-        shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
+        # shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
         mb.showinfo("Congratulations!", "The spatial folder is created!")
         
 
@@ -1429,22 +1429,27 @@ class Gui():
         p = open(self.folder_selected + "/metadata.json")
         meta = json.load(p)
 
-        barcode_file = "bc" + str(self.num_chan) + "v" + meta["barcodes"] + ".txt"
-        my_file = open(barcode_file,"r")
+        barcode_lis = []
+        with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
+            reader = csv.reader(csv_file, delimiter=",")
+
+            for row in reader:
+                curr_barcode = row[0]
+                barcode_lis.append(curr_barcode)
+            
+        csv_file.close()
+            
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
-                    barcode = my_file.readline().split('\t')
+                    
                     if self.arr[j][i] == 1:
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
+                        writer.writerow([barcode_lis[0].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
+                        writer.writerow([barcode_lis[0].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
 
-              
-        my_file.close()
         f.close()
-
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
