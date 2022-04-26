@@ -1441,13 +1441,16 @@ class Gui():
             
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
+
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     
+                    inx = (i * self.num_chan) + j
+                    print(barcode_lis[inx].strip())
                     if self.arr[j][i] == 1:
-                        writer.writerow([barcode_lis[0].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
+                        writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
-                        writer.writerow([barcode_lis[0].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
+                        writer.writerow([barcode_lis[inx].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
 
         f.close()
         meta['numTixels'] = self.numTixels
@@ -1455,6 +1458,8 @@ class Gui():
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
+        
+        mb.showinfo("Congratulations!", "The spatial folder has been updated!")
 
     #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
     def count(self,which):
