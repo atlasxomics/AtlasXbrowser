@@ -255,7 +255,6 @@ class Gui():
         x_padding = 2
 
         self.filemenu.entryconfig("Open Spatial Folder", state="disabled")
-        self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
 
         #defining a label to identify the option of selecting the BSA stained image
         label1 = tk.Label(self.starting_window, 
@@ -458,6 +457,9 @@ class Gui():
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
             if runID != "" and self.both_images_selected and self.barcode_file_selected:
+
+                self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+
                 val = self.user_selected_bsa.rfind("/")
                 self.bsa_short = self.user_selected_bsa[val + 1: ]
 
