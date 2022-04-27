@@ -68,14 +68,14 @@ class Gui():
         
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
-        filemenu = tk.Menu(menu)
-        menu.add_cascade(label="File", menu=filemenu)
+        self.filemenu = tk.Menu(menu)
+        menu.add_cascade(label="File", menu=self.filemenu)
  
-        filemenu.add_command(label="Begin Image Processing", command=self.load_images)
-        filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
-        filemenu.add_command(label="New Instance", command=self.restart)
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.destruct)
+        self.filemenu.add_command(label="Begin Image Processing", command=self.load_images)
+        self.filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
+        # filemenu.add_command(label="New Instance", command=self.restart)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit", command=self.destruct)
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command="")
@@ -253,6 +253,9 @@ class Gui():
         self.starting_window.geometry("600x400")
 
         x_padding = 2
+
+        self.filemenu.entryconfig("Open Spatial Folder", state="disabled")
+        self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
 
         #defining a label to identify the option of selecting the BSA stained image
         label1 = tk.Label(self.starting_window, 
@@ -482,6 +485,9 @@ class Gui():
 
             elif self.both_images_selected == False:
                 self.error_label.config(text = "Error! Must select BSA and postB Images!")
+            
+            elif self.barcode_file_selected == False:
+                self.error_label.config(text = "Error! Must select barcode file!")
         else:
             self.error_label.config(text = "Images must be located in the same directory!")
 
@@ -799,6 +805,10 @@ class Gui():
 
     # "Open spatial folder" window
     def second_window(self):
+
+        self.filemenu.entryconfig("Begin Image Processing", state="disabled")
+        self.filemenu.entryconfig("Open Spatial Folder", state="disabled")
+
         self.sendinfo_flag = False
         for i in self.names:
             if "meta" in i:
