@@ -21,6 +21,11 @@ import matplotlib
 import matplotlib.cm
 from shutil import copy, move, rmtree, copytree
 from tkinter.filedialog import askopenfile, askopenfilename
+
+import base64
+from encodedstring import *
+from io import BytesIO
+
 Image.MAX_IMAGE_PIXELS = None
 
 
@@ -50,13 +55,17 @@ class Gui():
         self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
 
         style = ttk.Style(root)
-        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
-        style.theme_use('azure')
+        # root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
+        # style.theme_use('azure')
 
-        background_image = Image.open("atlasbg.png")
+        pic = atlas_logo
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        background_image = Image.open(im_file)
+
         resized_image = background_image.resize((int(self.screen_width/1.5), self.screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
-
+        
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
         filemenu = tk.Menu(menu)
@@ -118,12 +127,22 @@ class Gui():
         self.rotateframe.place(relx=.11, rely=.10)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
         self.image_updated.pack(side=tk.BOTTOM)
-        rotateleft = Image.open("rotateleft.png")
+
+        pic = left_rotate
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        rotateleft = Image.open(im_file)
+
         bg = ImageTk.PhotoImage(rotateleft)
         self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
         self.left.image = bg
         self.left.pack(side=tk.LEFT)
-        rotateright = Image.open("rotateright.png")
+
+        pic = right_rotate
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        rotateright = Image.open(im_file)
+
         bg2 = ImageTk.PhotoImage(rotateright)
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
@@ -432,7 +451,6 @@ class Gui():
 
         same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
 
-
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
@@ -444,7 +462,8 @@ class Gui():
                 self.postB_short = self.user_selected_postB[val + 1: ]
 
                 self.metadata = {
-                "run": runID
+                "run": runID,
+                "barcode_file_orgin": self.barcode_filename
                 }
 
                 #setting excelName var, used later, to equal the user specifed run ID
@@ -511,7 +530,6 @@ class Gui():
                      self.names.append(file)
 
             try:
-                # self.barcode_file_spatial = open(self.folder_selected + "/barcode_file.txt")
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
                 self.num_chan = int(self.metadata['numChannels'])
@@ -625,8 +643,6 @@ class Gui():
         cv2.imwrite(self.postB_figure_path, image1)
 
         self.metadata["orientation"] = {"rotation": degrees}
-
-        #self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
@@ -949,6 +965,7 @@ class Gui():
 
         self.Rpoints = self.my_canvas.coords(self.c.current)
         self.quad_coords = self.my_canvas.coords(self.c.current)
+
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
@@ -1334,9 +1351,6 @@ class Gui():
                 self.arr[int(i)-1][int(j)] = 1
                 self.numTixels += 1
 
-        
-
-
     #Creates files for spatial folder
     def create_files(self):
         try:
@@ -1374,7 +1388,7 @@ class Gui():
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
-        shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
+        # shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
         mb.showinfo("Congratulations!", "The spatial folder is created!")
         
 
@@ -1429,28 +1443,39 @@ class Gui():
         p = open(self.folder_selected + "/metadata.json")
         meta = json.load(p)
 
-        barcode_file = "bc" + str(self.num_chan) + "v" + meta["barcodes"] + ".txt"
-        my_file = open(barcode_file,"r")
+
+        barcode_lis = []
+        with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
+            reader = csv.reader(csv_file, delimiter=",")
+
+            for row in reader:
+                curr_barcode = row[0]
+                barcode_lis.append(curr_barcode)
+            
+        csv_file.close()
+
+
+            
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
+
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
-                    barcode = my_file.readline().split('\t')
+                    
+                    inx = (i * self.num_chan) + j
                     if self.arr[j][i] == 1:
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
+                        writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
+                        writer.writerow([barcode_lis[inx].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
 
-              
-        my_file.close()
         f.close()
-
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
 
+        mb.showinfo("Congratulations!", "The spatial folder has been updated!")
     #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
     def count(self,which):
         name = ""
