@@ -5,6 +5,8 @@ Interactive browser for AtlasXomics Data
 
 This software is designed as an interactive browser for processing AtlasXomics image Data. To learn more about AtlasXbrowser please visit the documentation, https://docs.atlasxomics.com/projects/AtlasXbrowser/en/latest/.
 
+To use AtlasXbrowser, please download the most recent release: https://github.com/atlasxomics/AtlasXbrowser/releases. Executable file (AtlasXbrowser.tgz) is available for Mac OSX. Follow steps below if you prefer to run AtlasXbrowser as a python application from source code.
+
 ## Download
 
     git clone https://github.com/atlasxomics/AtlasXBrowser.git
