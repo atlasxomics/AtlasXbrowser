@@ -116,7 +116,7 @@ class Gui():
 
         #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
-        self.cropframe.place(relx=.11, rely=.01)
+        self.cropframe.place(relx=.11, rely=.00)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
         self.activateCrop_button.pack(side=tk.LEFT)
         self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
@@ -124,7 +124,7 @@ class Gui():
 
         #Rotation Panel
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
-        self.rotateframe.place(relx=.11, rely=.10)
+        self.rotateframe.place(relx=.11, rely=.09)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
         self.image_updated.pack(side=tk.BOTTOM)
 
@@ -151,7 +151,7 @@ class Gui():
 
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, rely=.23)
+        self.adframe.place(relx=.11, rely=.22)
 
         #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
