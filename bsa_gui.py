@@ -1539,7 +1539,11 @@ class Gui():
             c.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
 
         # colorBar
-        bar = Image.open("colorbar.png")
+        pic = color_bar
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        bar = Image.open(im_file)
+
         resized_bar = bar.resize((200, 40), Image.ANTIALIAS)
         color = ImageTk.PhotoImage(resized_bar)
         self.color_bar = tk.Label(self.cbframe, image=color)
