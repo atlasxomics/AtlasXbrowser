@@ -548,7 +548,7 @@ class Gui():
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
-        self.refactor = a
+        self.refactor = b
         self.newWidth = floor.width 
         self.newHeight = floor.height 
 
@@ -1446,7 +1446,7 @@ class Gui():
                 for j in range(self.num_chan):
                     
                     inx = (i * self.num_chan) + j
-                    print(barcode_lis[inx].strip())
+                    # print(barcode_lis[inx].strip())
                     if self.arr[j][i] == 1:
                         writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
