@@ -574,7 +574,7 @@ class Gui():
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
-        self.refactor = a
+        self.refactor = b
         self.newWidth = floor.width 
         self.newHeight = floor.height 
 
@@ -807,7 +807,6 @@ class Gui():
 
     # "Open spatial folder" window
     def second_window(self):
-
         self.filemenu.entryconfig("Begin Image Processing", state="disabled")
         self.filemenu.entryconfig("Open Spatial Folder", state="disabled")
 
