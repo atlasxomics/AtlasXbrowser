@@ -1,21 +1,20 @@
 {
     "points": [
-        37.800000000000004,
-        29.700000000000003,
-        1034.1000000000001,
-        40.5,
-        1021.95,
-        1031.4,
-        24.3,
-        1023.3000000000001
+        67.91666666666667,
+        92.36666666666667,
+        1060.8583333333333,
+        103.23333333333333,
+        1054.0666666666666,
+        1083.95,
+        61.125,
+        1081.2333333333333
     ],
-    "blockSize": 15,
-    "threshold": 10,
-    "numTixels": 2231,
-    "rawHeight": 1053,
+    "blockSize": 13,
+    "threshold": 11,
+    "numTixels": 2236,
+    "rawHeight": 1141,
     "numChannels": 50,
     "run": "D223",
-    "barcode_file_orgin": "/Users/liyaw/projects/AtlasXbrowser/data/bc50v1.txt",
     "orientation": {
         "rotation": 0
     }

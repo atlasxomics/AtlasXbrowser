@@ -174,7 +174,7 @@ class Gui():
         self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
 
-        self.gridA_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button = tk.Button(self.shframe, text = "ORG", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.pack(anchor='w')
 
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
@@ -831,7 +831,7 @@ class Gui():
         self.bar["value"] = 80
         self.pWindow.update()
         self.imgA = ImageTk.PhotoImage(floor)
-        self.picNames = [None, None]  
+        self.picNames = [self.imgA, None]  
 
 
         #update canvas and frame
@@ -853,7 +853,8 @@ class Gui():
         self.confirm_button['state'] = tk.DISABLED
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
-        self.grid_button["state"] = tk.DISABLED
+        self.grid_button["state"] = tk.ACTIVE
+        self.gridA_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.DISABLED
         self.check_on = tk.IntVar()
         self.check_on.set(0)
@@ -1006,7 +1007,8 @@ class Gui():
             self.activateThresh_button['state'] = "active"
             self.blockSize_scale['state'] = "disabled"
             self.cMean_scale['state'] = "disabled"
-
+            
+        self.value_sheFrame.set(1) 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
@@ -1132,7 +1134,7 @@ class Gui():
             prev[1] += slopeTO[0]
 
 
-        if self.picNames[0] != None:
+        if self.picNames[1] != None:
             #setting all tixel chaning radio buttons to on
             for child in self.labelframe.winfo_children():
                 if child.winfo_class() == 'Radiobutton':
@@ -1501,9 +1503,9 @@ class Gui():
         yValue = 40
 
         self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="14px")
-        self.cbframe.place(relx=.11, rely=.42)
+        self.cbframe.place(relx=.11, rely=.23)
 
-        c = tk.Canvas(self.cbframe, width=220, height=40)
+        c = tk.Canvas(self.cbframe, width=220, height=50)
         c.pack()
         c.delete("all")
         for i in range(len(colorbarNorm)):
