@@ -761,6 +761,7 @@ class Gui():
             self.begin_button['state'] = tk.DISABLED
             self.grid_button['state'] = tk.DISABLED
             self.gridA_button['state'] = tk.DISABLED
+            self.gridB_button['state'] = tk.DISABLED
             self.onoff_button['state'] = tk.DISABLED
             
             #Changing the selected radio button to display the first option of a point flip
@@ -861,7 +862,7 @@ class Gui():
         self.bar["value"] = 80
         self.pWindow.update()
         self.imgA = ImageTk.PhotoImage(floor)
-        self.picNames = [None, None]  
+        self.picNames = [self.imgA, None]  
 
 
         #update canvas and frame
