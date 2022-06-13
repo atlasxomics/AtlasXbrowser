@@ -276,16 +276,22 @@ class Gui():
 
 
         label3 = tk.Label(self.starting_window,
-        text = "Select Barcode File:",
+        text = "Barcode File:",
         font = ("Courier", 14))
         label3.grid(row = 2, column = 0, sticky = "e")
 
-        label3a = tk.Label(self.starting_window)
-        label3a.grid(row = 2, column = 2, sticky = "w")
+        self.barcode_name = tk.StringVar()
+        self.barcode_name.set("bc50v1")
+        label3a = tk.Label(self.starting_window,
+        text = self.barcode_name.get()
+        )
+        label3a.grid(row = 2, column = 1, sticky="w")        
 
-        barcode_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_barcode_file(label3a))
-        barcode_button.grid(row = 2, column = 1, sticky = "w")
+        # label3b = tk.Label(self.starting_window)
+        # label3b.grid(row = 2, column = 3, sticky = "w")
 
+        barcode_button = tk.Button(self.starting_window, text = "Custom Barcode", command = lambda: self.get_barcode_file(label3a))
+        barcode_button.grid(row = 2, column = 2, sticky = "w")
 
         self.run_identifier = tk.StringVar()
         label4 = tk.Label(self.starting_window, 
@@ -320,8 +326,6 @@ class Gui():
 
             #taking square root of number of barcodes
             barcodes = math.sqrt(total_num)
-
-
             #ensuring this is a whole number, indicating proper barcode file
             if barcodes - int(barcodes) == 0:
 
@@ -352,10 +356,6 @@ class Gui():
             self.resize_popup(msg, label)
             label.config(text = msg)
             self.barcode_file_selected = False
-        
-
-
-
             
     #method used to resize the popup window to ensure the user is able to see the name of the file they selected
     def resize_popup(self, message, label):
