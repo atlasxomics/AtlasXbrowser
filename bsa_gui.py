@@ -85,6 +85,8 @@ class Gui():
         self.quad_coords = [0]
         self.rotated_degree = 0
 
+        self.barcode_filename = "bc50v1.txt"
+        self.custom_barcode_selected = False
 
         self.ROILocated = False
         
@@ -213,10 +215,7 @@ class Gui():
         self.position_file.place(relx=.11, rely= .9)
 
         #A list to store the order in which rotations and reflections are complete
-        self.rotation_order = []
-
-
-        
+        # self.rotation_order = []
 
     def restart(self):
         self.newWindow.destroy()
@@ -228,7 +227,7 @@ class Gui():
 
     def load_images(self):
         self.both_images_selected = False
-        self.barcode_file_selected = False
+        # self.barcode_file_selected = False
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
@@ -274,24 +273,25 @@ class Gui():
         postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
         postB_button.grid(row = 1, column = 1, sticky = "w")
 
-
+        #barcode file selection
+        # standard barcode 1 automatically selected. Can also designate a custom file.
         label3 = tk.Label(self.starting_window,
         text = "Barcode File:",
         font = ("Courier", 14))
         label3.grid(row = 2, column = 0, sticky = "e")
 
-        self.barcode_name = tk.StringVar()
-        self.barcode_name.set("bc50v1")
         label3a = tk.Label(self.starting_window,
-        text = self.barcode_name.get()
+        text = "bc50v1" 
         )
         label3a.grid(row = 2, column = 1, sticky="w")        
 
         # label3b = tk.Label(self.starting_window)
         # label3b.grid(row = 2, column = 3, sticky = "w")
 
-        barcode_button = tk.Button(self.starting_window, text = "Custom Barcode", command = lambda: self.get_barcode_file(label3a))
-        barcode_button.grid(row = 2, column = 2, sticky = "w")
+        revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
+
+        barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
+        barcode_button.grid(row = 2, column = 1, sticky = "w")
 
         self.run_identifier = tk.StringVar()
         label4 = tk.Label(self.starting_window, 
@@ -312,7 +312,13 @@ class Gui():
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
 
-    def get_barcode_file(self, label):
+    def use_barcode1(self, remove_button, display_button):
+        self.custom_barcode_selected = False
+        self.barcode_filename = "bc50v1.txt"
+        display_button.config(text = "bc50v1")
+        remove_button.grid_remove()
+
+    def get_barcode_file(self, display_button, revert_button):
         #taking file path
         file = askopenfilename()
         if file == "":
@@ -335,26 +341,27 @@ class Gui():
                 #slicing string to only be image name, not full path
                 display_name = file[val + 1: ]
                 #resizing popup accordingly
-                self.resize_popup(display_name, label)
+                self.resize_popup(display_name, display_button)
                 #setting class variable
                 self.barcode_filename = file
-   
                 self.barcode_file_selected = True
+                display_button.config(text = display_name)
+                revert_button.grid(row=2, column=2)
 
             # if the sqrt is not a whole number, we know this is not a proper barcode file
             else:
                 print("Not valid barcode")
                 message = "Invalid barcode file, must include a proper number of barcodes."
-                self.resize_popup(message, label)
-                label.config(text = message)
+                self.resize_popup(message, display_button)
+                display_button.config(text = message)
                 self.barcode_file_selected = False
 
         # if not output error message on screen and ask to select text file
         except UnicodeDecodeError:
             print("Unable to open file")
             msg ="Invalid file type, must be of type .txt" 
-            self.resize_popup(msg, label)
-            label.config(text = msg)
+            self.resize_popup(msg, display_button)
+            display_button.config(text = msg)
             self.barcode_file_selected = False
             
     #method used to resize the popup window to ensure the user is able to see the name of the file they selected
@@ -411,7 +418,6 @@ class Gui():
         val = file.rfind("/")
         #slicing string to only be image name, not full path
         display_name = file[val + 1: ]
-        
         self.resize_popup(display_name, label)
 
 
