@@ -27,6 +27,7 @@ from encodedstring import *
 from io import BytesIO
 
 Image.MAX_IMAGE_PIXELS = None
+from barcode_var import barcode1_var
 
 
 def center(tL,tR,bR,bL):
@@ -94,6 +95,11 @@ class Gui():
         self.quad_coords = [0]
         self.rotated_degree = 0
 
+        # setting variables to be used when the default is selected
+        self.barcode_filename = ""
+        self.custom_barcode_selected = False
+        self.custom_barcode_valid = True
+        self.num_chan = 50
 
         self.ROILocated = False
         
@@ -232,10 +238,7 @@ class Gui():
         self.position_file.place(relx=.11, rely= .9)
 
         #A list to store the order in which rotations and reflections are complete
-        self.rotation_order = []
-
-
-        
+        # self.rotation_order = []
 
     def restart(self):
         self.newWindow.destroy()
@@ -247,7 +250,6 @@ class Gui():
 
     def load_images(self):
         self.both_images_selected = False
-        self.barcode_file_selected = False
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
@@ -295,18 +297,25 @@ class Gui():
         postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
         postB_button.grid(row = 1, column = 1, sticky = "w")
 
-
+        #barcode file selection
+        # standard barcode 1 automatically selected. Can also designate a custom file.
         label3 = tk.Label(self.starting_window,
-        text = "Select Barcode File:",
+        text = "Barcode File:",
         font = ("Courier", 14))
         label3.grid(row = 2, column = 0, sticky = "e")
 
-        label3a = tk.Label(self.starting_window)
-        label3a.grid(row = 2, column = 2, sticky = "w")
+        label3a = tk.Label(self.starting_window,
+        text = "bc50v1" 
+        )
+        label3a.grid(row = 2, column = 1, sticky="w")        
 
-        barcode_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_barcode_file(label3a))
+        # label3b = tk.Label(self.starting_window)
+        # label3b.grid(row = 2, column = 3, sticky = "w")
+
+        revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
+
+        barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
         barcode_button.grid(row = 2, column = 1, sticky = "w")
-
 
         self.run_identifier = tk.StringVar()
         label4 = tk.Label(self.starting_window, 
@@ -327,7 +336,14 @@ class Gui():
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
 
-    def get_barcode_file(self, label):
+    def use_barcode1(self, remove_button, display_button):
+        self.custom_barcode_selected = False
+        display_button.config(text = "bc50v1")
+        remove_button.grid_remove()
+        self.custom_barcode_selected = False
+        self.num_chan = 50
+
+    def get_barcode_file(self, display_button, revert_button):
         #taking file path
         file = askopenfilename()
         if file == "":
@@ -341,8 +357,6 @@ class Gui():
 
             #taking square root of number of barcodes
             barcodes = math.sqrt(total_num)
-
-
             #ensuring this is a whole number, indicating proper barcode file
             if barcodes - int(barcodes) == 0:
 
@@ -352,32 +366,34 @@ class Gui():
                 #slicing string to only be image name, not full path
                 display_name = file[val + 1: ]
                 #resizing popup accordingly
-                self.resize_popup(display_name, label)
+                self.resize_popup(display_name, display_button)
                 #setting class variable
                 self.barcode_filename = file
-   
-                self.barcode_file_selected = True
+                self.custom_barcode_selected = True
+                self.custom_barcode_valid = True
+                display_button.config(text = display_name)
+                
 
             # if the sqrt is not a whole number, we know this is not a proper barcode file
             else:
                 print("Not valid barcode")
                 message = "Invalid barcode file, must include a proper number of barcodes."
-                self.resize_popup(message, label)
-                label.config(text = message)
-                self.barcode_file_selected = False
+                self.resize_popup(message, display_button)
+                display_button.config(text = message)
+                self.custom_barcode_valid = False
+
+            
 
         # if not output error message on screen and ask to select text file
         except UnicodeDecodeError:
             print("Unable to open file")
             msg ="Invalid file type, must be of type .txt" 
-            self.resize_popup(msg, label)
-            label.config(text = msg)
-            self.barcode_file_selected = False
-        
-
-
-
+            self.resize_popup(msg, display_button)
+            display_button.config(text = msg)
+            self.custom_barcode_valid = False
             
+        revert_button.grid(row=2, column=2)
+
     #method used to resize the popup window to ensure the user is able to see the name of the file they selected
     def resize_popup(self, message, label):
         leng = len(message)
@@ -432,7 +448,6 @@ class Gui():
         val = file.rfind("/")
         #slicing string to only be image name, not full path
         display_name = file[val + 1: ]
-        
         self.resize_popup(display_name, label)
 
 
@@ -453,48 +468,42 @@ class Gui():
             return False
 
     def configure_metadata(self):
-
         same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
-            if runID != "" and self.both_images_selected and self.barcode_file_selected:
+            if runID != "":
+                if self.both_images_selected:
+                    if self.custom_barcode_valid or self.custom_barcode_selected == False:
+                        val = self.user_selected_bsa.rfind("/")
+                        self.bsa_short = self.user_selected_bsa[val + 1: ]
 
-                self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+                        val = self.user_selected_postB.rfind("/")
+                        self.postB_short = self.user_selected_postB[val + 1: ]
 
-                val = self.user_selected_bsa.rfind("/")
-                self.bsa_short = self.user_selected_bsa[val + 1: ]
+                        self.metadata = {
+                        "run": runID
+                        }
 
-                val = self.user_selected_postB.rfind("/")
-                self.postB_short = self.user_selected_postB[val + 1: ]
+                        #setting excelName var, used later, to equal the user specifed run ID
+                        self.excelName = runID
 
-                self.metadata = {
-                "run": runID,
-                "barcode_file_orgin": self.barcode_filename
-                }
+                        #calling method that puts images on canvas
+                        self.configure_images()
 
-                #setting excelName var, used later, to equal the user specifed run ID
-                self.excelName = runID
-
-                #calling method that puts images on canvas
-                self.configure_images()
-
-                self.starting_window.destroy()
-                self.activateCrop_button['state'] = tk.ACTIVE
-
-                self.newWindow.title("AtlasXbrowser (" + runID + ")")
-
-            elif runID == "":
+                        self.starting_window.destroy()
+                        self.activateCrop_button['state'] = tk.ACTIVE
+                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
+                    else:
+                        self.error_label.config(text = "Error! Must select a proper barcode file!")
+                else:
+                    self.error_label.config(text = "Error! Must select BSA and postB Images!")
+            else:
                 self.error_label.config(text = "Error! Enter a Run Identifier")
-
-            elif self.both_images_selected == False:
-                self.error_label.config(text = "Error! Must select BSA and postB Images!")
-            
-            elif self.barcode_file_selected == False:
-                self.error_label.config(text = "Error! Must select barcode file!")
         else:
-            self.error_label.config(text = "Images must be located in the same directory!")
+         self.error_label.config(text = "Images must be located in the same directory!")
+            
+            
 
     #populates the canvas of the main page with the BSA image
     def configure_images(self):
@@ -618,7 +627,7 @@ class Gui():
             self.cropped_image = updated
             # self.rotated_degree+=-90
             self.rotated_degree += 90
-            self.rotation_order.append(90)
+            # self.rotation_order.append(90)
 
         if num == 1:
             M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
@@ -633,7 +642,7 @@ class Gui():
             self.cropped_image = updated
             # self.rotated_degree+=90
             self.rotated_degree += 270
-            self.rotation_order.append(270)
+            # self.rotation_order.append(270)
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
@@ -886,7 +895,7 @@ class Gui():
         self.cMean_scale['state'] = tk.DISABLED
         self.grid_button["state"] = tk.ACTIVE
         self.gridA_button["state"] = tk.ACTIVE
-        self.gridB_button["state"] = tk.DISABLED
+        self.gridB_button['state'] = tk.DISABLED
         self.onoff_button["state"] = tk.DISABLED
         self.check_on = tk.IntVar()
         self.check_on.set(0)
@@ -955,7 +964,7 @@ class Gui():
         self.activateThresh_button['state'] = tk.DISABLED
         self.grid_button['state'] = tk.DISABLED
         self.gridA_button['state'] = tk.DISABLED
-        self.gridB_button["state"] = tk.DISABLED
+        self.gridB_button['state'] = tk.DISABLED
         self.onoff_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
@@ -1004,7 +1013,7 @@ class Gui():
         if self.ROILocated:
             self.grid_button['state'] = tk.ACTIVE
             self.gridA_button['state'] = tk.ACTIVE
-            self.gridB_button["state"] = tk.ACTIVE
+            self.gridB_button['state'] = tk.ACTIVE
             self.onoff_button['state'] = tk.ACTIVE
             self.activateThresh_button['state'] = tk.ACTIVE
 
@@ -1043,9 +1052,8 @@ class Gui():
             self.activateThresh_button['state'] = "active"
             self.blockSize_scale['state'] = "disabled"
             self.cMean_scale['state'] = "disabled"
-
-
-        self.value_sheFrame.set(1)
+            
+        self.value_sheFrame.set(1) 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
@@ -1382,23 +1390,47 @@ class Gui():
             path = self.folder_selected + "/spatial"
 
         #barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
-        my_file = open(self.barcode_filename,"r")
-        excelC = 1
+
+        # if a custom barcode is selected open the specified file
+        if self.custom_barcode_selected:
+            my_file = open(self.barcode_filename,"r")
+        
+        # excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             self.numTixels = 0
+
+            if self.custom_barcode_selected == False:
+                barcode = barcode1_var.split("\n")
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
-                    barcode = my_file.readline().split('\t')
+                    if (self.custom_barcode_selected):
+                        line = my_file.readline().split('\t')
+
+                    #val to be used when writing whether tixel position is on or off
+                    tixel_val = 0
                     if self.arr[j][i] == 1:
                         self.numTixels+=1
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        tixel_val = 1
+                        
+                    #if coming from a file, continue to take from the 0th index
+                    if (self.custom_barcode_selected):
+                        val = line[0].strip()
+                    #if coming from a variable index the variable
                     else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        inx = (i * self.num_chan) + j
+                        val = barcode[inx].strip()
 
-                excelC += 1
-              
-        my_file.close()
+                    writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                    # else:
+                    #     writer.writerow([val, 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+
+
+                    # excelC += 1
+        # if the barcodes being selected are from a custom file, close it
+        if (self.custom_barcode_selected):
+            my_file.close()
+
         self.json_file(path)
         self.grid_button["state"] = tk.DISABLED
         self.gridA_button["state"] = tk.DISABLED
@@ -1466,7 +1498,6 @@ class Gui():
         p = open(self.folder_selected + "/metadata.json")
         meta = json.load(p)
 
-
         barcode_lis = []
         with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
             reader = csv.reader(csv_file, delimiter=",")
@@ -1476,8 +1507,6 @@ class Gui():
                 barcode_lis.append(curr_barcode)
             
         csv_file.close()
-
-
             
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
@@ -1486,6 +1515,7 @@ class Gui():
                 for j in range(self.num_chan):
                     
                     inx = (i * self.num_chan) + j
+                    # print(barcode_lis[inx].strip())
                     if self.arr[j][i] == 1:
                         writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
@@ -1497,6 +1527,8 @@ class Gui():
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
+        
+        mb.showinfo("Congratulations!", "The spatial folder has been updated!")
 
         mb.showinfo("Congratulations!", "The spatial folder has been updated!")
     #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
