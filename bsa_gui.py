@@ -227,7 +227,7 @@ class Gui():
 
     def load_images(self):
         self.both_images_selected = False
-        # self.barcode_file_selected = False
+        self.barcode_file_selected = True
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
@@ -317,6 +317,7 @@ class Gui():
         self.barcode_filename = "bc50v1.txt"
         display_button.config(text = "bc50v1")
         remove_button.grid_remove()
+        self.barcode_file_selected = True
 
     def get_barcode_file(self, display_button, revert_button):
         #taking file path
@@ -346,7 +347,7 @@ class Gui():
                 self.barcode_filename = file
                 self.barcode_file_selected = True
                 display_button.config(text = display_name)
-                revert_button.grid(row=2, column=2)
+                
 
             # if the sqrt is not a whole number, we know this is not a proper barcode file
             else:
@@ -356,6 +357,8 @@ class Gui():
                 display_button.config(text = message)
                 self.barcode_file_selected = False
 
+            
+
         # if not output error message on screen and ask to select text file
         except UnicodeDecodeError:
             print("Unable to open file")
@@ -364,6 +367,8 @@ class Gui():
             display_button.config(text = msg)
             self.barcode_file_selected = False
             
+        revert_button.grid(row=2, column=2)
+
     #method used to resize the popup window to ensure the user is able to see the name of the file they selected
     def resize_popup(self, message, label):
         leng = len(message)
@@ -440,40 +445,41 @@ class Gui():
     def configure_metadata(self):
 
         same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-
-
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
-            if runID != "" and self.both_images_selected and self.barcode_file_selected:
-                val = self.user_selected_bsa.rfind("/")
-                self.bsa_short = self.user_selected_bsa[val + 1: ]
+            if runID != "":
+                if self.both_images_selected:
+                    if self.barcode_file_selected:
+                        val = self.user_selected_bsa.rfind("/")
+                        self.bsa_short = self.user_selected_bsa[val + 1: ]
 
-                val = self.user_selected_postB.rfind("/")
-                self.postB_short = self.user_selected_postB[val + 1: ]
+                        val = self.user_selected_postB.rfind("/")
+                        self.postB_short = self.user_selected_postB[val + 1: ]
 
-                self.metadata = {
-                "run": runID
-                }
+                        self.metadata = {
+                        "run": runID
+                        }
 
-                #setting excelName var, used later, to equal the user specifed run ID
-                self.excelName = runID
+                        #setting excelName var, used later, to equal the user specifed run ID
+                        self.excelName = runID
 
-                #calling method that puts images on canvas
-                self.configure_images()
+                        #calling method that puts images on canvas
+                        self.configure_images()
 
-                self.starting_window.destroy()
-                self.activateCrop_button['state'] = tk.ACTIVE
-
-                self.newWindow.title("AtlasXbrowser (" + runID + ")")
-
-            elif runID == "":
+                        self.starting_window.destroy()
+                        self.activateCrop_button['state'] = tk.ACTIVE
+                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
+                    else:
+                        self.error_label.config(text="Error! Select Proper Barcode File")
+                else:
+                    self.error_label.config(text = "Error! Must select BSA and postB Images!")
+            else:
                 self.error_label.config(text = "Error! Enter a Run Identifier")
-
-            elif self.both_images_selected == False:
-                self.error_label.config(text = "Error! Must select BSA and postB Images!")
         else:
             self.error_label.config(text = "Images must be located in the same directory!")
+            
+            
 
     #populates the canvas of the main page with the BSA image
     def configure_images(self):
