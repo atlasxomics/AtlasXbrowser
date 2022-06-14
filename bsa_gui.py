@@ -86,7 +86,7 @@ class Gui():
         self.rotated_degree = 0
 
         self.barcode_filename = "bc50v1.txt"
-        self.custom_barcode_selected = False
+        self.custom_barcode_selected = True
 
         self.ROILocated = False
         
@@ -227,7 +227,6 @@ class Gui():
 
     def load_images(self):
         self.both_images_selected = False
-        self.barcode_file_selected = True
         self.starting_window = tk.Toplevel(self.newWindow)
         self.starting_window.title("Selecting Images")
         self.starting_window_origwidth = 600
@@ -317,7 +316,7 @@ class Gui():
         self.barcode_filename = "bc50v1.txt"
         display_button.config(text = "bc50v1")
         remove_button.grid_remove()
-        self.barcode_file_selected = True
+        self.custom_barcode_selected = False
 
     def get_barcode_file(self, display_button, revert_button):
         #taking file path
@@ -345,7 +344,8 @@ class Gui():
                 self.resize_popup(display_name, display_button)
                 #setting class variable
                 self.barcode_filename = file
-                self.barcode_file_selected = True
+                self.custom_barcode_selected = True
+                self.custom_barcode_valid = True
                 display_button.config(text = display_name)
                 
 
@@ -355,7 +355,7 @@ class Gui():
                 message = "Invalid barcode file, must include a proper number of barcodes."
                 self.resize_popup(message, display_button)
                 display_button.config(text = message)
-                self.barcode_file_selected = False
+                self.custom_barcode_valid = False
 
             
 
@@ -365,7 +365,7 @@ class Gui():
             msg ="Invalid file type, must be of type .txt" 
             self.resize_popup(msg, display_button)
             display_button.config(text = msg)
-            self.barcode_file_selected = False
+            self.custom_barcode_valid = False
             
         revert_button.grid(row=2, column=2)
 
@@ -450,7 +450,7 @@ class Gui():
             runID = self.run_identifier.get()
             if runID != "":
                 if self.both_images_selected:
-                    if self.barcode_file_selected:
+                    if self.custom_barcode_valid or self.custom_barcode_selected == False:
                         val = self.user_selected_bsa.rfind("/")
                         self.bsa_short = self.user_selected_bsa[val + 1: ]
 
@@ -471,13 +471,13 @@ class Gui():
                         self.activateCrop_button['state'] = tk.ACTIVE
                         self.newWindow.title("AtlasXbrowser (" + runID + ")")
                     else:
-                        self.error_label.config(text="Error! Select Proper Barcode File")
+                        self.error_label.config(text = "Error! Must select a proper barcode file!")
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
             else:
                 self.error_label.config(text = "Error! Enter a Run Identifier")
         else:
-            self.error_label.config(text = "Images must be located in the same directory!")
+         self.error_label.config(text = "Images must be located in the same directory!")
             
             
 
