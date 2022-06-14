@@ -22,6 +22,7 @@ import matplotlib.cm
 from shutil import copy, move, rmtree, copytree
 from tkinter.filedialog import askopenfile, askopenfilename
 Image.MAX_IMAGE_PIXELS = None
+from barcode_var import barcode1_var
 
 
 def center(tL,tR,bR,bL):
@@ -85,8 +86,11 @@ class Gui():
         self.quad_coords = [0]
         self.rotated_degree = 0
 
-        self.barcode_filename = "bc50v1.txt"
-        self.custom_barcode_selected = True
+        # setting variables to be used when the default is selected
+        self.barcode_filename = ""
+        self.custom_barcode_selected = False
+        self.custom_barcode_valid = True
+        self.num_chan = 50
 
         self.ROILocated = False
         
@@ -313,10 +317,10 @@ class Gui():
 
     def use_barcode1(self, remove_button, display_button):
         self.custom_barcode_selected = False
-        self.barcode_filename = "bc50v1.txt"
         display_button.config(text = "bc50v1")
         remove_button.grid_remove()
         self.custom_barcode_selected = False
+        self.num_chan = 50
 
     def get_barcode_file(self, display_button, revert_button):
         #taking file path
@@ -443,7 +447,6 @@ class Gui():
             return False
 
     def configure_metadata(self):
-
         same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
         if same_dir:
             #retrieving variables from stored StringVar variables
@@ -604,7 +607,7 @@ class Gui():
             self.cropped_image = updated
             # self.rotated_degree+=-90
             self.rotated_degree += 90
-            self.rotation_order.append(90)
+            # self.rotation_order.append(90)
 
         if num == 1:
             M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
@@ -619,7 +622,7 @@ class Gui():
             self.cropped_image = updated
             # self.rotated_degree+=90
             self.rotated_degree += 270
-            self.rotation_order.append(270)
+            # self.rotation_order.append(270)
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
@@ -1368,23 +1371,47 @@ class Gui():
             path = self.folder_selected + "/spatial"
 
         #barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
-        my_file = open(self.barcode_filename,"r")
-        excelC = 1
+
+        # if a custom barcode is selected open the specified file
+        if self.custom_barcode_selected:
+            my_file = open(self.barcode_filename,"r")
+        
+        # excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             self.numTixels = 0
+
+            if self.custom_barcode_selected == False:
+                barcode = barcode1_var.split("\n")
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
-                    barcode = my_file.readline().split('\t')
+                    if (self.custom_barcode_selected):
+                        line = my_file.readline().split('\t')
+
+                    #val to be used when writing whether tixel position is on or off
+                    tixel_val = 0
                     if self.arr[j][i] == 1:
                         self.numTixels+=1
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        tixel_val = 1
+                        
+                    #if coming from a file, continue to take from the 0th index
+                    if (self.custom_barcode_selected):
+                        val = line[0].strip()
+                    #if coming from a variable index the variable
                     else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        inx = (i * self.num_chan) + j
+                        val = barcode[inx].strip()
 
-                excelC += 1
-              
-        my_file.close()
+                    writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                    # else:
+                    #     writer.writerow([val, 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+
+
+                    # excelC += 1
+        # if the barcodes being selected are from a custom file, close it
+        if (self.custom_barcode_selected):
+            my_file.close()
+
         self.json_file(path)
         self.grid_button["state"] = tk.DISABLED
         self.gridA_button["state"] = tk.DISABLED
