@@ -352,7 +352,7 @@ class Gui():
                 self.custom_barcode_valid = True
                 display_button.config(text = display_name)
                 
-
+        
             # if the sqrt is not a whole number, we know this is not a proper barcode file
             else:
                 print("Not valid barcode")
@@ -360,7 +360,13 @@ class Gui():
                 self.resize_popup(message, display_button)
                 display_button.config(text = message)
                 self.custom_barcode_valid = False
-
+        
+        except IsADirectoryError:
+            print("This is a directory")
+            msg = "Error! Cannot choose a directory."
+            self.resize_popup(msg, display_button)
+            display_button.config(text=msg)
+            self.custom_barcode_valid = False
             
 
         # if not output error message on screen and ask to select text file
