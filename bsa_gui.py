@@ -348,6 +348,8 @@ class Gui():
         file = askopenfilename()
         if file == "":
             return 
+        
+        self.custom_barcode_selected = True
 
         #checking if able to readlines of file
         try:
@@ -369,7 +371,6 @@ class Gui():
                 self.resize_popup(display_name, display_button)
                 #setting class variable
                 self.barcode_filename = file
-                self.custom_barcode_selected = True
                 self.custom_barcode_valid = True
                 display_button.config(text = display_name)
                 
