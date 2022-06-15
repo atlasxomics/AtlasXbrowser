@@ -2499,36 +2499,3 @@ AACGTGATGAGCTGAA
 AACGTGATGATAGACA
 AACGTGATGCCACATA """
 
-my_file = open("/Users/jonah/Downloads/bc50v1.txt", "r")
-
-# bc = my_file.readlines.split("\t")
-
-var = barcode1_var.split("\n")
-
-counter = 0
-
-for i in range(50):
-    for k in range(50):
-        inx = (i * 50) + k
-
-        line = my_file.readline()
-        line = line.split("\t")[0].strip()
-        var_var = var[inx].strip()
-
-        if (var_var != line):
-            print(i)
-            print(k)
-            print(inx)
-            print(counter)
-            print("no_match")
-            # print(var_var)
-            # print(line)
-        counter += 1
-
-print(len(barcode1_var.split("\n")))
-
-# var = barcode1_var.split("\n")
-
-# print(len(var))
-# for i in var:
-#     print(i)
