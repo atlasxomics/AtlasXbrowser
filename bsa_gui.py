@@ -276,33 +276,8 @@ class Gui():
         postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
         postB_button.grid(row = 1, column = 1, sticky = "w")
 
-        #barcode file selection
-        # standard barcode 1 automatically selected. Can also designate a custom file.
-        label3 = tk.Label(self.starting_window,
-        text = "Barcode File:",
-        font = ("Courier", 14))
-        label3.grid(row = 2, column = 0, sticky = "e")
-
-        self.barcode_selected = tk.StringVar()
-        self.barcode_selected.set("1")
-        barcode_options = ["1", "2", "3"]
-        barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, barcode_options)
-        barcode_drop.grid(row = 2, column = 1, sticky="w")
-        # label3a = tk.Label(self.starting_window,
-        # text = "bc50v1" 
-        # )
-        # label3a.grid(row = 2, column = 1, sticky="w")        
-
-        # label3b = tk.Label(self.starting_window)
-        # label3b.grid(row = 2, column = 3, sticky = "w")
-
-        # revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
-
-        # barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
-        # barcode_button.grid(row = 2, column = 1, sticky = "w")
-
         self.run_identifier = tk.StringVar()
-        label4 = tk.Label(self.starting_window, 
+        label3 = tk.Label(self.starting_window, 
         text = "Run ID:", 
         font = ("Courier", 14)
         # width = 25
@@ -311,46 +286,76 @@ class Gui():
         entry_box = tk.Entry(self.starting_window, textvariable = self.run_identifier,
         )
 
-        label4.grid(row = 3, column = 0, sticky = "e")
-        entry_box.grid(row = 3, column = 1, sticky = "w")
+        label3.grid(row = 2, column = 0, sticky = "e")
+        entry_box.grid(row = 2, column = 1, sticky = "w")
 
         self.tissue = tk.StringVar()
-        label5 = tk.Label(self.starting_window,
+        label4 = tk.Label(self.starting_window,
         text = "Tissue:",
         font = ("Courier", 14)
         )
         entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
-        label5.grid(row = 4, column = 0, sticky="e")
-        entry_box2.grid(row=4, column= 1, sticky="w")
+        label4.grid(row = 3, column = 0, sticky="e")
+        entry_box2.grid(row=3, column= 1, sticky="w")
 
+        label5 = tk.Label(self.starting_window,
+        text="Collaborator",
+        font = ("Courier", 14))
+        self.collaborator = tk.StringVar()
+        entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
+        label5.grid(row = 4, column = 0, sticky="e")
+        entry_box_collab.grid(row=4, column = 1, sticky="w")
+
+        #barcode file selection
+        # standard barcode 1 automatically selected. Can also designate a custom file.
+        label3 = tk.Label(self.starting_window,
+        text = "Barcode File:",
+        font = ("Courier", 14))
+        label3.grid(row = 5, column = 0, sticky = "e")
+
+        self.barcode_selected = tk.StringVar()
+        self.barcode_selected.set("1")
+        barcode_options = ["1", "2", "3"]
+        barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, *barcode_options)
+        barcode_drop.grid(row = 5, column = 1, sticky="w")
 
         self.species = tk.StringVar()
         label6 = tk.Label(self.starting_window,
         text="Species:",
-        font= ("Coutier", 14))
+        font= ("Courier", 14))
 
         species_options = ["Mouse", "Human"]
-        species_dropdown = tk.OptionMenu(self.starting_window, self.species, species_options)
-        label6.grid(row=5, column=0, sticky="e")
-        species_dropdown.grid(row=5, column=1, sticky="w")
+        species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
+        label6.grid(row=6, column=0, sticky="e")
+        species_dropdown.grid(row=6, column=1, sticky="w")
 
         self.assay = tk.StringVar()
         self.assay.set("ATAC Seq")
         assay_options = ["ATAC Seq", "mRNA"]
         label7 = tk.Label(self.starting_window,
             text="Assay:",
-            font = ("Coutier", 14))
-        assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, assay_options)
+            font = ("Courier", 14))
+        assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, *assay_options)
+        label7.grid(row=7, column=0, sticky="e")
+        assay_dropdown.grid(row=7, column=1, sticky="w")
 
+        self.tissue_type = tk.StringVar()
+        self.tissue_type.set("FFPE")
+        type_options = ["FFPE", "FF"]
+        label8 = tk.Label(self.starting_window,
+                        text="Type:",
+                        font = ("Courier", 14))
+        type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
+        label8.grid(row=8, column=0, sticky="e")
+        type_dropdown.grid(row=8, column=1, sticky="w")
 
+        #submit button
+        button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
+        button.grid(row = 9, column = 1, sticky = "w", pady = 20)
 
-        # #submit button
-        # button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
-        # button.grid(row = 5, column = 1, sticky = "w", pady = 20)
-
-        # #error button
-        # self.error_label = tk.Label(self.starting_window)
-        # self.error_label.grid(row = 6, column = 1, sticky = "w")
+        #error button
+        self.error_label = tk.Label(self.starting_window)
+        self.error_label.grid(row = 10, column = 1, sticky = "w")
 
     def use_barcode1(self, remove_button, display_button):
         self.custom_barcode_selected = False
@@ -496,28 +501,41 @@ class Gui():
             runID = self.run_identifier.get()
             if runID != "":
                 if self.both_images_selected:
-                    if self.custom_barcode_valid or self.custom_barcode_selected == False:
-                        val = self.user_selected_bsa.rfind("/")
-                        self.bsa_short = self.user_selected_bsa[val + 1: ]
+                    val = self.user_selected_bsa.rfind("/")
+                    self.bsa_short = self.user_selected_bsa[val + 1: ]
 
-                        val = self.user_selected_postB.rfind("/")
-                        self.postB_short = self.user_selected_postB[val + 1: ]
+                    val = self.user_selected_postB.rfind("/")
+                    self.postB_short = self.user_selected_postB[val + 1: ]
+                    self.num_chan = 50
+                    if self.barcode_selected.get() == "1":
+                        self.barcode_filename = "bc50v1.txt"
+                    elif self.barcode_selected.get() == "2":
+                        self.barcode_filename = "bc50v2.txt"
+                    elif self.barcode_filename.get() == "3":
+                        self.barcode_filename = "bc50v3.txt"
+                    elif self.barcode_selected.get() == "4":
+                        self.barcode_filename = "bc100v1.txt"
+                        self.num_chan = 100
 
-                        self.metadata = {
-                        "run": runID
-                        }
+                    self.metadata = {
+                    "run": runID,
+                    "species": self.species.get(),
+                    "type": self.tissue_type.get(),
+                    "assay": self.assay.get(),
+                    "collaborator": self.collaborator.get(),
+                    "barcode": self.barcode_selected.get()
+                    }
 
-                        #setting excelName var, used later, to equal the user specifed run ID
-                        self.excelName = runID
+                    #setting excelName var, used later, to equal the user specifed run ID
+                    self.excelName = runID
 
-                        #calling method that puts images on canvas
-                        self.configure_images()
+                    #calling method that puts images on canvas
+                    self.configure_images()
 
-                        self.starting_window.destroy()
-                        self.activateCrop_button['state'] = tk.ACTIVE
-                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
-                    else:
-                        self.error_label.config(text = "Error! Must select a proper barcode file!")
+                    self.starting_window.destroy()
+                    self.activateCrop_button['state'] = tk.ACTIVE
+                    self.newWindow.title("AtlasXbrowser (" + runID + ")")
+
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
             else:
@@ -1406,6 +1424,7 @@ class Gui():
 
 
     #Creates files for spatial folder
+    #Creates files for spatial folder
     def create_files(self):
         try:
             path = os.path.join(self.folder_selected, "spatial")
@@ -1413,52 +1432,27 @@ class Gui():
         except FileExistsError:
             path = self.folder_selected + "/spatial"
 
-        #barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
-
-        # if a custom barcode is selected open the specified file
-        if self.custom_barcode_selected:
-            my_file = open(self.barcode_filename,"r")
-        
-        # excelC = 1
+        # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
+        my_file = open(self.barcode_filename,"r")
+        excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             self.numTixels = 0
-
-            if self.custom_barcode_selected == False:
-                barcode = barcode1_var.split("\n")
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
-                    if (self.custom_barcode_selected):
-                        line = my_file.readline().split('\t')
-
-                    #val to be used when writing whether tixel position is on or off
-                    tixel_val = 0
+                    barcode = my_file.readline().split('\t')
                     if self.arr[j][i] == 1:
                         self.numTixels+=1
-                        tixel_val = 1
-                        
-                    #if coming from a file, continue to take from the 0th index
-                    if (self.custom_barcode_selected):
-                        val = line[0].strip()
-                    #if coming from a variable index the variable
+                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
-                        inx = (i * self.num_chan) + j
-                        val = barcode[inx].strip()
+                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
-                    writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
-                    # else:
-                    #     writer.writerow([val, 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
-
-
-                    # excelC += 1
-        # if the barcodes being selected are from a custom file, close it
-        if (self.custom_barcode_selected):
-            my_file.close()
-
+                excelC += 1
+              
+        my_file.close()
         self.json_file(path)
         self.grid_button["state"] = tk.DISABLED
         self.gridA_button["state"] = tk.DISABLED
-        self.gridB_button["state"] = tk.DISABLED
         try: 
             move(self.figure_folder,path)
         except shutil.Error:
@@ -1467,7 +1461,6 @@ class Gui():
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
-        # shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
         mb.showinfo("Congratulations!", "The spatial folder is created!")
         
 
@@ -1504,7 +1497,8 @@ class Gui():
                     "threshold": sec,
                     "numTixels": self.numTixels,
                     "rawHeight": self.rawHeight,
-                    "numChannels": self.num_chan}
+                    "numChannels": self.num_chan
+                    }
         metaDict.update(self.metadata)
         
         json_object = json.dumps(dictionary, indent = 4)
