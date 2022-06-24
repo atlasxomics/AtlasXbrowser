@@ -283,18 +283,23 @@ class Gui():
         font = ("Courier", 14))
         label3.grid(row = 2, column = 0, sticky = "e")
 
-        label3a = tk.Label(self.starting_window,
-        text = "bc50v1" 
-        )
-        label3a.grid(row = 2, column = 1, sticky="w")        
+        self.barcode_selected = tk.StringVar()
+        self.barcode_selected.set("1")
+        barcode_options = ["1", "2", "3"]
+        barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, barcode_options)
+        barcode_drop.grid(row = 2, column = 1, sticky="w")
+        # label3a = tk.Label(self.starting_window,
+        # text = "bc50v1" 
+        # )
+        # label3a.grid(row = 2, column = 1, sticky="w")        
 
         # label3b = tk.Label(self.starting_window)
         # label3b.grid(row = 2, column = 3, sticky = "w")
 
-        revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
+        # revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
 
-        barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
-        barcode_button.grid(row = 2, column = 1, sticky = "w")
+        # barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
+        # barcode_button.grid(row = 2, column = 1, sticky = "w")
 
         self.run_identifier = tk.StringVar()
         label4 = tk.Label(self.starting_window, 
@@ -308,12 +313,44 @@ class Gui():
 
         label4.grid(row = 3, column = 0, sticky = "e")
         entry_box.grid(row = 3, column = 1, sticky = "w")
-        
-        button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
-        button.grid(row = 5, column = 1, sticky = "w", pady = 20)
 
-        self.error_label = tk.Label(self.starting_window)
-        self.error_label.grid(row = 6, column = 1, sticky = "w")
+        self.tissue = tk.StringVar()
+        label5 = tk.Label(self.starting_window,
+        text = "Tissue:",
+        font = ("Courier", 14)
+        )
+        entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
+        label5.grid(row = 4, column = 0, sticky="e")
+        entry_box2.grid(row=4, column= 1, sticky="w")
+
+
+        self.species = tk.StringVar()
+        label6 = tk.Label(self.starting_window,
+        text="Species:",
+        font= ("Coutier", 14))
+
+        species_options = ["Mouse", "Human"]
+        species_dropdown = tk.OptionMenu(self.starting_window, self.species, species_options)
+        label6.grid(row=5, column=0, sticky="e")
+        species_dropdown.grid(row=5, column=1, sticky="w")
+
+        self.assay = tk.StringVar()
+        self.assay.set("ATAC Seq")
+        assay_options = ["ATAC Seq", "mRNA"]
+        label7 = tk.Label(self.starting_window,
+            text="Assay:",
+            font = ("Coutier", 14))
+        assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, assay_options)
+
+
+
+        # #submit button
+        # button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
+        # button.grid(row = 5, column = 1, sticky = "w", pady = 20)
+
+        # #error button
+        # self.error_label = tk.Label(self.starting_window)
+        # self.error_label.grid(row = 6, column = 1, sticky = "w")
 
     def use_barcode1(self, remove_button, display_button):
         self.custom_barcode_selected = False
