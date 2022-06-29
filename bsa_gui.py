@@ -523,7 +523,7 @@ class Gui():
                     "type": self.tissue_type.get(),
                     "assay": self.assay.get(),
                     "collaborator": self.collaborator.get(),
-                    "barcode": self.barcode_selected.get()
+                    "barcodes": self.barcode_selected.get()
                     }
 
                     #setting excelName var, used later, to equal the user specifed run ID
