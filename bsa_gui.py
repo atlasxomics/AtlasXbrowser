@@ -320,11 +320,12 @@ class Gui():
         barcode_drop.grid(row = 5, column = 1, sticky="w")
 
         self.species = tk.StringVar()
+        self.species.set("Mouse")
         label6 = tk.Label(self.starting_window,
         text="Species:",
         font= ("Courier", 14))
 
-        species_options = ["Mouse", "Human"]
+        species_options = ["Mouse", "Human", "Rat", "Hampster"]
         species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
         label6.grid(row=6, column=0, sticky="e")
         species_dropdown.grid(row=6, column=1, sticky="w")
@@ -341,7 +342,7 @@ class Gui():
 
         self.tissue_type = tk.StringVar()
         self.tissue_type.set("FFPE")
-        type_options = ["FFPE", "FF"]
+        type_options = ["FFPE", "FF", "EFPR"]
         label8 = tk.Label(self.starting_window,
                         text="Type:",
                         font = ("Courier", 14))
@@ -511,7 +512,7 @@ class Gui():
                         self.barcode_filename = "bc50v1.txt"
                     elif self.barcode_selected.get() == "2":
                         self.barcode_filename = "bc50v2.txt"
-                    elif self.barcode_filename.get() == "3":
+                    elif self.barcode_selected.get() == "3":
                         self.barcode_filename = "bc50v3.txt"
                     elif self.barcode_selected.get() == "4":
                         self.barcode_filename = "bc100v1.txt"
