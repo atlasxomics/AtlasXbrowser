@@ -60,14 +60,14 @@ class Gui():
 
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
-        filemenu = tk.Menu(menu)
-        menu.add_cascade(label="File", menu=filemenu)
+        self.filemenu = tk.Menu(menu)
+        menu.add_cascade(label="File", menu=self.filemenu)
  
-        filemenu.add_command(label="Begin Image Processing", command=self.load_images)
-        filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
-        filemenu.add_command(label="New Instance", command=self.restart)
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.destruct)
+        self.filemenu.add_command(label="Begin Image Processing", command=self.load_images)
+        self.filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
+        self.filemenu.add_command(label="New Instance", command=self.restart)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit", command=self.destruct)
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command="")
@@ -85,6 +85,8 @@ class Gui():
         self.check_on.set(0)
         self.quad_coords = [0]
         self.rotated_degree = 0
+
+        self.metaCreated = False
 
         # setting variables to be used when the default is selected
         self.barcode_filename = ""
@@ -563,7 +565,9 @@ class Gui():
                     self.starting_window.destroy()
                     self.activateCrop_button['state'] = tk.ACTIVE
                     self.newWindow.title("AtlasXbrowser (" + runID + ")")
-
+                    self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+                    self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
+                    
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
             else:
