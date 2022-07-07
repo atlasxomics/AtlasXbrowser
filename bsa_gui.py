@@ -289,22 +289,22 @@ class Gui():
         label3.grid(row = 2, column = 0, sticky = "e")
         entry_box.grid(row = 2, column = 1, sticky = "w")
 
+        label5 = tk.Label(self.starting_window,
+        text="Collaborator:",
+        font = ("Courier", 14))
+        self.collaborator = tk.StringVar()
+        entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
+        label5.grid(row = 3, column = 0, sticky="e")
+        entry_box_collab.grid(row=3, column = 1, sticky="w")
+
         self.tissue = tk.StringVar()
         label4 = tk.Label(self.starting_window,
         text = "Tissue:",
         font = ("Courier", 14)
         )
         entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
-        label4.grid(row = 3, column = 0, sticky="e")
-        entry_box2.grid(row=3, column= 1, sticky="w")
-
-        label5 = tk.Label(self.starting_window,
-        text="Collaborator",
-        font = ("Courier", 14))
-        self.collaborator = tk.StringVar()
-        entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
-        label5.grid(row = 4, column = 0, sticky="e")
-        entry_box_collab.grid(row=4, column = 1, sticky="w")
+        label4.grid(row = 4, column = 0, sticky="e")
+        entry_box2.grid(row=4, column= 1, sticky="w")
 
         #barcode file selection
         # standard barcode 1 automatically selected. Can also designate a custom file.
@@ -325,14 +325,14 @@ class Gui():
         text="Species:",
         font= ("Courier", 14))
 
-        species_options = ["Mouse", "Human", "Rat", "Hampster"]
+        species_options = ["Mouse", "Human", "Rat", "Chicken"]
         species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
         label6.grid(row=6, column=0, sticky="e")
         species_dropdown.grid(row=6, column=1, sticky="w")
 
         self.assay = tk.StringVar()
         self.assay.set("ATAC Seq")
-        assay_options = ["ATAC Seq", "mRNA"]
+        assay_options = ["ATAC Seq","CUT&TAG" ,"mRNA"]
         label7 = tk.Label(self.starting_window,
             text="Assay:",
             font = ("Courier", 14))
@@ -341,22 +341,42 @@ class Gui():
         assay_dropdown.grid(row=7, column=1, sticky="w")
 
         self.tissue_type = tk.StringVar()
-        self.tissue_type.set("FFPE")
-        type_options = ["FFPE", "FF", "EFPR"]
-        label8 = tk.Label(self.starting_window,
-                        text="Type:",
-                        font = ("Courier", 14))
-        type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
-        label8.grid(row=8, column=0, sticky="e")
-        type_dropdown.grid(row=8, column=1, sticky="w")
+        self.tissue_type.set("FF")
+        # type_options = ["FFPE", "FF", "EFPR"]
+        # label8 = tk.Label(self.starting_window,
+        #                 text="Type:",
+        #                 font = ("Courier", 14))
+        # type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
+        # label8.grid(row=8, column=0, sticky="e")
+        # type_dropdown.grid(row=8, column=1, sticky="w")
+
+        self.tissue_state = tk.StringVar()
+        self.tissue_state.set("Normal")
+        tissue_options = ["Normal", "Disease"]
+        label9 = tk.Label(self.starting_window,
+                            text = "Tissue State:",
+                            font = ("Courier", 14))
+        tissue_state_dropdown = tk.OptionMenu(self.starting_window, self.tissue_state, *tissue_options)
+        label9.grid(row=8, column = 0, sticky="e")
+        tissue_state_dropdown.grid(row=8, column = 1, sticky="w")
+
+        self.resolution = tk.StringVar()
+        self.resolution.set("25")
+        label10 = tk.Label(self.starting_window,
+                            text = "Chip Resolution:",
+                            font = ("Courier", 14))
+        resolution_options = [10, 25, 50]
+        resolution_dropdown = tk.OptionMenu(self.starting_window, self.resolution, *resolution_options)
+        label10.grid(row=9, column = 0, sticky="e")
+        resolution_dropdown.grid(row=9, column = 1, sticky="w")
 
         #submit button
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
-        button.grid(row = 9, column = 1, sticky = "w", pady = 20)
+        button.grid(row = 10, column = 1, sticky = "w", pady = 20)
 
         #error button
         self.error_label = tk.Label(self.starting_window)
-        self.error_label.grid(row = 10, column = 1, sticky = "w")
+        self.error_label.grid(row = 11, column = 1, sticky = "w")
 
     def use_barcode1(self, remove_button, display_button):
         self.custom_barcode_selected = False
@@ -500,7 +520,12 @@ class Gui():
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
-            if runID != "":
+            tissue_type = self.tissue_type.get()
+            collaborator = self.collaborator.get()
+            resolution = self.resolution.get()
+            tissue = self.tissue.get()
+            print("Tissue type" + tissue_type)
+            if runID != "" and collaborator != "" and tissue != "" :
                 if self.both_images_selected:
                     val = self.user_selected_bsa.rfind("/")
                     self.bsa_short = self.user_selected_bsa[val + 1: ]
@@ -523,7 +548,10 @@ class Gui():
                     "type": self.tissue_type.get(),
                     "assay": self.assay.get(),
                     "collaborator": self.collaborator.get(),
-                    "barcodes": self.barcode_selected.get()
+                    "barcodes": self.barcode_selected.get(),
+                    "resolution": self.resolution.get(),
+                    "disease_state": self.tissue_state.get(),
+                    "tissue": self.tissue.get()
                     }
 
                     #setting excelName var, used later, to equal the user specifed run ID
@@ -539,7 +567,7 @@ class Gui():
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
             else:
-                self.error_label.config(text = "Error! Enter a Run Identifier")
+                self.error_label.config(text = "Error! Fill out necessary fields!")
         else:
          self.error_label.config(text = "Images must be located in the same directory!")
             
