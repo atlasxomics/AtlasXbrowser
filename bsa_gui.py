@@ -86,7 +86,12 @@ class Gui():
         self.quad_coords = [0]
         self.rotated_degree = 0
 
+        self.grid_active = False
+        self.grid_created = False
+
         self.metaCreated = False
+
+        self.tixel_locations = {}
 
         # setting variables to be used when the default is selected
         self.barcode_filename = ""
@@ -179,14 +184,18 @@ class Gui():
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
         self.shframe.place(relx=.11, rely=.51)
 
-        self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_toggle = tk.Button(self.shframe, text = "Toggle", command= lambda: self.toggle_grid())
+        self.grid_toggle.pack(side=tk.LEFT)
+
+        self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.change_image(self.picNames[2]), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
 
-        self.gridB_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[1]), state=tk.DISABLED)
+        self.gridB_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.change_image(self.picNames[1]), state=tk.DISABLED)
         self.gridB_button.pack(side=tk.RIGHT)
 
-        self.gridA_button = tk.Button(self.shframe, text = "postB", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button = tk.Button(self.shframe, text = "postB", command = lambda: self.change_image(self.picNames[0]), state=tk.DISABLED)
         self.gridA_button.pack(side=tk.RIGHT)
+
 
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
         self.labelframe.place(relx=.11, rely= .60)
@@ -643,7 +652,6 @@ class Gui():
 
     #Initalize images that will be in container 
     def init_images(self):
-
         #opening images directly from previously stored path
         a = Image.open(self.bsa_figure_path)
         b = Image.open(self.postB_figure_path)
@@ -675,6 +683,8 @@ class Gui():
         self.imgA = ImageTk.PhotoImage(floor)
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgB, self.imgA]
+        # setting the variable storing the current image shown on screen to imgA which is the postB image
+        self.current_pic = self.imgA
 
         #my_canvas populated with the BSA stained image instead of the post-B image
         self.my_canvas.config(width = floor.width, height= floor.height)
@@ -724,8 +734,6 @@ class Gui():
         (h,w) = image.shape[:2]
 
         (h1, w1) = image.shape[:2]
-
-
         cX, cY = (w // 2, h //2)
         degrees = self.rotated_degree % 360
         M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
@@ -832,10 +840,7 @@ class Gui():
         self.my_canvas.delete("image")
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
         self.right_canvas.config(width = floor.width + 300, height= h)
-
-
-
-                        
+    
     def activate_thresh(self):
 
         self.classification_active = False
@@ -882,9 +887,6 @@ class Gui():
         self.my_canvas.unbind('<ButtonRelease-1>')
         
         #finding the initial bw image from thresholding
-
-
-
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
@@ -982,14 +984,14 @@ class Gui():
         sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
-        self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
+        self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled", tag = "image")
         self.pWindow.destroy()
         self.sendinfo(self.picNames[2])
         
     #Update Threshold sliders
     def showThresh(self, value):
         if float(value) > 11:
-            self.my_canvas.delete("all")
+            # self.my_canvas.delete("all")
         #sel set to block size value
             sel = int(self.blockSize_value.get())
         #sec set to C value
@@ -1028,6 +1030,8 @@ class Gui():
 
     #Find Roi coordinates
     def find_points(self):
+        self.grid_created = False
+        self.tixel_locations = {}
 
         #Disable  buttons that should not be activated
         self.blockSize_scale['state'] = tk.DISABLED
@@ -1040,13 +1044,12 @@ class Gui():
         self.onoff_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled", tag = "image")
         
         self.c = DrawShapes(self.my_canvas, self.quad_coords)
         self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
         
         self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
-
         self.confirm_button["state"] = tk.ACTIVE
 
        
@@ -1066,7 +1069,7 @@ class Gui():
         self.quad_coords = self.my_canvas.coords(self.c.current)
 
         self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal", tag = "image")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
 
@@ -1113,20 +1116,39 @@ class Gui():
         else:
             #otherwise the new image is added to the end, which will be the 2nd index
             self.picNames.append(bw_Image)
-
         return bw_Image
 
-    def grid(self,pic):
-        #if the lmain label exists, we are coming from thresholding
+    def toggle_grid(self):
+        if self.grid_created == False:
+            print("calling grid")
+            self.grid()
+            self.grid_created = True
+            self.grid_active = True
+        else:
+            for key in self.tixel_locations.keys():
+                if self.grid_active:
+                    self.my_canvas.itemconfig(key, fill = self.tixel_locations[key], state = "hidden")
+                else:
+                    self.my_canvas.itemconfig(key, fill = self.tixel_locations[key], state = "normal")
+            self.grid_active = not self.grid_active
+
+    def change_image(self, pic):
+        self.my_canvas.delete("image")
+        self.my_canvas.create_image(0, 0, anchor="nw", image=pic, state="disabled", tag = "image")
+        self.my_canvas.tag_lower("image", "1x0")
+        self.current_pic = pic
+
+    def grid(self):
+        #if the lmain label exists, we are coming from thresholding and must destroy lmain to display image on my_canvas
         if self.lmain.winfo_exists() == 1:
             self.lmain.destroy()
             self.activateThresh_button['state'] = "active"
             self.blockSize_scale['state'] = "disabled"
             self.cMean_scale['state'] = "disabled"
-            
+
         self.value_sheFrame.set(1) 
-        self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
+        # self.my_canvas.delete("all")
+        # self.my_canvas.create_image(0,0, anchor="nw", image = self.current_pic, state="disabled")
     
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
@@ -1165,8 +1187,12 @@ class Gui():
                     bL = [tL[0]+slope[1],tL[1]+slope[0]]
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
                 position = str(j+1) + "x" + str(i)
+                # position = (i * self.num_chan) + j
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
+                polygon = self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="normal")
+                print(position)
+                # key is the position and 
+                self.tixel_locations[position] = '' 
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
@@ -1178,13 +1204,16 @@ class Gui():
                 #if self.classification_active:
                 if self.classification_active:
                     if self.arr[j][i] == 1:
-                        try:
-                            tags = self.my_canvas.find_withtag(position)
-                            self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
-                        except IndexError:
-                            self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
+                        self.my_canvas.itemconfigure(polygon, fill="red", state="normal")
+            # self.my_canvas.itemconfigure(self.tixel_locations[key], state='hidden')
+                        # try:
+                        #     tags = self.my_canvas.find_withtag(position)
+                        #     self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
+                        # except IndexError:
+                        #     self.my_canvas.itemconfig((self.num_chan*i+5)+j, fill='red', state="normal")
             prev[0] += slopeTO[1]
             prev[1] += slopeTO[0]
+
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
@@ -1193,12 +1222,11 @@ class Gui():
         #if the lmain label still exists, destroy it
         if self.lmain.winfo_exists() == 1:
             self.lmain.destroy()
-
         
         #self.activateThresh_button['state'] = tk.DISABLED
         self.check_on.set(0)
         self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
+        self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled", tag = "image")
 
         ratioNum = (self.num_chan*2) - 1
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
