@@ -136,7 +136,11 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
-        
+        rotate_left_small = Image.open("rotateleft2.png")
+        img3 = ImageTk.PhotoImage(rotate_left_small)
+        self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
+        self.degree_45.image = img3
+        self.degree_45.pack(side=tk.LEFT)
 
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
@@ -686,36 +690,23 @@ class Gui():
     def image_axis(self, num):
         (h,w) = self.cropped_image.shape[:2]
         cX, cY = (w // 2, h //2)
-
         if num == 0:
             M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
-            updated = cv2.warpAffine(self.cropped_image, M, (w,h))
-            I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
-            # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            formatted = Image.fromarray(I)
-            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(sized)
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
-            self.cropped_image = updated
-            # self.rotated_degree+=-90
             self.rotated_degree += 90
-            # self.rotation_order.append(90)
-
         if num == 1:
             M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
-            updated = cv2.warpAffine(self.cropped_image, M, (w,h))
-            I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
-            # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
-            formatted = Image.fromarray(I)
-            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(sized)
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
-            self.cropped_image = updated
-            # self.rotated_degree+=90
             self.rotated_degree += 270
-            # self.rotation_order.append(270)
+        if num == 2:
+            M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
+            self.rotated_degree += 45
+        updated = cv2.warpAffine(self.cropped_image, M, (w,h))
+        I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
+        formatted = Image.fromarray(I)
+        sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        imgtk = ImageTk.PhotoImage(sized)
+        self.lmain.image = imgtk
+        self.lmain.configure(image=imgtk)
+        self.cropped_image = updated
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
@@ -741,6 +732,7 @@ class Gui():
 
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
+        self.degree_45['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateThresh_button['state'] = tk.ACTIVE
 
@@ -771,7 +763,6 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
-
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
@@ -799,6 +790,7 @@ class Gui():
         # self.up['state'] = tk.ACTIVE
         self.left['state'] = tk.ACTIVE
         self.right['state'] = tk.ACTIVE
+        self.degree_45["state"] = tk.ACTIVE
         # self.flip['state'] = tk.ACTIVE
         self.image_updated['state'] = tk.ACTIVE
         self.confirmCrop_button['state'] = tk.DISABLED
@@ -832,9 +824,6 @@ class Gui():
         self.my_canvas.delete("image")
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
         self.right_canvas.config(width = floor.width + 300, height= h)
-
-
-
                         
     def activate_thresh(self):
 
