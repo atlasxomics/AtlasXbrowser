@@ -113,17 +113,9 @@ class Gui():
         self.lmain.image = bg
         self.lmain.configure(image=bg)
 
-        #f/crop
-        self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
-        self.cropframe.place(relx=.11, rely=.01)
-        self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
-        self.activateCrop_button.pack(side=tk.LEFT)
-        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
-        self.confirmCrop_button.pack()
-
         #Rotation Panel
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
-        self.rotateframe.place(relx=.11, rely=.10)
+        self.rotateframe.place(relx=.11, rely=.01)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
         self.image_updated.pack(side=tk.BOTTOM)
         rotateleft = Image.open("rotateleft.png")
@@ -141,6 +133,15 @@ class Gui():
         self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
         self.degree_45.image = img3
         self.degree_45.pack(side=tk.LEFT)
+        
+        #f/crop
+        self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
+        self.cropframe.place(relx=.11, rely=.14)
+        self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
+        self.activateCrop_button.pack(side=tk.LEFT)
+        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
+        self.confirmCrop_button.pack()
+
 
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
@@ -567,10 +568,16 @@ class Gui():
                     self.configure_images()
 
                     self.starting_window.destroy()
-                    self.activateCrop_button['state'] = tk.ACTIVE
+                    # self.activateCrop_button['state'] = tk.ACTIVE
                     self.newWindow.title("AtlasXbrowser (" + runID + ")")
                     self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
                     self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
+
+                    self.left['state'] = tk.ACTIVE
+                    self.right['state'] = tk.ACTIVE
+                    self.degree_45["state"] = tk.ACTIVE
+                    self.image_updated['state'] = tk.ACTIVE
+                    self.confirmCrop_button['state'] = tk.DISABLED
                     
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
@@ -579,31 +586,29 @@ class Gui():
         else:
          self.error_label.config(text = "Images must be located in the same directory!")
             
-            
-
-    #populates the canvas of the main page with the BSA image
     def configure_images(self):
-        a = Image.open(self.user_selected_bsa)
-        w, h = (a.width, a.height)
+        self.bsa_on_screen = Image.open(self.user_selected_bsa)
+        w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
         newH = self.screen_height - 60
 
-        self.image_array = cv2.imread(self.user_selected_bsa, 0)
-        self.rotation_matrix = np.identity(len(self.image_array))
+        # self.image_array = cv2.imread(self.user_selected_bsa, 0)
+        # self.rotation_matrix = np.identity(len(self.image_array))
 
         #find ratio of 60 less than screenheight to the image height
         self.factor = newH/h
         #use ratio to calcuate the new width
         newW = int(round(w*newH/h))
         #resize the bsa image based on these calculations
-        bsa = a.resize((newW, newH), Image.ANTIALIAS)
+        bsa = self.bsa_on_screen.resize((newW, newH), Image.ANTIALIAS)
         self.qwimga = ImageTk.PhotoImage(bsa)
-        #setting canvas height and width based on the size of images
-        self.my_canvas.config(width = bsa.width, height= bsa.height)
-        self.lmain.pack_forget()
-        #loading the bsa image onto screen
-        self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
-        self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
-        self.right_canvas.config(width = bsa.width + 300, height= h)
+
+        self.lmain.pack()
+        self.lmain.image = self.qwimga 
+        self.lmain.configure(image = self.qwimga)
+
+        self.bsa_resized = np.array(bsa)
+        # w = self.bsa_on_screen.width()
+
 
 
     #Ability to grab files from specified folder 'Spatial folder'
@@ -680,7 +685,8 @@ class Gui():
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgB, self.imgA]
 
-        #my_canvas populated with the BSA stained image instead of the post-B image
+        # my_canvas populated with the BSA stained image instead of the post-B image
+        self.lmain.pack()
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
@@ -688,7 +694,12 @@ class Gui():
 
     #Rotate and flip the images
     def image_axis(self, num):
-        (h,w) = self.cropped_image.shape[:2]
+        # h = self.bsa_on_screen.height
+        # w = self.bsa_on_screen.width
+        # (h,w) = self.cropped_image.shape[:2]
+        (h,w) = self.bsa_resized.shape[:2]
+        print(h)
+        print(w)
         cX, cY = (w // 2, h //2)
         if num == 0:
             M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
@@ -699,44 +710,48 @@ class Gui():
         if num == 2:
             M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
             self.rotated_degree += 45
-        updated = cv2.warpAffine(self.cropped_image, M, (w,h))
-        I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
-        formatted = Image.fromarray(I)
-        sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-        imgtk = ImageTk.PhotoImage(sized)
-        self.lmain.image = imgtk
-        self.lmain.configure(image=imgtk)
-        self.cropped_image = updated
+        updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
+        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
+        formatted = Image.fromarray(updated)
+        sized = formatted.resize((w, h), Image.ANTIALIAS)
+        self.imgtk = ImageTk.PhotoImage(sized)
+        self.lmain.image = self.imgtk
+        self.lmain.configure(image=self.imgtk)
+        self.bsa_resized = updated
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
-        image = cv2.imread(self.bsa_figure_path)
-        image1 = cv2.imread(self.postB_figure_path)
+        image = cv2.imread(self.user_selected_bsa)
+        image1 = cv2.imread(self.user_selected_postB)
         (h,w) = image.shape[:2]
-
-        (h1, w1) = image.shape[:2]
-
-
+        # (h1, w1) = image.shape[:2]
         cX, cY = (w // 2, h //2)
         degrees = self.rotated_degree % 360
         M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
         image = cv2.warpAffine(image, M, (w,h))
         image1 = cv2.warpAffine(image1, M, (w,h))
-
+        self.create_figure_folder()
         cv2.imwrite(self.bsa_figure_path, image)
         cv2.imwrite(self.postB_figure_path, image1)
 
         self.metadata["orientation"] = {"rotation": degrees}
 
-        #self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
-
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
         self.degree_45['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
-        self.activateThresh_button['state'] = tk.ACTIVE
+        self.activateCrop_button['state'] = tk.ACTIVE
 
-        self.init_images()
+        self.prep_cropping()
+        # self.init_images()
+
+    def prep_cropping(self):
+        cur_height = self.lmain.winfo_width()
+        cur_width = self.lmain.winfo_height()
+        self.lmain.pack_forget()
+        self.my_canvas.config(width = cur_width, height = cur_height)
+        self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
+
 
     def cropping(self):
         #creating cropping square on screen, defined as b
@@ -751,9 +766,7 @@ class Gui():
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
-    #Confirm cropping and reinitalize images in the containers
-    def square_image(self):
-  
+    def create_figure_folder(self):
         self.figure_folder = os.path.join(self.folder_selected, "figure") 
         #try making a figure folder
         try:
@@ -763,67 +776,58 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
+        print(self.figure_folder)
+        self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
+        self.postB_figure_path = self.figure_folder + "/" + self.postB_short
+
+        # copy(self.folder_selected + "/" + self.bsa_short, self.figure_folder)
+        # copy(self.folder_selected + "/" + self.postB_short, self.figure_folder)
+
+    #Confirm cropping and reinitalize images in the containers
+    def square_image(self):
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
 
-        #copying the image files into the figure folder in within the same larger folder
-        # for i in self.names:
-        #     copy(source + "/" + i, self.figure_folder)
-
-        copy(source + "/" + self.bsa_short, self.figure_folder)
-        copy(source + "/" + self.postB_short, self.figure_folder)
-            
-        self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
         image1 = Image.open(self.bsa_figure_path)
+        # pil_img = Image.fromarray(self.bsa_resized)
         im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         bsa = im1.save(self.bsa_figure_path)
 
-        self.postB_figure_path = self.figure_folder + "/" + self.postB_short
+        # self.postB_figure_path = self.figure_folder + "/" + self.postB_short
         image2 = Image.open(self.postB_figure_path)
         im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
         post = im2.save(self.postB_figure_path)
 
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
-
-        # self.up['state'] = tk.ACTIVE
-        self.left['state'] = tk.ACTIVE
-        self.right['state'] = tk.ACTIVE
-        self.degree_45["state"] = tk.ACTIVE
-        # self.flip['state'] = tk.ACTIVE
-        self.image_updated['state'] = tk.ACTIVE
-        self.confirmCrop_button['state'] = tk.DISABLED
-
-
         b = im1
 
-        w, h = (b.width, b.height)
-        #newH is 60 less than the image height
-        newH = self.screen_height - 60
-        #newW is the ratio of newH to H times the width
-        newW = int(round(w*newH/h))
-        #creating a new image of resized BSA image base don above calculations
-        floor = b.resize((newW, newH), Image.ANTIALIAS)
+        # w, h = (b.width, b.height)
+        # #newH is 60 less than the image height
+        # newH = self.screen_height - 60
+        # #newW is the ratio of newH to H times the width
+        # newW = int(round(w*newH/h))
+        # #creating a new image of resized BSA image base don above calculations
+        # floor = b.resize((newW, newH), Image.ANTIALIAS)
+        # postB = im2.resize((newW, newH), Image.ANTIALIAS)
+        # #setting object height and width to the BSA images
+        # self.newWidth = floor.width ; self.newHeight = floor.height
 
-        #setting object height and width to the BSA images
-        self.newWidth = floor.width ; self.newHeight = floor.height
+        # self.my_canvas.config(width = floor.width, height= floor.height)
 
-        #PhotoImage of the resized BSA
-        imgA = ImageTk.PhotoImage(floor)
+        # img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
+        # self.cropped_image = img
 
-        self.my_canvas.config(width = floor.width, height= floor.height)
-
-        img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
-        self.cropped_image = img
-
-        self.lmain.pack()
-
-        self.lmain.image = imgA
-        self.lmain.configure(image=imgA)
-        self.my_canvas.delete("image")
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
+        # self.lmain.pack()
+        # self.lmain.image = imgA
+        # self.lmain.configure(image=imgA)
+        self.my_canvas.delete("all")
+        # self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
+        # self.right_canvas.config(width = floor.width + 300, height= h)
+        self.activateThresh_button['state'] = tk.ACTIVE
+        self.confirmCrop_button['state'] = tk.DISABLED
+        self.init_images()
                         
     def activate_thresh(self):
 
