@@ -698,8 +698,6 @@ class Gui():
         # w = self.bsa_on_screen.width
         # (h,w) = self.cropped_image.shape[:2]
         (h,w) = self.bsa_resized.shape[:2]
-        print(h)
-        print(w)
         cX, cY = (w // 2, h //2)
         if num == 0:
             M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
@@ -711,7 +709,7 @@ class Gui():
             M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
             self.rotated_degree += 45
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
-        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
+        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
         formatted = Image.fromarray(updated)
         sized = formatted.resize((w, h), Image.ANTIALIAS)
         self.imgtk = ImageTk.PhotoImage(sized)
@@ -721,20 +719,20 @@ class Gui():
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
-        image = cv2.imread(self.user_selected_bsa)
-        image1 = cv2.imread(self.user_selected_postB)
-        (h,w) = image.shape[:2]
-        # (h1, w1) = image.shape[:2]
-        cX, cY = (w // 2, h //2)
-        degrees = self.rotated_degree % 360
-        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-        image = cv2.warpAffine(image, M, (w,h))
-        image1 = cv2.warpAffine(image1, M, (w,h))
+        # image = cv2.imread(self.user_selected_bsa)
+        # image1 = cv2.imread(self.user_selected_postB)
+        # (h,w) = image.shape[:2]
+        # # (h1, w1) = image.shape[:2]
+        # cX, cY = (w // 2, h //2)
+        # degrees = self.rotated_degree % 360
+        # M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        # image = cv2.warpAffine(image, M, (w,h))
+        # image1 = cv2.warpAffine(image1, M, (w,h))
         self.create_figure_folder()
-        cv2.imwrite(self.bsa_figure_path, image)
-        cv2.imwrite(self.postB_figure_path, image1)
+        # cv2.imwrite(self.bsa_figure_path, image)
+        # cv2.imwrite(self.postB_figure_path, image1)
 
-        self.metadata["orientation"] = {"rotation": degrees}
+
 
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
@@ -751,7 +749,6 @@ class Gui():
         self.lmain.pack_forget()
         self.my_canvas.config(width = cur_width, height = cur_height)
         self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
-
 
     def cropping(self):
         #creating cropping square on screen, defined as b
@@ -780,51 +777,38 @@ class Gui():
         self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
         self.postB_figure_path = self.figure_folder + "/" + self.postB_short
 
-        # copy(self.folder_selected + "/" + self.bsa_short, self.figure_folder)
-        # copy(self.folder_selected + "/" + self.postB_short, self.figure_folder)
-
     #Confirm cropping and reinitalize images in the containers
     def square_image(self):
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
-
-        image1 = Image.open(self.bsa_figure_path)
+        image1 = cv2.imread(self.user_selected_bsa)
+        (h, w) = image1.shape[:2]
+        cX, cY = (w // 2, h //2)
+        degrees = self.rotated_degree % 360
+        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        rot_image1 = cv2.warpAffine(image1, M, (w, h))
+        I = cv2.cvtColor(rot_image1, cv2.COLOR_BGR2RGB)
+        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
+        img1 = Image.fromarray(I)
         # pil_img = Image.fromarray(self.bsa_resized)
-        im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        im1 = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         bsa = im1.save(self.bsa_figure_path)
 
         # self.postB_figure_path = self.figure_folder + "/" + self.postB_short
-        image2 = Image.open(self.postB_figure_path)
-        im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
+        image2 = cv2.imread(self.user_selected_postB)
+        rot_image2 = cv2.warpAffine(image2, M, (w,h))
+        img2 = Image.fromarray(rot_image2)
+        im2 = img2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
         post = im2.save(self.postB_figure_path)
 
+        self.metadata["orientation"] = {"rotation": degrees}
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
         b = im1
 
-        # w, h = (b.width, b.height)
-        # #newH is 60 less than the image height
-        # newH = self.screen_height - 60
-        # #newW is the ratio of newH to H times the width
-        # newW = int(round(w*newH/h))
-        # #creating a new image of resized BSA image base don above calculations
-        # floor = b.resize((newW, newH), Image.ANTIALIAS)
-        # postB = im2.resize((newW, newH), Image.ANTIALIAS)
-        # #setting object height and width to the BSA images
-        # self.newWidth = floor.width ; self.newHeight = floor.height
-
-        # self.my_canvas.config(width = floor.width, height= floor.height)
-
-        # img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
-        # self.cropped_image = img
-
-        # self.lmain.pack()
-        # self.lmain.image = imgA
-        # self.lmain.configure(image=imgA)
         self.my_canvas.delete("all")
-        # self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        # self.right_canvas.config(width = floor.width + 300, height= h)
+
         self.activateThresh_button['state'] = tk.ACTIVE
         self.confirmCrop_button['state'] = tk.DISABLED
         self.init_images()
