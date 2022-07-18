@@ -600,11 +600,11 @@ class Gui():
         newW = int(round(w*newH/h))
         #resize the bsa image based on these calculations
         bsa = self.bsa_on_screen.resize((newW, newH), Image.ANTIALIAS)
-        self.qwimga = ImageTk.PhotoImage(bsa)
+        self.imgtk = ImageTk.PhotoImage(bsa)
 
         self.lmain.pack()
-        self.lmain.image = self.qwimga 
-        self.lmain.configure(image = self.qwimga)
+        self.lmain.image = self.imgtk 
+        self.lmain.configure(image = self.imgtk)
 
         self.bsa_resized = np.array(bsa)
         # w = self.bsa_on_screen.width()
@@ -744,10 +744,10 @@ class Gui():
         # self.init_images()
 
     def prep_cropping(self):
-        cur_height = self.lmain.winfo_width()
+        cur_height = self.lmain.winfo_width() * 2
         cur_width = self.lmain.winfo_height()
         self.lmain.pack_forget()
-        self.my_canvas.config(width = cur_width, height = cur_height)
+        # self.my_canvas.config(width = cur_width, height = cur_height)
         self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
 
     def cropping(self):
