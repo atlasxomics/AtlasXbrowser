@@ -1441,6 +1441,8 @@ class Gui():
         except FileExistsError:
             path = self.folder_selected + "/spatial"
 
+        self.position_file["state"] = tk.DISABLED
+
         # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         my_file = open(self.barcode_filename,"r")
         excelC = 1
