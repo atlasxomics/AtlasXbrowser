@@ -322,7 +322,7 @@ class Gui():
 
         self.barcode_selected = tk.StringVar()
         self.barcode_selected.set("1")
-        barcode_options = ["1", "2", "3", "4"]
+        barcode_options = ["1", "2", "3", "4", "24"]
         barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, *barcode_options)
         barcode_drop.grid(row = 5, column = 1, sticky="w")
 
@@ -548,6 +548,8 @@ class Gui():
                         self.barcode_filename = "bc50v3.txt"
                     elif self.barcode_selected.get() == "4":
                         self.barcode_filename = "bc50v4.txt" 
+                    elif self.barcode_selected.get() == "24":
+                        self.barcode_filename = "bc50v24.txt"
 
                     self.metadata = {
                     "run": runID,
