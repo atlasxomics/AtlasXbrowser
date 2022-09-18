@@ -1443,26 +1443,45 @@ class Gui():
         self.position_file["state"] = tk.DISABLED
 
         # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
-        my_file = open(self.barcode_filename,"r")
-        excelC = 1
+        if self.custom_barcode_selected:
+            my_file = open(self.barcode_filename,"r")
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             self.numTixels = 0
+            if self.custom_barcode_selected == False:
+                 barcode = barcode1_var.split("\n")
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
-                    barcode = my_file.readline().split('\t')
+                    if (self.custom_barcode_selected):
+                         line = my_file.readline().split('\t')
+
+                     #val to be used when writing whether tixel position is on or off
+                    tixel_val = 0
                     if self.arr[j][i] == 1:
                         self.numTixels+=1
-                        writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
-                    else:
-                        writer.writerow([barcode[0].strip(), 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                        tixel_val = 1
 
-                excelC += 1
+                     #if coming from a file, continue to take from the 0th index
+                    if (self.custom_barcode_selected):
+                        val = line[0].strip()
+                    #if coming from a variable index the variable
+                        # writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+                    else:
+                        inx = (i * self.num_chan) + j
+                        val = barcode[inx].strip()
+
+                    writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
+
+         # if the barcodes being selected are from a custom file, close it
+        if (self.custom_barcode_selected):
+            my_file.close()
+
               
-        my_file.close()
+        # my_file.close()
         self.json_file(path)
         self.grid_button["state"] = tk.DISABLED
         self.gridA_button["state"] = tk.DISABLED
+        self.gridB_button["state"] = tk.DISABLED
         try: 
             move(self.figure_folder,path)
         except shutil.Error:
