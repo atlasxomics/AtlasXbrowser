@@ -128,11 +128,11 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
-        rotate_left_small = Image.open("rotateleft2.png")
-        img3 = ImageTk.PhotoImage(rotate_left_small)
-        self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
-        self.degree_45.image = img3
-        self.degree_45.pack(side=tk.LEFT)
+        # rotate_left_small = Image.open("rotateleft2.png")
+        # img3 = ImageTk.PhotoImage(rotate_left_small)
+        # self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
+        # self.degree_45.image = img3
+        # self.degree_45.pack(side=tk.LEFT)
         
         #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
@@ -283,8 +283,31 @@ class Gui():
         postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
         postB_button.grid(row = 1, column = 1, sticky = "w")
 
+
+        #barcode file selection
+         # standard barcode 1 automatically selected. Can also designate a custom file.
+        label3 = tk.Label(self.starting_window,
+        text = "Barcode File:",
+        font = ("Courier", 14))
+        label3.grid(row = 2, column = 0, sticky = "e")
+
+        label3a = tk.Label(self.starting_window,
+        text = "bc50v1" 
+        )
+        label3a.grid(row = 2, column = 1, sticky="w")        
+
+        # label3b = tk.Label(self.starting_window)
+        # label3b.grid(row = 2, column = 3, sticky = "w")
+
+        revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
+
+        barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
+        barcode_button.grid(row = 2, column = 1, sticky = "w")
+
+        label3.grid(row = 2, column = 0, sticky = "e")
+
         self.run_identifier = tk.StringVar()
-        label3 = tk.Label(self.starting_window, 
+        label4 = tk.Label(self.starting_window, 
         text = "Run ID:", 
         font = ("Courier", 14)
         # width = 25
@@ -292,98 +315,96 @@ class Gui():
 
         entry_box = tk.Entry(self.starting_window, textvariable = self.run_identifier,
         )
+        label4.grid(row=3, column=0, sticky="e")
+        entry_box.grid(row=3, column=1, sticky="w")
+        # label5 = tk.Label(self.starting_window,
+        # text="Collaborator:",
+        # font = ("Courier", 14))
+        # self.collaborator = tk.StringVar()
+        # entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
+        # label5.grid(row = 3, column = 0, sticky="e")
+        # entry_box_collab.grid(row=3, column = 1, sticky="w")
 
-        label3.grid(row = 2, column = 0, sticky = "e")
-        entry_box.grid(row = 2, column = 1, sticky = "w")
+        # self.tissue = tk.StringVar()
+        # label4 = tk.Label(self.starting_window,
+        # text = "Tissue:",
+        # font = ("Courier", 14)
+        # )
+        # entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
+        # label4.grid(row = 4, column = 0, sticky="e")
+        # entry_box2.grid(row=4, column= 1, sticky="w")
 
-        label5 = tk.Label(self.starting_window,
-        text="Collaborator:",
-        font = ("Courier", 14))
-        self.collaborator = tk.StringVar()
-        entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
-        label5.grid(row = 3, column = 0, sticky="e")
-        entry_box_collab.grid(row=3, column = 1, sticky="w")
+        # #barcode file selection
+        # # standard barcode 1 automatically selected. Can also designate a custom file.
+        # label3 = tk.Label(self.starting_window,
+        # text = "Barcode File:",
+        # font = ("Courier", 14))
+        # label3.grid(row = 5, column = 0, sticky = "e")
 
-        self.tissue = tk.StringVar()
-        label4 = tk.Label(self.starting_window,
-        text = "Tissue:",
-        font = ("Courier", 14)
-        )
-        entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
-        label4.grid(row = 4, column = 0, sticky="e")
-        entry_box2.grid(row=4, column= 1, sticky="w")
+        # self.barcode_selected = tk.StringVar()
+        # self.barcode_selected.set("1")
+        # barcode_options = ["1", "2", "3", "4", "24", "24_flipB"]
+        # barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, *barcode_options)
+        # barcode_drop.grid(row = 5, column = 1, sticky="w")
 
-        #barcode file selection
-        # standard barcode 1 automatically selected. Can also designate a custom file.
-        label3 = tk.Label(self.starting_window,
-        text = "Barcode File:",
-        font = ("Courier", 14))
-        label3.grid(row = 5, column = 0, sticky = "e")
+        # self.species = tk.StringVar()
+        # self.species.set("Mouse")
+        # label6 = tk.Label(self.starting_window,
+        # text="Species:",
+        # font= ("Courier", 14))
 
-        self.barcode_selected = tk.StringVar()
-        self.barcode_selected.set("1")
-        barcode_options = ["1", "2", "3", "4", "24", "24_flipB"]
-        barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, *barcode_options)
-        barcode_drop.grid(row = 5, column = 1, sticky="w")
+        # species_options = ["Mouse", "Human", "Rat", "Chicken"]
+        # species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
+        # label6.grid(row=6, column=0, sticky="e")
+        # species_dropdown.grid(row=6, column=1, sticky="w")
 
-        self.species = tk.StringVar()
-        self.species.set("Mouse")
-        label6 = tk.Label(self.starting_window,
-        text="Species:",
-        font= ("Courier", 14))
+        # self.assay = tk.StringVar()
+        # self.assay.set("ATAC Seq")
+        # assay_options = ["ATAC Seq","CUT&TAG" ,"mRNA"]
+        # label7 = tk.Label(self.starting_window,
+        #     text="Assay:",
+        #     font = ("Courier", 14))
+        # assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, *assay_options)
+        # label7.grid(row=7, column=0, sticky="e")
+        # assay_dropdown.grid(row=7, column=1, sticky="w")
 
-        species_options = ["Mouse", "Human", "Rat", "Chicken"]
-        species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
-        label6.grid(row=6, column=0, sticky="e")
-        species_dropdown.grid(row=6, column=1, sticky="w")
+        # self.tissue_type = tk.StringVar()
+        # self.tissue_type.set("FF")
+        # # type_options = ["FFPE", "FF", "EFPR"]
+        # # label8 = tk.Label(self.starting_window,
+        # #                 text="Type:",
+        # #                 font = ("Courier", 14))
+        # # type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
+        # # label8.grid(row=8, column=0, sticky="e")
+        # # type_dropdown.grid(row=8, column=1, sticky="w")
 
-        self.assay = tk.StringVar()
-        self.assay.set("ATAC Seq")
-        assay_options = ["ATAC Seq","CUT&TAG" ,"mRNA"]
-        label7 = tk.Label(self.starting_window,
-            text="Assay:",
-            font = ("Courier", 14))
-        assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, *assay_options)
-        label7.grid(row=7, column=0, sticky="e")
-        assay_dropdown.grid(row=7, column=1, sticky="w")
+        # self.tissue_state = tk.StringVar()
+        # self.tissue_state.set("Normal")
+        # tissue_options = ["Normal", "Disease"]
+        # label9 = tk.Label(self.starting_window,
+        #                     text = "Tissue State:",
+        #                     font = ("Courier", 14))
+        # tissue_state_dropdown = tk.OptionMenu(self.starting_window, self.tissue_state, *tissue_options)
+        # label9.grid(row=8, column = 0, sticky="e")
+        # tissue_state_dropdown.grid(row=8, column = 1, sticky="w")
 
-        self.tissue_type = tk.StringVar()
-        self.tissue_type.set("FF")
-        # type_options = ["FFPE", "FF", "EFPR"]
-        # label8 = tk.Label(self.starting_window,
-        #                 text="Type:",
-        #                 font = ("Courier", 14))
-        # type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
-        # label8.grid(row=8, column=0, sticky="e")
-        # type_dropdown.grid(row=8, column=1, sticky="w")
-
-        self.tissue_state = tk.StringVar()
-        self.tissue_state.set("Normal")
-        tissue_options = ["Normal", "Disease"]
-        label9 = tk.Label(self.starting_window,
-                            text = "Tissue State:",
-                            font = ("Courier", 14))
-        tissue_state_dropdown = tk.OptionMenu(self.starting_window, self.tissue_state, *tissue_options)
-        label9.grid(row=8, column = 0, sticky="e")
-        tissue_state_dropdown.grid(row=8, column = 1, sticky="w")
-
-        self.resolution = tk.StringVar()
-        self.resolution.set("25")
-        label10 = tk.Label(self.starting_window,
-                            text = "Chip Resolution:",
-                            font = ("Courier", 14))
-        resolution_options = [10, 25, 50]
-        resolution_dropdown = tk.OptionMenu(self.starting_window, self.resolution, *resolution_options)
-        label10.grid(row=9, column = 0, sticky="e")
-        resolution_dropdown.grid(row=9, column = 1, sticky="w")
+        # self.resolution = tk.StringVar()
+        # self.resolution.set("25")
+        # label10 = tk.Label(self.starting_window,
+        #                     text = "Chip Resolution:",
+        #                     font = ("Courier", 14))
+        # resolution_options = [10, 25, 50]
+        # resolution_dropdown = tk.OptionMenu(self.starting_window, self.resolution, *resolution_options)
+        # label10.grid(row=9, column = 0, sticky="e")
+        # resolution_dropdown.grid(row=9, column = 1, sticky="w")
 
         #submit button
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
-        button.grid(row = 10, column = 1, sticky = "w", pady = 20)
+        button.grid(row = 5, column = 1, sticky = "w", pady = 20)
 
         #error button
         self.error_label = tk.Label(self.starting_window)
-        self.error_label.grid(row = 11, column = 1, sticky = "w")
+        self.error_label.grid(row = 6, column = 1, sticky = "w")
 
     def use_barcode1(self, remove_button, display_button):
         self.custom_barcode_selected = False
@@ -527,44 +548,18 @@ class Gui():
         if same_dir:
             #retrieving variables from stored StringVar variables
             runID = self.run_identifier.get()
-            tissue_type = self.tissue_type.get()
-            collaborator = self.collaborator.get()
-            resolution = self.resolution.get()
-            tissue = self.tissue.get()
-            print("Tissue type" + tissue_type)
-            if runID != "" and collaborator != "" and tissue != "" :
+            if runID != "":
                 if self.both_images_selected:
-                    val = self.user_selected_bsa.rfind("/")
-                    self.bsa_short = self.user_selected_bsa[val + 1: ]
+                    if self.custom_barcode_valid or self.custom_barcode_selected == False:
+                        val = self.user_selected_bsa.rfind("/")
+                        self.bsa_short = self.user_selected_bsa[val + 1: ]
 
-                    val = self.user_selected_postB.rfind("/")
-                    self.postB_short = self.user_selected_postB[val + 1: ]
-                    self.num_chan = 50
-                    if self.barcode_selected.get() == "1":
-                        self.barcode_filename = "bc50v1.txt"
-                    elif self.barcode_selected.get() == "2":
-                        self.barcode_filename = "bc50v2.txt"
-                    elif self.barcode_selected.get() == "3":
-                        self.barcode_filename = "bc50v3.txt"
-                    elif self.barcode_selected.get() == "4":
-                        self.barcode_filename = "bc50v4.txt" 
-                    elif self.barcode_selected.get() == "24":
-                        self.barcode_filename = "bc50v24.txt"
-                    elif self.barcode_selected.get() == "24_flipB":
-                        self.barcode_filename = "bc50v24flipB.txt"
+                        val = self.user_selected_postB.rfind("/")
+                        self.postB_short = self.user_selected_postB[val + 1: ]
 
-                    self.metadata = {
-                    "run": runID,
-                    "species": self.species.get(),
-                    "type": self.tissue_type.get(),
-                    "assay": self.assay.get(),
-                    "collaborator": self.collaborator.get(),
-                    "barcodes": self.barcode_selected.get(),
-                    "resolution": self.resolution.get(),
-                    "disease_state": self.tissue_state.get(),
-                    "tissue": self.tissue.get()
-                    }
-
+                        self.metadata = {
+                        "run": runID
+                        }
                     #setting excelName var, used later, to equal the user specifed run ID
                     self.excelName = runID
 
@@ -579,14 +574,14 @@ class Gui():
 
                     self.left['state'] = tk.ACTIVE
                     self.right['state'] = tk.ACTIVE
-                    self.degree_45["state"] = tk.ACTIVE
+                    # self.degree_45["state"] = tk.ACTIVE
                     self.image_updated['state'] = tk.ACTIVE
                     self.confirmCrop_button['state'] = tk.DISABLED
                     
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
             else:
-                self.error_label.config(text = "Error! Fill out necessary fields!")
+                self.error_label.config(text = "Error! Enter a Run Identifier!")
         else:
          self.error_label.config(text = "Images must be located in the same directory!")
             
@@ -740,7 +735,7 @@ class Gui():
 
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
-        self.degree_45['state'] = tk.DISABLED
+        # self.degree_45['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateCrop_button['state'] = tk.ACTIVE
 
