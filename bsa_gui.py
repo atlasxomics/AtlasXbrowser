@@ -60,14 +60,14 @@ class Gui():
 
         menu = tk.Menu(self.newWindow)
         self.newWindow.config(menu=menu)
-        filemenu = tk.Menu(menu)
-        menu.add_cascade(label="File", menu=filemenu)
+        self.filemenu = tk.Menu(menu)
+        menu.add_cascade(label="File", menu=self.filemenu)
  
-        filemenu.add_command(label="Begin Image Processing", command=self.load_images)
-        filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
-        filemenu.add_command(label="New Instance", command=self.restart)
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.destruct)
+        self.filemenu.add_command(label="Begin Image Processing", command=self.load_images)
+        self.filemenu.add_command(label="Open Spatial Folder", command=self.get_spatial)
+        self.filemenu.add_command(label="New Instance", command=self.restart)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit", command=self.destruct)
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command="")
@@ -85,6 +85,8 @@ class Gui():
         self.check_on.set(0)
         self.quad_coords = [0]
         self.rotated_degree = 0
+
+        self.metaCreated = False
 
         # setting variables to be used when the default is selected
         self.barcode_filename = ""
@@ -111,17 +113,9 @@ class Gui():
         self.lmain.image = bg
         self.lmain.configure(image=bg)
 
-        #f/crop
-        self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
-        self.cropframe.place(relx=.11, rely=.01)
-        self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
-        self.activateCrop_button.pack(side=tk.LEFT)
-        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
-        self.confirmCrop_button.pack()
-
         #Rotation Panel
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
-        self.rotateframe.place(relx=.11, rely=.10)
+        self.rotateframe.place(relx=.11, rely=.01)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
         self.image_updated.pack(side=tk.BOTTOM)
         rotateleft = Image.open("rotateleft.png")
@@ -134,7 +128,20 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
+        # rotate_left_small = Image.open("rotateleft2.png")
+        # img3 = ImageTk.PhotoImage(rotate_left_small)
+        # self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
+        # self.degree_45.image = img3
+        # self.degree_45.pack(side=tk.LEFT)
         
+        #f/crop
+        self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
+        self.cropframe.place(relx=.11, rely=.14)
+        self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
+        self.activateCrop_button.pack(side=tk.LEFT)
+        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
+        self.confirmCrop_button.pack()
+
 
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
@@ -276,8 +283,9 @@ class Gui():
         postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
         postB_button.grid(row = 1, column = 1, sticky = "w")
 
+
         #barcode file selection
-        # standard barcode 1 automatically selected. Can also designate a custom file.
+         # standard barcode 1 automatically selected. Can also designate a custom file.
         label3 = tk.Label(self.starting_window,
         text = "Barcode File:",
         font = ("Courier", 14))
@@ -296,6 +304,8 @@ class Gui():
         barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
         barcode_button.grid(row = 2, column = 1, sticky = "w")
 
+        label3.grid(row = 2, column = 0, sticky = "e")
+
         self.run_identifier = tk.StringVar()
         label4 = tk.Label(self.starting_window, 
         text = "Run ID:", 
@@ -305,13 +315,94 @@ class Gui():
 
         entry_box = tk.Entry(self.starting_window, textvariable = self.run_identifier,
         )
+        label4.grid(row=3, column=0, sticky="e")
+        entry_box.grid(row=3, column=1, sticky="w")
+        # label5 = tk.Label(self.starting_window,
+        # text="Collaborator:",
+        # font = ("Courier", 14))
+        # self.collaborator = tk.StringVar()
+        # entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
+        # label5.grid(row = 3, column = 0, sticky="e")
+        # entry_box_collab.grid(row=3, column = 1, sticky="w")
 
-        label4.grid(row = 3, column = 0, sticky = "e")
-        entry_box.grid(row = 3, column = 1, sticky = "w")
-        
+        # self.tissue = tk.StringVar()
+        # label4 = tk.Label(self.starting_window,
+        # text = "Tissue:",
+        # font = ("Courier", 14)
+        # )
+        # entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
+        # label4.grid(row = 4, column = 0, sticky="e")
+        # entry_box2.grid(row=4, column= 1, sticky="w")
+
+        # #barcode file selection
+        # # standard barcode 1 automatically selected. Can also designate a custom file.
+        # label3 = tk.Label(self.starting_window,
+        # text = "Barcode File:",
+        # font = ("Courier", 14))
+        # label3.grid(row = 5, column = 0, sticky = "e")
+
+        # self.barcode_selected = tk.StringVar()
+        # self.barcode_selected.set("1")
+        # barcode_options = ["1", "2", "3", "4", "24", "24_flipB"]
+        # barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, *barcode_options)
+        # barcode_drop.grid(row = 5, column = 1, sticky="w")
+
+        # self.species = tk.StringVar()
+        # self.species.set("Mouse")
+        # label6 = tk.Label(self.starting_window,
+        # text="Species:",
+        # font= ("Courier", 14))
+
+        # species_options = ["Mouse", "Human", "Rat", "Chicken"]
+        # species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
+        # label6.grid(row=6, column=0, sticky="e")
+        # species_dropdown.grid(row=6, column=1, sticky="w")
+
+        # self.assay = tk.StringVar()
+        # self.assay.set("ATAC Seq")
+        # assay_options = ["ATAC Seq","CUT&TAG" ,"mRNA"]
+        # label7 = tk.Label(self.starting_window,
+        #     text="Assay:",
+        #     font = ("Courier", 14))
+        # assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, *assay_options)
+        # label7.grid(row=7, column=0, sticky="e")
+        # assay_dropdown.grid(row=7, column=1, sticky="w")
+
+        # self.tissue_type = tk.StringVar()
+        # self.tissue_type.set("FF")
+        # # type_options = ["FFPE", "FF", "EFPR"]
+        # # label8 = tk.Label(self.starting_window,
+        # #                 text="Type:",
+        # #                 font = ("Courier", 14))
+        # # type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
+        # # label8.grid(row=8, column=0, sticky="e")
+        # # type_dropdown.grid(row=8, column=1, sticky="w")
+
+        # self.tissue_state = tk.StringVar()
+        # self.tissue_state.set("Normal")
+        # tissue_options = ["Normal", "Disease"]
+        # label9 = tk.Label(self.starting_window,
+        #                     text = "Tissue State:",
+        #                     font = ("Courier", 14))
+        # tissue_state_dropdown = tk.OptionMenu(self.starting_window, self.tissue_state, *tissue_options)
+        # label9.grid(row=8, column = 0, sticky="e")
+        # tissue_state_dropdown.grid(row=8, column = 1, sticky="w")
+
+        # self.resolution = tk.StringVar()
+        # self.resolution.set("25")
+        # label10 = tk.Label(self.starting_window,
+        #                     text = "Chip Resolution:",
+        #                     font = ("Courier", 14))
+        # resolution_options = [10, 25, 50]
+        # resolution_dropdown = tk.OptionMenu(self.starting_window, self.resolution, *resolution_options)
+        # label10.grid(row=9, column = 0, sticky="e")
+        # resolution_dropdown.grid(row=9, column = 1, sticky="w")
+
+        #submit button
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
         button.grid(row = 5, column = 1, sticky = "w", pady = 20)
 
+        #error button
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
 
@@ -469,50 +560,54 @@ class Gui():
                         self.metadata = {
                         "run": runID
                         }
+                    #setting excelName var, used later, to equal the user specifed run ID
+                    self.excelName = runID
 
-                        #setting excelName var, used later, to equal the user specifed run ID
-                        self.excelName = runID
+                    #calling method that puts images on canvas
+                    self.configure_images()
 
-                        #calling method that puts images on canvas
-                        self.configure_images()
+                    self.starting_window.destroy()
+                    # self.activateCrop_button['state'] = tk.ACTIVE
+                    self.newWindow.title("AtlasXbrowser (" + runID + ")")
+                    self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+                    self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
 
-                        self.starting_window.destroy()
-                        self.activateCrop_button['state'] = tk.ACTIVE
-                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
-                    else:
-                        self.error_label.config(text = "Error! Must select a proper barcode file!")
+                    self.left['state'] = tk.ACTIVE
+                    self.right['state'] = tk.ACTIVE
+                    # self.degree_45["state"] = tk.ACTIVE
+                    self.image_updated['state'] = tk.ACTIVE
+                    self.confirmCrop_button['state'] = tk.DISABLED
+                    
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
             else:
-                self.error_label.config(text = "Error! Enter a Run Identifier")
+                self.error_label.config(text = "Error! Enter a Run Identifier!")
         else:
          self.error_label.config(text = "Images must be located in the same directory!")
             
-            
-
-    #populates the canvas of the main page with the BSA image
     def configure_images(self):
-        a = Image.open(self.user_selected_bsa)
-        w, h = (a.width, a.height)
+        self.bsa_on_screen = Image.open(self.user_selected_bsa)
+        w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
         newH = self.screen_height - 60
 
-        self.image_array = cv2.imread(self.user_selected_bsa, 0)
-        self.rotation_matrix = np.identity(len(self.image_array))
+        # self.image_array = cv2.imread(self.user_selected_bsa, 0)
+        # self.rotation_matrix = np.identity(len(self.image_array))
 
         #find ratio of 60 less than screenheight to the image height
         self.factor = newH/h
         #use ratio to calcuate the new width
         newW = int(round(w*newH/h))
         #resize the bsa image based on these calculations
-        bsa = a.resize((newW, newH), Image.ANTIALIAS)
-        self.qwimga = ImageTk.PhotoImage(bsa)
-        #setting canvas height and width based on the size of images
-        self.my_canvas.config(width = bsa.width, height= bsa.height)
-        self.lmain.pack_forget()
-        #loading the bsa image onto screen
-        self.my_canvas.create_image(0, 0, image=self.qwimga, anchor="nw", tag ="image")
-        self.newWindow.geometry("{0}x{1}".format(bsa.width + 300, self.screen_height))
-        self.right_canvas.config(width = bsa.width + 300, height= h)
+        bsa = self.bsa_on_screen.resize((newW, newH), Image.ANTIALIAS)
+        self.imgtk = ImageTk.PhotoImage(bsa)
+
+        self.lmain.pack()
+        self.lmain.image = self.imgtk 
+        self.lmain.configure(image = self.imgtk)
+
+        self.bsa_resized = np.array(bsa)
+        # w = self.bsa_on_screen.width()
+
 
 
     #Ability to grab files from specified folder 'Spatial folder'
@@ -589,7 +684,8 @@ class Gui():
         self.imgB = ImageTk.PhotoImage(postB)
         self.picNames = [self.imgB, self.imgA]
 
-        #my_canvas populated with the BSA stained image instead of the post-B image
+        # my_canvas populated with the BSA stained image instead of the post-B image
+        self.lmain.pack()
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
@@ -597,67 +693,61 @@ class Gui():
 
     #Rotate and flip the images
     def image_axis(self, num):
-        (h,w) = self.cropped_image.shape[:2]
+        # h = self.bsa_on_screen.height
+        # w = self.bsa_on_screen.width
+        # (h,w) = self.cropped_image.shape[:2]
+        (h,w) = self.bsa_resized.shape[:2]
         cX, cY = (w // 2, h //2)
-
         if num == 0:
             M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
-            updated = cv2.warpAffine(self.cropped_image, M, (w,h))
-            I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
-            # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            formatted = Image.fromarray(I)
-            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(sized)
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
-            self.cropped_image = updated
-            # self.rotated_degree+=-90
             self.rotated_degree += 90
-            # self.rotation_order.append(90)
-
         if num == 1:
             M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
-            updated = cv2.warpAffine(self.cropped_image, M, (w,h))
-            I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB)
-            # updated = cv2.rotate(self.cropped_image, cv2.ROTATE_90_CLOCKWISE)
-            formatted = Image.fromarray(I)
-            sized = formatted.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
-            imgtk = ImageTk.PhotoImage(sized)
-            self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
-            self.cropped_image = updated
-            # self.rotated_degree+=90
             self.rotated_degree += 270
-            # self.rotation_order.append(270)
+        if num == 2:
+            M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
+            self.rotated_degree += 45
+        updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
+        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
+        formatted = Image.fromarray(updated)
+        sized = formatted.resize((w, h), Image.ANTIALIAS)
+        self.imgtk = ImageTk.PhotoImage(sized)
+        self.lmain.image = self.imgtk
+        self.lmain.configure(image=self.imgtk)
+        self.bsa_resized = updated
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
-        image = cv2.imread(self.bsa_figure_path)
-        image1 = cv2.imread(self.postB_figure_path)
-        (h,w) = image.shape[:2]
+        # image = cv2.imread(self.user_selected_bsa)
+        # image1 = cv2.imread(self.user_selected_postB)
+        # (h,w) = image.shape[:2]
+        # # (h1, w1) = image.shape[:2]
+        # cX, cY = (w // 2, h //2)
+        # degrees = self.rotated_degree % 360
+        # M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        # image = cv2.warpAffine(image, M, (w,h))
+        # image1 = cv2.warpAffine(image1, M, (w,h))
+        self.create_figure_folder()
+        # cv2.imwrite(self.bsa_figure_path, image)
+        # cv2.imwrite(self.postB_figure_path, image1)
 
-        (h1, w1) = image.shape[:2]
 
-
-        cX, cY = (w // 2, h //2)
-        degrees = self.rotated_degree % 360
-        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-        image = cv2.warpAffine(image, M, (w,h))
-        image1 = cv2.warpAffine(image1, M, (w,h))
-
-        cv2.imwrite(self.bsa_figure_path, image)
-        cv2.imwrite(self.postB_figure_path, image1)
-
-        self.metadata["orientation"] = {"rotation": degrees}
-
-        #self.metadata["orientation"] = {"horizontal_flip": self.flipped_horz,"rotation": 90 * degree,"vertical_flip": self.flipped_vert}
 
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
+        # self.degree_45['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
-        self.activateThresh_button['state'] = tk.ACTIVE
+        self.activateCrop_button['state'] = tk.ACTIVE
 
-        self.init_images()
+        self.prep_cropping()
+        # self.init_images()
+
+    def prep_cropping(self):
+        cur_height = self.lmain.winfo_width() * 2
+        cur_width = self.lmain.winfo_height()
+        self.lmain.pack_forget()
+        # self.my_canvas.config(width = cur_width, height = cur_height)
+        self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
 
     def cropping(self):
         #creating cropping square on screen, defined as b
@@ -672,9 +762,7 @@ class Gui():
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
-    #Confirm cropping and reinitalize images in the containers
-    def square_image(self):
-  
+    def create_figure_folder(self):
         self.figure_folder = os.path.join(self.folder_selected, "figure") 
         #try making a figure folder
         try:
@@ -684,70 +772,45 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
+        print(self.figure_folder)
+        self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
+        self.postB_figure_path = self.figure_folder + "/" + self.postB_short
 
+    #Confirm cropping and reinitalize images in the containers
+    def square_image(self):
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
-
-        #copying the image files into the figure folder in within the same larger folder
-        # for i in self.names:
-        #     copy(source + "/" + i, self.figure_folder)
-
-        copy(source + "/" + self.bsa_short, self.figure_folder)
-        copy(source + "/" + self.postB_short, self.figure_folder)
-            
-        self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
-        image1 = Image.open(self.bsa_figure_path)
-        im1 = image1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        image1 = cv2.imread(self.user_selected_bsa)
+        (h, w) = image1.shape[:2]
+        cX, cY = (w // 2, h //2)
+        degrees = self.rotated_degree % 360
+        M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
+        rot_image1 = cv2.warpAffine(image1, M, (w, h))
+        I = cv2.cvtColor(rot_image1, cv2.COLOR_BGR2RGB)
+        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
+        img1 = Image.fromarray(I)
+        # pil_img = Image.fromarray(self.bsa_resized)
+        im1 = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         bsa = im1.save(self.bsa_figure_path)
 
-        self.postB_figure_path = self.figure_folder + "/" + self.postB_short
-        image2 = Image.open(self.postB_figure_path)
-        im2 = image2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
+        # self.postB_figure_path = self.figure_folder + "/" + self.postB_short
+        image2 = cv2.imread(self.user_selected_postB)
+        rot_image2 = cv2.warpAffine(image2, M, (w,h))
+        img2 = Image.fromarray(rot_image2)
+        im2 = img2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
         post = im2.save(self.postB_figure_path)
 
+        self.metadata["orientation"] = {"rotation": degrees}
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
-
-        # self.up['state'] = tk.ACTIVE
-        self.left['state'] = tk.ACTIVE
-        self.right['state'] = tk.ACTIVE
-        # self.flip['state'] = tk.ACTIVE
-        self.image_updated['state'] = tk.ACTIVE
-        self.confirmCrop_button['state'] = tk.DISABLED
-
-
         b = im1
 
-        w, h = (b.width, b.height)
-        #newH is 60 less than the image height
-        newH = self.screen_height - 60
-        #newW is the ratio of newH to H times the width
-        newW = int(round(w*newH/h))
-        #creating a new image of resized BSA image base don above calculations
-        floor = b.resize((newW, newH), Image.ANTIALIAS)
+        self.my_canvas.delete("all")
 
-        #setting object height and width to the BSA images
-        self.newWidth = floor.width ; self.newHeight = floor.height
-
-        #PhotoImage of the resized BSA
-        imgA = ImageTk.PhotoImage(floor)
-
-        self.my_canvas.config(width = floor.width, height= floor.height)
-
-        img = cv2.imread(self.bsa_figure_path, cv2.IMREAD_UNCHANGED)
-        self.cropped_image = img
-
-        self.lmain.pack()
-
-        self.lmain.image = imgA
-        self.lmain.configure(image=imgA)
-        self.my_canvas.delete("image")
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
-
-
-
+        self.activateThresh_button['state'] = tk.ACTIVE
+        self.confirmCrop_button['state'] = tk.DISABLED
+        self.init_images()
                         
     def activate_thresh(self):
 
@@ -1369,6 +1432,7 @@ class Gui():
 
 
     #Creates files for spatial folder
+    #Creates files for spatial folder
     def create_files(self):
         try:
             path = os.path.join(self.folder_selected, "spatial")
@@ -1376,48 +1440,41 @@ class Gui():
         except FileExistsError:
             path = self.folder_selected + "/spatial"
 
-        #barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
+        self.position_file["state"] = tk.DISABLED
 
-        # if a custom barcode is selected open the specified file
+        # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         if self.custom_barcode_selected:
             my_file = open(self.barcode_filename,"r")
-        
-        # excelC = 1
         with open(path + "/tissue_positions_list.csv", 'w') as f:
             writer = csv.writer(f)
             self.numTixels = 0
-
             if self.custom_barcode_selected == False:
-                barcode = barcode1_var.split("\n")
+                 barcode = barcode1_var.split("\n")
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     if (self.custom_barcode_selected):
-                        line = my_file.readline().split('\t')
+                         line = my_file.readline().split('\t')
 
                     #val to be used when writing whether tixel position is on or off
                     tixel_val = 0
                     if self.arr[j][i] == 1:
                         self.numTixels+=1
                         tixel_val = 1
-                        
-                    #if coming from a file, continue to take from the 0th index
+
+                     #if coming from a file, continue to take from the 0th index
                     if (self.custom_barcode_selected):
                         val = line[0].strip()
-                    #if coming from a variable index the variable
                     else:
                         inx = (i * self.num_chan) + j
                         val = barcode[inx].strip()
 
                     writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
-                    # else:
-                    #     writer.writerow([val, 0, i, j, self.coords[j][i][1], self.coords[j][i][0]])
 
-
-                    # excelC += 1
-        # if the barcodes being selected are from a custom file, close it
+         # if the barcodes being selected are from a custom file, close it
         if (self.custom_barcode_selected):
             my_file.close()
 
+        # my_file.close()
         self.json_file(path)
         self.grid_button["state"] = tk.DISABLED
         self.gridA_button["state"] = tk.DISABLED
@@ -1430,7 +1487,6 @@ class Gui():
         f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
-        # shutil.copyfile(self.barcode_filename, path + "/barcode_file.txt")
         mb.showinfo("Congratulations!", "The spatial folder is created!")
         
 
@@ -1467,7 +1523,8 @@ class Gui():
                     "threshold": sec,
                     "numTixels": self.numTixels,
                     "rawHeight": self.rawHeight,
-                    "numChannels": self.num_chan}
+                    "numChannels": self.num_chan
+                    }
         metaDict.update(self.metadata)
         
         json_object = json.dumps(dictionary, indent = 4)
