@@ -114,10 +114,12 @@ class Gui():
         self.lmain.configure(image=bg)
 
         #Rotation Panel
-        self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
+        self.rotate_degree = tk.IntVar()
+        self.rotate_degree.set(90)
+        self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
         self.rotateframe.place(relx=.11, rely=.01)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
-        self.image_updated.pack(side=tk.BOTTOM)
+        self.image_updated.pack(side = tk.BOTTOM, anchor=tk.S)
         rotateleft = Image.open("rotateleft.png")
         bg = ImageTk.PhotoImage(rotateleft)
         self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
@@ -128,6 +130,10 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
+        tk.Radiobutton(self.rotateframe, text="90", value=90, variable=self.rotate_degree).pack(side=tk.LEFT)
+        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_degree).pack(side=tk.LEFT)
+        
+        self.change_radio_rotationdegree_state(False)
         # rotate_left_small = Image.open("rotateleft2.png")
         # img3 = ImageTk.PhotoImage(rotate_left_small)
         # self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
@@ -577,6 +583,8 @@ class Gui():
                         # self.degree_45["state"] = tk.ACTIVE
                         self.image_updated['state'] = tk.ACTIVE
                         self.confirmCrop_button['state'] = tk.DISABLED
+
+                        self.change_radio_rotationdegree_state(True)
                     
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
@@ -584,7 +592,15 @@ class Gui():
                 self.error_label.config(text = "Error! Enter a Run Identifier!")
         else:
          self.error_label.config(text = "Images must be located in the same directory!")
-            
+    
+    def change_radio_rotationdegree_state(self, on):
+        for child in self.rotateframe.winfo_children():
+            if child.winfo_class() == 'Radiobutton':
+                state = "disabled"
+                if on:
+                    state = "active"
+                child['state'] = state 
+
     def configure_images(self):
         self.bsa_on_screen = Image.open(self.user_selected_bsa)
         w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
@@ -696,17 +712,20 @@ class Gui():
         # h = self.bsa_on_screen.height
         # w = self.bsa_on_screen.width
         # (h,w) = self.cropped_image.shape[:2]
+        print(self.rotate_degree.get())
         (h,w) = self.bsa_resized.shape[:2]
         cX, cY = (w // 2, h //2)
+        degree_rot = self.rotate_degree.get()
         if num == 0:
-            M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
-            self.rotated_degree += 90
+            M = cv2.getRotationMatrix2D((cX, cY), degree_rot, 1.0) 
+            self.rotated_degree += degree_rot 
         if num == 1:
-            M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
-            self.rotated_degree += 270
-        if num == 2:
-            M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
-            self.rotated_degree += 45
+            rot_clock = 360 - degree_rot
+            M = cv2.getRotationMatrix2D((cX, cY), rot_clock, 1.0)
+            self.rotated_degree += rot_clock 
+        # if num == 2:
+        #     M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
+        #     self.rotated_degree += 45
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
         # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
         formatted = Image.fromarray(updated)
@@ -738,6 +757,7 @@ class Gui():
         # self.degree_45['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateCrop_button['state'] = tk.ACTIVE
+        self.change_radio_rotationdegree_state(False)
 
         self.prep_cropping()
         # self.init_images()
