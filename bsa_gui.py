@@ -560,23 +560,23 @@ class Gui():
                         self.metadata = {
                         "run": runID
                         }
-                    #setting excelName var, used later, to equal the user specifed run ID
-                    self.excelName = runID
+                        #setting excelName var, used later, to equal the user specifed run ID
+                        self.excelName = runID
 
-                    #calling method that puts images on canvas
-                    self.configure_images()
+                        #calling method that puts images on canvas
+                        self.configure_images()
 
-                    self.starting_window.destroy()
-                    # self.activateCrop_button['state'] = tk.ACTIVE
-                    self.newWindow.title("AtlasXbrowser (" + runID + ")")
-                    self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
-                    self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
+                        self.starting_window.destroy()
+                        # self.activateCrop_button['state'] = tk.ACTIVE
+                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
+                        self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+                        self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
 
-                    self.left['state'] = tk.ACTIVE
-                    self.right['state'] = tk.ACTIVE
-                    # self.degree_45["state"] = tk.ACTIVE
-                    self.image_updated['state'] = tk.ACTIVE
-                    self.confirmCrop_button['state'] = tk.DISABLED
+                        self.left['state'] = tk.ACTIVE
+                        self.right['state'] = tk.ACTIVE
+                        # self.degree_45["state"] = tk.ACTIVE
+                        self.image_updated['state'] = tk.ACTIVE
+                        self.confirmCrop_button['state'] = tk.DISABLED
                     
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
