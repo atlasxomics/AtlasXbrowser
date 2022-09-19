@@ -1455,7 +1455,7 @@ class Gui():
                     if (self.custom_barcode_selected):
                          line = my_file.readline().split('\t')
 
-                     #val to be used when writing whether tixel position is on or off
+                    #val to be used when writing whether tixel position is on or off
                     tixel_val = 0
                     if self.arr[j][i] == 1:
                         self.numTixels+=1
@@ -1464,8 +1464,6 @@ class Gui():
                      #if coming from a file, continue to take from the 0th index
                     if (self.custom_barcode_selected):
                         val = line[0].strip()
-                    #if coming from a variable index the variable
-                        # writer.writerow([barcode[0].strip(), 1, i, j, self.coords[j][i][1], self.coords[j][i][0]])
                     else:
                         inx = (i * self.num_chan) + j
                         val = barcode[inx].strip()
@@ -1476,7 +1474,6 @@ class Gui():
         if (self.custom_barcode_selected):
             my_file.close()
 
-              
         # my_file.close()
         self.json_file(path)
         self.grid_button["state"] = tk.DISABLED
