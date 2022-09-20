@@ -114,10 +114,12 @@ class Gui():
         self.lmain.configure(image=bg)
 
         #Rotation Panel
-        self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx="10px", pady="10px")
+        self.rotate_45_90 = tk.IntVar()
+        self.rotate_45_90.set(90)
+        self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
         self.rotateframe.place(relx=.11, rely=.01)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
-        self.image_updated.pack(side=tk.BOTTOM)
+        self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
         rotateleft = Image.open("rotateleft.png")
         bg = ImageTk.PhotoImage(rotateleft)
         self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
@@ -128,6 +130,10 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
+        tk.Radiobutton(self.rotateframe, text="90", value=90, variable=self.rotate_45_90).pack(padx=(20, 0))
+        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(padx=(20, 0)), 
+        
+        self.change_radio_rotationdegree_state(False)
         # rotate_left_small = Image.open("rotateleft2.png")
         # img3 = ImageTk.PhotoImage(rotate_left_small)
         # self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
@@ -317,86 +323,6 @@ class Gui():
         )
         label4.grid(row=3, column=0, sticky="e")
         entry_box.grid(row=3, column=1, sticky="w")
-        # label5 = tk.Label(self.starting_window,
-        # text="Collaborator:",
-        # font = ("Courier", 14))
-        # self.collaborator = tk.StringVar()
-        # entry_box_collab = tk.Entry(self.starting_window, textvariable=self.collaborator)
-        # label5.grid(row = 3, column = 0, sticky="e")
-        # entry_box_collab.grid(row=3, column = 1, sticky="w")
-
-        # self.tissue = tk.StringVar()
-        # label4 = tk.Label(self.starting_window,
-        # text = "Tissue:",
-        # font = ("Courier", 14)
-        # )
-        # entry_box2 = tk.Entry(self.starting_window, textvariable=self.tissue)
-        # label4.grid(row = 4, column = 0, sticky="e")
-        # entry_box2.grid(row=4, column= 1, sticky="w")
-
-        # #barcode file selection
-        # # standard barcode 1 automatically selected. Can also designate a custom file.
-        # label3 = tk.Label(self.starting_window,
-        # text = "Barcode File:",
-        # font = ("Courier", 14))
-        # label3.grid(row = 5, column = 0, sticky = "e")
-
-        # self.barcode_selected = tk.StringVar()
-        # self.barcode_selected.set("1")
-        # barcode_options = ["1", "2", "3", "4", "24", "24_flipB"]
-        # barcode_drop = tk.OptionMenu(self.starting_window, self.barcode_selected, *barcode_options)
-        # barcode_drop.grid(row = 5, column = 1, sticky="w")
-
-        # self.species = tk.StringVar()
-        # self.species.set("Mouse")
-        # label6 = tk.Label(self.starting_window,
-        # text="Species:",
-        # font= ("Courier", 14))
-
-        # species_options = ["Mouse", "Human", "Rat", "Chicken"]
-        # species_dropdown = tk.OptionMenu(self.starting_window, self.species, *species_options)
-        # label6.grid(row=6, column=0, sticky="e")
-        # species_dropdown.grid(row=6, column=1, sticky="w")
-
-        # self.assay = tk.StringVar()
-        # self.assay.set("ATAC Seq")
-        # assay_options = ["ATAC Seq","CUT&TAG" ,"mRNA"]
-        # label7 = tk.Label(self.starting_window,
-        #     text="Assay:",
-        #     font = ("Courier", 14))
-        # assay_dropdown = tk.OptionMenu(self.starting_window, self.assay, *assay_options)
-        # label7.grid(row=7, column=0, sticky="e")
-        # assay_dropdown.grid(row=7, column=1, sticky="w")
-
-        # self.tissue_type = tk.StringVar()
-        # self.tissue_type.set("FF")
-        # # type_options = ["FFPE", "FF", "EFPR"]
-        # # label8 = tk.Label(self.starting_window,
-        # #                 text="Type:",
-        # #                 font = ("Courier", 14))
-        # # type_dropdown = tk.OptionMenu(self.starting_window, self.tissue_type, *type_options)
-        # # label8.grid(row=8, column=0, sticky="e")
-        # # type_dropdown.grid(row=8, column=1, sticky="w")
-
-        # self.tissue_state = tk.StringVar()
-        # self.tissue_state.set("Normal")
-        # tissue_options = ["Normal", "Disease"]
-        # label9 = tk.Label(self.starting_window,
-        #                     text = "Tissue State:",
-        #                     font = ("Courier", 14))
-        # tissue_state_dropdown = tk.OptionMenu(self.starting_window, self.tissue_state, *tissue_options)
-        # label9.grid(row=8, column = 0, sticky="e")
-        # tissue_state_dropdown.grid(row=8, column = 1, sticky="w")
-
-        # self.resolution = tk.StringVar()
-        # self.resolution.set("25")
-        # label10 = tk.Label(self.starting_window,
-        #                     text = "Chip Resolution:",
-        #                     font = ("Courier", 14))
-        # resolution_options = [10, 25, 50]
-        # resolution_dropdown = tk.OptionMenu(self.starting_window, self.resolution, *resolution_options)
-        # label10.grid(row=9, column = 0, sticky="e")
-        # resolution_dropdown.grid(row=9, column = 1, sticky="w")
 
         #submit button
         button = tk.Button(self.starting_window, text='Submit', font =("Courier", 14), command = lambda: self.configure_metadata())
@@ -577,6 +503,8 @@ class Gui():
                         # self.degree_45["state"] = tk.ACTIVE
                         self.image_updated['state'] = tk.ACTIVE
                         self.confirmCrop_button['state'] = tk.DISABLED
+
+                        self.change_radio_rotationdegree_state(True)
                     
                 else:
                     self.error_label.config(text = "Error! Must select BSA and postB Images!")
@@ -584,7 +512,15 @@ class Gui():
                 self.error_label.config(text = "Error! Enter a Run Identifier!")
         else:
          self.error_label.config(text = "Images must be located in the same directory!")
-            
+    
+    def change_radio_rotationdegree_state(self, on):
+        for child in self.rotateframe.winfo_children():
+            if child.winfo_class() == 'Radiobutton':
+                state = "disabled"
+                if on:
+                    state = "active"
+                child['state'] = state 
+
     def configure_images(self):
         self.bsa_on_screen = Image.open(self.user_selected_bsa)
         w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
@@ -693,72 +629,48 @@ class Gui():
 
     #Rotate and flip the images
     def image_axis(self, num):
-        # h = self.bsa_on_screen.height
-        # w = self.bsa_on_screen.width
-        # (h,w) = self.cropped_image.shape[:2]
         (h,w) = self.bsa_resized.shape[:2]
         cX, cY = (w // 2, h //2)
+        degree_rot = self.rotate_45_90.get()
         if num == 0:
-            M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0) 
-            self.rotated_degree += 90
+            self.rotated_degree += degree_rot 
         if num == 1:
-            M = cv2.getRotationMatrix2D((cX, cY), 270, 1.0)
-            self.rotated_degree += 270
-        if num == 2:
-            M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
-            self.rotated_degree += 45
+            rot_clock = 360 - degree_rot
+            self.rotated_degree += rot_clock 
+        
+        M = cv2.getRotationMatrix2D((cX, cY), self.rotated_degree, 1.0) 
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
-        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
         formatted = Image.fromarray(updated)
         sized = formatted.resize((w, h), Image.ANTIALIAS)
         self.imgtk = ImageTk.PhotoImage(sized)
         self.lmain.image = self.imgtk
         self.lmain.configure(image=self.imgtk)
-        self.bsa_resized = updated
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
-        # image = cv2.imread(self.user_selected_bsa)
-        # image1 = cv2.imread(self.user_selected_postB)
-        # (h,w) = image.shape[:2]
-        # # (h1, w1) = image.shape[:2]
-        # cX, cY = (w // 2, h //2)
-        # degrees = self.rotated_degree % 360
-        # M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-        # image = cv2.warpAffine(image, M, (w,h))
-        # image1 = cv2.warpAffine(image1, M, (w,h))
         self.create_figure_folder()
-        # cv2.imwrite(self.bsa_figure_path, image)
-        # cv2.imwrite(self.postB_figure_path, image1)
-
-
-
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
         # self.degree_45['state'] = tk.DISABLED
         self.image_updated['state'] = tk.DISABLED
         self.activateCrop_button['state'] = tk.ACTIVE
+        self.change_radio_rotationdegree_state(False)
 
         self.prep_cropping()
-        # self.init_images()
 
     def prep_cropping(self):
         cur_height = self.lmain.winfo_width() * 2
         cur_width = self.lmain.winfo_height()
         self.lmain.pack_forget()
-        # self.my_canvas.config(width = cur_width, height = cur_height)
         self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
 
     def cropping(self):
         #creating cropping square on screen, defined as b
         self.b = DrawSquare(self.my_canvas)
-        # self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
-             #DOES THIS NEED TO BE INCLUDED^^^
         self.my_canvas.bind('<Button1-Motion>', self.b.on_motion)
         self.my_canvas.bind('<ButtonRelease-1>', self.b.on_release)
 
         #deactivating the 'activate' button, activating the 'confirm' button
-   
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
@@ -788,9 +700,7 @@ class Gui():
         M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
         rot_image1 = cv2.warpAffine(image1, M, (w, h))
         I = cv2.cvtColor(rot_image1, cv2.COLOR_BGR2RGB)
-        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
         img1 = Image.fromarray(I)
-        # pil_img = Image.fromarray(self.bsa_resized)
         im1 = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         bsa = im1.save(self.bsa_figure_path)
 
