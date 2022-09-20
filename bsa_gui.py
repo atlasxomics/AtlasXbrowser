@@ -114,8 +114,8 @@ class Gui():
         self.lmain.configure(image=bg)
 
         #Rotation Panel
-        self.rotate_degree = tk.IntVar()
-        self.rotate_degree.set(90)
+        self.rotate_45_90 = tk.IntVar()
+        self.rotate_45_90.set(90)
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
         self.rotateframe.place(relx=.11, rely=.01)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
@@ -130,8 +130,8 @@ class Gui():
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
-        tk.Radiobutton(self.rotateframe, text="90", value=90, variable=self.rotate_degree).pack(side=tk.LEFT)
-        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_degree).pack(side=tk.LEFT)
+        tk.Radiobutton(self.rotateframe, text="90", value=90, variable=self.rotate_45_90).pack(side=tk.LEFT)
+        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(side=tk.LEFT)
         
         self.change_radio_rotationdegree_state(False)
         # rotate_left_small = Image.open("rotateleft2.png")
@@ -709,49 +709,26 @@ class Gui():
 
     #Rotate and flip the images
     def image_axis(self, num):
-        # h = self.bsa_on_screen.height
-        # w = self.bsa_on_screen.width
-        # (h,w) = self.cropped_image.shape[:2]
-        print(self.rotate_degree.get())
         (h,w) = self.bsa_resized.shape[:2]
         cX, cY = (w // 2, h //2)
-        degree_rot = self.rotate_degree.get()
+        degree_rot = self.rotate_45_90.get()
         if num == 0:
-            M = cv2.getRotationMatrix2D((cX, cY), degree_rot, 1.0) 
             self.rotated_degree += degree_rot 
         if num == 1:
             rot_clock = 360 - degree_rot
-            M = cv2.getRotationMatrix2D((cX, cY), rot_clock, 1.0)
             self.rotated_degree += rot_clock 
-        # if num == 2:
-        #     M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
-        #     self.rotated_degree += 45
+        
+        M = cv2.getRotationMatrix2D((cX, cY), self.rotated_degree, 1.0) 
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
-        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
         formatted = Image.fromarray(updated)
         sized = formatted.resize((w, h), Image.ANTIALIAS)
         self.imgtk = ImageTk.PhotoImage(sized)
         self.lmain.image = self.imgtk
         self.lmain.configure(image=self.imgtk)
-        self.bsa_resized = updated
 
     #Update postB and BSA images to new image orientation 
     def image_position(self):
-        # image = cv2.imread(self.user_selected_bsa)
-        # image1 = cv2.imread(self.user_selected_postB)
-        # (h,w) = image.shape[:2]
-        # # (h1, w1) = image.shape[:2]
-        # cX, cY = (w // 2, h //2)
-        # degrees = self.rotated_degree % 360
-        # M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
-        # image = cv2.warpAffine(image, M, (w,h))
-        # image1 = cv2.warpAffine(image1, M, (w,h))
         self.create_figure_folder()
-        # cv2.imwrite(self.bsa_figure_path, image)
-        # cv2.imwrite(self.postB_figure_path, image1)
-
-
-
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
         # self.degree_45['state'] = tk.DISABLED
@@ -760,25 +737,20 @@ class Gui():
         self.change_radio_rotationdegree_state(False)
 
         self.prep_cropping()
-        # self.init_images()
 
     def prep_cropping(self):
         cur_height = self.lmain.winfo_width() * 2
         cur_width = self.lmain.winfo_height()
         self.lmain.pack_forget()
-        # self.my_canvas.config(width = cur_width, height = cur_height)
         self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
 
     def cropping(self):
         #creating cropping square on screen, defined as b
         self.b = DrawSquare(self.my_canvas)
-        # self.my_canvas.bind('<Button-1>', self.b.on_click_quad)
-             #DOES THIS NEED TO BE INCLUDED^^^
         self.my_canvas.bind('<Button1-Motion>', self.b.on_motion)
         self.my_canvas.bind('<ButtonRelease-1>', self.b.on_release)
 
         #deactivating the 'activate' button, activating the 'confirm' button
-   
         self.activateCrop_button['state'] = tk.DISABLED
         self.confirmCrop_button['state'] = tk.ACTIVE
 
@@ -808,9 +780,7 @@ class Gui():
         M = cv2.getRotationMatrix2D((cX, cY), degrees, 1.0)
         rot_image1 = cv2.warpAffine(image1, M, (w, h))
         I = cv2.cvtColor(rot_image1, cv2.COLOR_BGR2RGB)
-        # I = cv2.cvtColor(updated, cv2.COLOR_BGR2RGB
         img1 = Image.fromarray(I)
-        # pil_img = Image.fromarray(self.bsa_resized)
         im1 = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
         bsa = im1.save(self.bsa_figure_path)
 
