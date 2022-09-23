@@ -1360,6 +1360,7 @@ class Gui():
             self.numTixels = 0
             if self.custom_barcode_selected == False:
                  barcode = barcode1_var.split("\n")
+                 print(barcode)
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     if (self.custom_barcode_selected):
