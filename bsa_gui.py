@@ -298,16 +298,16 @@ class Gui():
         label3.grid(row = 2, column = 0, sticky = "e")
 
         label3a = tk.Label(self.starting_window,
-        text = "bc50v1" 
+        text = "bc50v1-24" 
         )
         label3a.grid(row = 2, column = 1, sticky="w")        
 
         # label3b = tk.Label(self.starting_window)
         # label3b.grid(row = 2, column = 3, sticky = "w")
 
-        revert_button = tk.Button(self.starting_window, text="Revert to bc50v1", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
+        revert_button = tk.Button(self.starting_window, text="Revert to bc50v1-24", bg="red", command=lambda: self.use_barcode1(revert_button, barcode_button))
 
-        barcode_button = tk.Button(self.starting_window, text = "bc50v1",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
+        barcode_button = tk.Button(self.starting_window, text = "bc50v1-24",bg="grey" ,command = lambda: self.get_barcode_file(barcode_button, revert_button))
         barcode_button.grid(row = 2, column = 1, sticky = "w")
 
         label3.grid(row = 2, column = 0, sticky = "e")
@@ -684,7 +684,6 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
-        print(self.figure_folder)
         self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
         self.postB_figure_path = self.figure_folder + "/" + self.postB_short
 
@@ -1469,7 +1468,6 @@ class Gui():
                 for j in range(self.num_chan):
                     
                     inx = (i * self.num_chan) + j
-                    # print(barcode_lis[inx].strip())
                     if self.arr[j][i] == 1:
                         writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
