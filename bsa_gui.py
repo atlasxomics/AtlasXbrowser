@@ -684,7 +684,6 @@ class Gui():
             rmtree(self.figure_folder)
             os.mkdir(self.figure_folder)
 
-        print(self.figure_folder)
         self.bsa_figure_path = self.figure_folder + "/" + self.bsa_short
         self.postB_figure_path = self.figure_folder + "/" + self.postB_short
 
@@ -1360,7 +1359,6 @@ class Gui():
             self.numTixels = 0
             if self.custom_barcode_selected == False:
                  barcode = barcode1_var.split("\n")
-                 print(barcode)
             for i in range(self.num_chan):
                 for j in range(self.num_chan):
                     if (self.custom_barcode_selected):
@@ -1470,7 +1468,6 @@ class Gui():
                 for j in range(self.num_chan):
                     
                     inx = (i * self.num_chan) + j
-                    # print(barcode_lis[inx].strip())
                     if self.arr[j][i] == 1:
                         writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
                     else:
