@@ -24,6 +24,10 @@ from tkinter.filedialog import askopenfile, askopenfilename
 Image.MAX_IMAGE_PIXELS = None
 from barcode_var import barcode1_var
 
+import base64
+from io import BytesIO
+from image_strings import *
+
 
 def center(tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
@@ -51,10 +55,12 @@ class Gui():
         self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
 
         style = ttk.Style(root)
-        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
-        style.theme_use('azure')
+        # root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
+        # style.theme_use('azure')
+        im_bytes = base64.b64decode(atlas_logo)
+        im_file = BytesIO(im_bytes)
+        background_image = Image.open(im_file)
 
-        background_image = Image.open("atlasbg.png")
         resized_image = background_image.resize((int(self.screen_width/1.5), self.screen_height), Image.ANTIALIAS)
         bg = ImageTk.PhotoImage(resized_image)
 
@@ -120,12 +126,20 @@ class Gui():
         self.rotateframe.place(relx=.11, rely=.01)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
         self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
-        rotateleft = Image.open("rotateleft.png")
+
+        im_bytes = base64.b64decode(left_rotate)
+        im_file = BytesIO(im_bytes)
+        rotateleft = Image.open(im_file)
+
         bg = ImageTk.PhotoImage(rotateleft)
         self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
         self.left.image = bg
         self.left.pack(side=tk.LEFT)
-        rotateright = Image.open("rotateright.png")
+
+        im_bytes = base64.b64decode(right_rotate)
+        im_file = BytesIO(im_bytes)
+        rotateright = Image.open(im_file)
+
         bg2 = ImageTk.PhotoImage(rotateright)
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
         self.right.image = bg2
@@ -1533,7 +1547,10 @@ class Gui():
             c.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
 
         # colorBar
-        bar = Image.open("colorbar.png")
+        im_bytes = base64.b64decode(color_bar)
+        im_file = BytesIO(im_bytes)
+        bar = Image.open(im_file)
+        
         resized_bar = bar.resize((200, 40), Image.ANTIALIAS)
         color = ImageTk.PhotoImage(resized_bar)
         self.color_bar = tk.Label(self.cbframe, image=color)
