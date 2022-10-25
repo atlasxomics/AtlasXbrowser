@@ -272,22 +272,22 @@ class Gui():
         label1a.grid(row = 0, column = 2, sticky = "w")
 
 
-        label2 = tk.Label(self.starting_window, 
-        text = "Select PostB image:", 
-        font = ("Courier", 14),
-        # width = 25,
-        )
-        label2.grid(row = 1, column = 0, sticky = "e")
-        #label to display the name of the selected postB file to user
+        # label2 = tk.Label(self.starting_window, 
+        # text = "Select PostB image:", 
+        # font = ("Courier", 14),
+        # # width = 25,
+        # )
+        # label2.grid(row = 1, column = 0, sticky = "e")
+        # #label to display the name of the selected postB file to user
 
-        label2a = tk.Label(self.starting_window)
-        label2a.grid(row = 1, column =2, sticky = "w")
+        # label2a = tk.Label(self.starting_window)
+        # label2a.grid(row = 1, column =2, sticky = "w")
 
-        #attibute to store postB image file name
-        self.user_selected_postB = ""
-        #button where user can select postB
-        postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
-        postB_button.grid(row = 1, column = 1, sticky = "w")
+        # #attibute to store postB image file name
+        # self.user_selected_postB = ""
+        # #button where user can select postB
+        # postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
+        # postB_button.grid(row = 1, column = 1, sticky = "w")
 
 
         #barcode file selection
@@ -426,18 +426,19 @@ class Gui():
 
         #ensuring that the selected file is an image file
         if file.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".tif")):
+            self.user_selected_bsa = file
             #for BSA
-            if num == 0:
-                self.user_selected_bsa = file
-                if self.user_selected_postB != "":
-                    self.both_images_selected = True
+            # if num == 0:
+            #     self.user_selected_bsa = file
+            #     if self.user_selected_postB != "":
+            #         self.both_images_selected = True
                    
-            #for postB
-            else:
-                self.user_selected_postB = file
+            # # for postB
+            # else:
+            # self.user_selected_postB = file
 
-                if self.user_selected_bsa != "":
-                    self.both_images_selected = True
+            # if self.user_selected_bsa != "":
+            #     self.both_images_selected = True
                         
         else:
             if num == 0:
@@ -470,48 +471,38 @@ class Gui():
             return False
 
     def configure_metadata(self):
-        same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-        if same_dir:
-            #retrieving variables from stored StringVar variables
-            runID = self.run_identifier.get()
-            if runID != "":
-                if self.both_images_selected:
-                    if self.custom_barcode_valid or self.custom_barcode_selected == False:
-                        val = self.user_selected_bsa.rfind("/")
-                        self.bsa_short = self.user_selected_bsa[val + 1: ]
+        #retrieving variables from stored StringVar variables
+        runID = self.run_identifier.get()
+        if runID != "":
+            if self.custom_barcode_valid or self.custom_barcode_selected == False:
+                val = self.user_selected_bsa.rfind("/")
+                self.bsa_short = self.user_selected_bsa[val + 1: ]
+                self.folder_selected = self.user_selected_bsa[:val]
+                self.postB_short = "{}_postB.tif".format(runID)
+                self.metadata = {
+                "run": runID
+                }
+                #setting excelName var, used later, to equal the user specifed run ID
+                self.excelName = runID
 
-                        val = self.user_selected_postB.rfind("/")
-                        self.postB_short = self.user_selected_postB[val + 1: ]
+                #calling method that puts images on canvas
+                self.configure_images()
 
-                        self.metadata = {
-                        "run": runID
-                        }
-                        #setting excelName var, used later, to equal the user specifed run ID
-                        self.excelName = runID
+                self.starting_window.destroy()
+                # self.activateCrop_button['state'] = tk.ACTIVE
+                self.newWindow.title("AtlasXbrowser (" + runID + ")")
+                self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+                self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
 
-                        #calling method that puts images on canvas
-                        self.configure_images()
+                self.left['state'] = tk.ACTIVE
+                self.right['state'] = tk.ACTIVE
+                # self.degree_45["state"] = tk.ACTIVE
+                self.image_updated['state'] = tk.ACTIVE
+                self.confirmCrop_button['state'] = tk.DISABLED
 
-                        self.starting_window.destroy()
-                        # self.activateCrop_button['state'] = tk.ACTIVE
-                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
-                        self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
-                        self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
-
-                        self.left['state'] = tk.ACTIVE
-                        self.right['state'] = tk.ACTIVE
-                        # self.degree_45["state"] = tk.ACTIVE
-                        self.image_updated['state'] = tk.ACTIVE
-                        self.confirmCrop_button['state'] = tk.DISABLED
-
-                        self.change_radio_rotationdegree_state(True)
-                    
-                else:
-                    self.error_label.config(text = "Error! Must select BSA and postB Images!")
-            else:
-                self.error_label.config(text = "Error! Enter a Run Identifier!")
+                self.change_radio_rotationdegree_state(True)
         else:
-         self.error_label.config(text = "Images must be located in the same directory!")
+            self.error_label.config(text = "Error! Enter a Run Identifier!")
     
     def change_radio_rotationdegree_state(self, on):
         for child in self.rotateframe.winfo_children():
@@ -589,17 +580,15 @@ class Gui():
     def init_images(self):
 
         #opening images directly from previously stored path
-        a = Image.open(self.bsa_figure_path)
-        b = Image.open(self.postB_figure_path)
+        a = self.bsa_cropped_pillow
+        b = self.postB_cropped_pillow
 
-
-        w, h = (a.width, a.height)
-        self.rawHeight = h
         self.width, self.height = (a.width, a.height)
+        self.rawHeight = self.height
         newH = self.screen_height - 60
-        self.factor = newH/h
+        self.factor = newH/self.height
 
-        newW = int(round(w*newH/h))
+        newW = int(round(self.width*newH/self.height))
         floor = a.resize((newW, newH), Image.ANTIALIAS)
         postB = b.resize((newW, newH), Image.ANTIALIAS)
 
@@ -608,7 +597,6 @@ class Gui():
         self.newHeight = floor.height 
 
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
-
         flippedImage = img
 
         try:
@@ -625,7 +613,7 @@ class Gui():
         self.my_canvas.config(width = floor.width, height= floor.height)
         self.lmain.configure(image=self.imgA)
         self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
+        self.right_canvas.config(width = floor.width + 300, height= self.height)
 
     #Rotate and flip the images
     def image_axis(self, num):
@@ -700,20 +688,21 @@ class Gui():
         rot_image1 = cv2.warpAffine(image1, M, (w, h))
         I = cv2.cvtColor(rot_image1, cv2.COLOR_BGR2RGB)
         img1 = Image.fromarray(I)
-        im1 = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-        bsa = im1.save(self.bsa_figure_path)
+        self.bsa_cropped_pillow = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        bsa = self.bsa_cropped_pillow.save(self.bsa_figure_path)
 
         # self.postB_figure_path = self.figure_folder + "/" + self.postB_short
-        image2 = cv2.imread(self.user_selected_postB)
-        rot_image2 = cv2.warpAffine(image2, M, (w,h))
-        img2 = Image.fromarray(rot_image2)
-        im2 = img2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
-        post = im2.save(self.postB_figure_path)
+        image2 = np.asarray(self.bsa_cropped_pillow)
+        postB_cropped = image2[:, :, 2]
+        self.postB_cropped_pillow = Image.fromarray(postB_cropped)
+        # rot_image2 = cv2.warpAffine(image2, M, (w,h))
+        # img2 = Image.fromarray(rot_image2)
+        # im2 = img2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
+        post = self.postB_cropped_pillow.save(self.postB_figure_path)
 
         self.metadata["orientation"] = {"rotation": degrees}
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
-        b = im1
 
         self.my_canvas.delete("all")
 
