@@ -1041,7 +1041,7 @@ class Gui():
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="red", tag = position, width=1, state="disabled")
+                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
@@ -1114,7 +1114,7 @@ class Gui():
 
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="yellow", tag = position, width=1, state="disabled")
+                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
