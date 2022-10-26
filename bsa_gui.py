@@ -1345,7 +1345,7 @@ class Gui():
         # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         if self.custom_barcode_selected:
             my_file = open(self.barcode_filename,"r")
-        with open(path + "/tissue_positions_list.csv", 'w') as f:
+        with open(path + "/tissue_positions_list.csv", 'w', newline='') as f:
             writer = csv.writer(f)
             self.numTixels = 0
             if self.custom_barcode_selected == False:
@@ -1452,7 +1452,7 @@ class Gui():
             
         csv_file.close()
             
-        with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
+        with open(self.folder_selected + "/tissue_positions_list.csv", 'w', newline='') as f:
             writer = csv.writer(f)
 
             for i in range(self.num_chan):
