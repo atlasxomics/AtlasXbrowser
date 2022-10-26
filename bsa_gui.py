@@ -118,20 +118,20 @@ class Gui():
         self.rotate_45_90.set(90)
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
         self.rotateframe.place(relx=.11, rely=.01)
-        self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
+        self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.confirm_rotation, state=tk.DISABLED)
         self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
         rotateleft = Image.open("rotateleft.png")
         bg = ImageTk.PhotoImage(rotateleft)
-        self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
+        self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.rotate_image(0), state=tk.DISABLED)
         self.left.image = bg
         self.left.pack(side=tk.LEFT)
         rotateright = Image.open("rotateright.png")
         bg2 = ImageTk.PhotoImage(rotateright)
-        self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
+        self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.rotate_image(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
         tk.Radiobutton(self.rotateframe, text="90", value=90, variable=self.rotate_45_90).pack(padx=(20, 0))
-        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(padx=(20, 0)), 
+        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(padx=(20, 0))
         
         self.change_radio_rotationdegree_state(False)
         # rotate_left_small = Image.open("rotateleft2.png")
@@ -145,7 +145,7 @@ class Gui():
         self.cropframe.place(relx=.11, rely=.14)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
         self.activateCrop_button.pack(side=tk.LEFT)
-        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
+        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.confirm_cropping, state=tk.DISABLED)
         self.confirmCrop_button.pack()
 
 
@@ -184,7 +184,7 @@ class Gui():
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
-        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
+        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm_roi(None), state=tk.DISABLED)
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
@@ -514,25 +514,28 @@ class Gui():
 
     def configure_images(self):
         self.bsa_on_screen = Image.open(self.user_selected_bsa)
+
         w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
         newH = self.screen_height - 60
-
         # self.image_array = cv2.imread(self.user_selected_bsa, 0)
         # self.rotation_matrix = np.identity(len(self.image_array))
 
         #find ratio of 60 less than screenheight to the image height
         self.factor = newH/h
         #use ratio to calcuate the new width
-        newW = int(round(w*newH/h))
+        newW = int(round(w*self.factor))
         #resize the bsa image based on these calculations
         bsa = self.bsa_on_screen.resize((newW, newH), Image.ANTIALIAS)
-        self.imgtk = ImageTk.PhotoImage(bsa)
+        self.bsa_tkinter_image = ImageTk.PhotoImage(bsa)
 
         self.lmain.pack()
-        self.lmain.image = self.imgtk 
-        self.lmain.configure(image = self.imgtk)
+        self.lmain.image = self.bsa_tkinter_image 
+        self.lmain.configure(image = self.bsa_tkinter_image)
 
         self.bsa_resized = np.array(bsa)
+        print("Original height: {} width: {}".format(self.bsa_on_screen.height, self.bsa_on_screen.width))
+        print("New height: {} new width: {}".format(newH, newW))
+        print("Screen Height: {} screen width: {}".format(self.screen_height, self.screen_width))
         # w = self.bsa_on_screen.width()
 
 
@@ -616,7 +619,7 @@ class Gui():
         self.right_canvas.config(width = floor.width + 300, height= self.height)
 
     #Rotate and flip the images
-    def image_axis(self, num):
+    def rotate_image(self, num):
         (h,w) = self.bsa_resized.shape[:2]
         cX, cY = (w // 2, h //2)
         degree_rot = self.rotate_45_90.get()
@@ -630,12 +633,12 @@ class Gui():
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
         formatted = Image.fromarray(updated)
         sized = formatted.resize((w, h), Image.ANTIALIAS)
-        self.imgtk = ImageTk.PhotoImage(sized)
-        self.lmain.image = self.imgtk
-        self.lmain.configure(image=self.imgtk)
+        self.bsa_tkinter_image = ImageTk.PhotoImage(sized)
+        self.lmain.image = self.bsa_tkinter_image
+        self.lmain.configure(image=self.bsa_tkinter_image)
 
     #Update postB and BSA images to new image orientation 
-    def image_position(self):
+    def confirm_rotation(self):
         self.create_figure_folder()
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
@@ -647,10 +650,8 @@ class Gui():
         self.prep_cropping()
 
     def prep_cropping(self):
-        cur_height = self.lmain.winfo_width() * 2
-        cur_width = self.lmain.winfo_height()
         self.lmain.pack_forget()
-        self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
+        self.my_canvas.create_image(0, 0, image = self.bsa_tkinter_image, anchor="nw", tag = "image")
 
     def cropping(self):
         #creating cropping square on screen, defined as b
@@ -676,7 +677,7 @@ class Gui():
         self.postB_figure_path = self.figure_folder + "/" + self.postB_short
 
     #Confirm cropping and reinitalize images in the containers
-    def square_image(self):
+    def confirm_cropping(self):
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
@@ -916,17 +917,17 @@ class Gui():
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
         
-        self.c = DrawShapes(self.my_canvas, self.quad_coords)
-        self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
+        self.draggable_roi = DrawShapes(self.my_canvas, self.quad_coords)
+        self.my_canvas.bind('<Button-1>', self.draggable_roi.on_click_quad)
         
-        self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
+        self.my_canvas.bind('<Button1-Motion>', self.draggable_roi.on_motion)
 
         self.confirm_button["state"] = tk.ACTIVE
 
        
 
     #Confirms coordinates choosen 
-    def confirm(self, none):
+    def confirm_roi(self, none):
         self.ROILocated = True
         #self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
@@ -936,8 +937,8 @@ class Gui():
 
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
-        self.Rpoints = self.my_canvas.coords(self.c.current)
-        self.quad_coords = self.my_canvas.coords(self.c.current)
+        self.Rpoints = self.my_canvas.coords(self.draggable_roi.current)
+        self.quad_coords = self.my_canvas.coords(self.draggable_roi.current)
 
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
@@ -1040,7 +1041,7 @@ class Gui():
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
+                self.my_canvas.create_polygon(pointer, fill='', outline="red", tag = position, width=1, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
@@ -1113,7 +1114,7 @@ class Gui():
 
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
+                self.my_canvas.create_polygon(pointer, fill='', outline="yellow", tag = position, width=1, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
@@ -1299,6 +1300,7 @@ class Gui():
         self.my_canvas.unbind("<ButtonRelease-1>")
     def on_off(self, event):
         tag = event.widget.find_closest(event.x,event.y)
+        print("x: {} y: {} sf: {}".format(event.x, event.y, self.factor))
         position = event.widget.gettags(tag)
         try:
             where = position[0].split("x")
