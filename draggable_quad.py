@@ -23,6 +23,9 @@ class DrawShapes():
     def on_motion(self, event):
         """fires when the user drags the mouse ... resizes currently active quadrilateral"""
         x1, y1, x2, y2, x3, y3, x4, y4 = self.points
+        print("x1: {} y1: {}".format(x1, y1))
+        print("x4: {} y4:{}".format(x4, y4))
+        print("x3: {} y3:{}".format(x3, y3))
         ds = [distance((event.x, event.y), (x1, y1)), distance((event.x, event.y), (x2, y2)),
               distance((event.x, event.y), (x3, y3)), distance((event.x, event.y), (x4, y4))]
         dsi = ds.index(min(ds))

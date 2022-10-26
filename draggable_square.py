@@ -15,7 +15,7 @@ class DrawSquare():
 
         dist = distance([width*.10, height*.10], [width-(width*.10), height*.10])
         #Defining self.points as the four corners of the initial 
-        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), dist + height*.10, width*.10, dist + height*.10
+        self.points = width*.10, height*.10, width * .9, height*.10, width * .9, dist + height*.10, width*.10, dist + height*.10
         self.rect = [width*.10, height*.10, width-(width*.10), dist + height*.10]
         #outputting square on screen
 
@@ -29,6 +29,8 @@ class DrawSquare():
         """fires when the user drags the mouse ... resizes currently active quadrilateral"""
         #obtaining the coordinates for all corners of the square
         x1, y1, x2, y2, x3, y3, x4, y4 = self.points
+        print("x1: {} y1: {}".format(x1, y1))
+        print("x3: {} y3: {}".format(x3, y3))
         #creating list of distances between where the mouse is and the four corners of the quad
         ds = [distance((event.x, event.y), (x1, y1)), distance((event.x, event.y), (x2, y2)),
               distance((event.x, event.y), (x3, y3)), distance((event.x, event.y), (x4, y4))]
