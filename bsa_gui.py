@@ -80,7 +80,7 @@ class Gui():
         self.points = []
         self.Rpoints = []
         self.coords = None
-        self.arr = None
+        self.tixel_status = None
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         self.quad_coords = [0]
@@ -427,19 +427,6 @@ class Gui():
         #ensuring that the selected file is an image file
         if file.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".tif")):
             self.user_selected_bsa = file
-            #for BSA
-            # if num == 0:
-            #     self.user_selected_bsa = file
-            #     if self.user_selected_postB != "":
-            #         self.both_images_selected = True
-                   
-            # # for postB
-            # else:
-            # self.user_selected_postB = file
-
-            # if self.user_selected_bsa != "":
-            #     self.both_images_selected = True
-                        
         else:
             if num == 0:
                 self.user_selected_bsa = ""
@@ -835,7 +822,7 @@ class Gui():
         self.Rpoints = [i*newFactor for i in self.metadata['points']]
 
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-        self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+        self.tixel_status = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         #Buttons
         self.begin_button['state'] = tk.DISABLED
@@ -935,7 +922,7 @@ class Gui():
         
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-        self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+        self.tixel_status = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         self.Rpoints = self.my_canvas.coords(self.draggable_roi.current)
         self.quad_coords = self.my_canvas.coords(self.draggable_roi.current)
@@ -1050,7 +1037,7 @@ class Gui():
                 #allowing on and off tissues on overlay
                 #if self.classification_active:
                 if self.classification_active:
-                    if self.arr[j][i] == 1:
+                    if self.tixel_status[j][i] == 1:
                         try:
                             tags = self.my_canvas.find_withtag(position)
                             self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
@@ -1140,12 +1127,12 @@ class Gui():
             points_copy = self.Rpoints.copy()
 
             tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan)
-            self.arr,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
-            for i in range(len(self.arr)):
-                for j in range(len(self.arr)):
+            self.tixel_status,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
+            for i in range(len(self.tixel_status)):
+                for j in range(len(self.tixel_status)):
                     position = str(j+1) + "x" + str(i)
 
-                    if self.arr[j][i] == 1:
+                    if self.tixel_status[j][i] == 1:
                         try:
                             tags = self.my_canvas.find_withtag(position)
                             self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
@@ -1173,7 +1160,7 @@ class Gui():
                         j = int(row[3])+1
                         i = int(row[2])
                         if row[1] == "1":
-                            self.arr[j-1][i] = 1
+                            self.tixel_status[j-1][i] = 1
                             position = str(j)+"x"+str(i)
                             try:
                                 tags = self.my_canvas.find_withtag(position)
@@ -1181,13 +1168,13 @@ class Gui():
                             except IndexError:
                                 pass
                         else:
-                            self.arr[j-1][i] = 0
+                            self.tixel_status[j-1][i] = 0
                 self.sendinfo_flag = True
             else:
-                for i in range(len(self.arr)):
-                    for j in range(len(self.arr)):
+                for i in range(len(self.tixel_status)):
+                    for j in range(len(self.tixel_status)):
                         position = str(j+1) + "x" + str(i)
-                        if self.arr[j][i] == 1:
+                        if self.tixel_status[j][i] == 1:
                             try:
                                 tags = self.my_canvas.find_withtag(position)
                                 self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
@@ -1229,17 +1216,17 @@ class Gui():
                 if self.check_on.get() == 0:
                     if state == "normal":
                         self.my_canvas.itemconfig(k, fill="", state="disabled", width=1)
-                        self.arr[int(i)-1][int(j)] = 0
+                        self.tixel_status[int(i)-1][int(j)] = 0
                     else:
                         self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
-                        self.arr[int(i)-1][int(j)] = 1
+                        self.tixel_status[int(i)-1][int(j)] = 1
                 else:
                     if state == "normal":
                         self.my_canvas.itemconfig(k, state="disabled", outline="")
-                        self.arr[int(i)-1][int(j)] = 0
+                        self.tixel_status[int(i)-1][int(j)] = 0
                     else:
                         self.my_canvas.itemconfig(k, state ="normal", width=1, outline="black")
-                        self.arr[int(i)-1][int(j)] = 1
+                        self.tixel_status[int(i)-1][int(j)] = 1
 
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
@@ -1263,10 +1250,10 @@ class Gui():
                 j = where[1]
                 if self.check_on.get() == 0:
                     self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
-                    self.arr[int(i)-1][int(j)] = 1
+                    self.tixel_status[int(i)-1][int(j)] = 1
                 else:
                     self.my_canvas.itemconfig(k, width=1, state ="normal", outline="black")
-                    self.arr[int(i)-1][int(j)] = 1
+                    self.tixel_status[int(i)-1][int(j)] = 1
 
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
@@ -1290,10 +1277,10 @@ class Gui():
                 j = where[1]
                 if self.check_on.get() == 0:
                     self.my_canvas.itemconfig(k, fill="", state="disabled", width=1)
-                    self.arr[int(i)-1][int(j)] = 0
+                    self.tixel_status[int(i)-1][int(j)] = 0
                 else:
                     self.my_canvas.itemconfig(k, state="disabled", outline="")
-                    self.arr[int(i)-1][int(j)] = 0
+                    self.tixel_status[int(i)-1][int(j)] = 0
 
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
@@ -1311,20 +1298,20 @@ class Gui():
         if self.check_on.get()==0:
             if state == "normal":
                 self.my_canvas.itemconfig(tag, fill="", state="disabled", width=1)
-                self.arr[int(i)-1][int(j)] = 0
+                self.tixel_status[int(i)-1][int(j)] = 0
                 self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, fill="red", state ="normal", width=1)
-                self.arr[int(i)-1][int(j)] = 1
+                self.tixel_status[int(i)-1][int(j)] = 1
                 self.numTixels += 1
         else:
             if state == "normal":
                 self.my_canvas.itemconfig(tag, state="disabled", outline="")
-                self.arr[int(i)-1][int(j)] = 0
+                self.tixel_status[int(i)-1][int(j)] = 0
                 self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
-                self.arr[int(i)-1][int(j)] = 1
+                self.tixel_status[int(i)-1][int(j)] = 1
                 self.numTixels += 1
 
         
@@ -1340,38 +1327,24 @@ class Gui():
             path = self.folder_selected + "/spatial"
 
         self.position_file["state"] = tk.DISABLED
-
-        # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
+        barcodes = barcode1_var
         if self.custom_barcode_selected:
+            barcodes = []
             my_file = open(self.barcode_filename,"r")
-        with open(path + "/tissue_positions_list.csv", 'w', newline='') as f:
-            writer = csv.writer(f)
-            self.numTixels = 0
-            if self.custom_barcode_selected == False:
-                 barcode = barcode1_var.split("\n")
-            for i in range(self.num_chan):
-                for j in range(self.num_chan):
-                    if (self.custom_barcode_selected):
-                         line = my_file.readline().split('\t')
-######### FIX I/J
-                    #val to be used when writing whether tixel position is on or off
-                    tixel_val = 0
-                    if self.arr[j][i] == 1:
-                        self.numTixels+=1
-                        tixel_val = 1
-
-                     #if coming from a file, continue to take from the 0th index
-                    if (self.custom_barcode_selected):
-                        val = line[0].strip()
-                    else:
-                        inx = (i * self.num_chan) + j
-                        val = barcode[inx].strip()
-
-                    writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
-
-         # if the barcodes being selected are from a custom file, close it
-        if (self.custom_barcode_selected):
+            lines = my_file.readlines()
+            for line in lines:
+                val = line.strip()
+                barcodes.append(val)
             my_file.close()
+        filename = path + "/tissue_positions_list.csv"
+        self.write_positions_file(filename,barcodes, self.coords, self.tixel_status, self.factor)
+        self.numTixels = 0
+        for row in self.tixel_status:
+            self.numTixels += sum(row)
+
+        print("on tixels: {}".format(self.numTixels))
+# ######### FIX I/J
+         # if the barcodes being selected are from a custom file, close it
 
         # my_file.close()
         self.json_file(path)
@@ -1383,7 +1356,7 @@ class Gui():
         except shutil.Error:
             rmtree(path+"/"+"figure")
             move(self.figure_folder,path)
-        f.close()
+        # f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
         mb.showinfo("Congratulations!", "The spatial folder is created!")
@@ -1456,19 +1429,8 @@ class Gui():
             
         csv_file.close()
             ######## FIX I/J
-        with open(self.folder_selected + "/tissue_positions_list.csv", 'w', newline='') as f:
-            writer = csv.writer(f)
-
-            for i in range(self.num_chan):
-                for j in range(self.num_chan):
-                    
-                    inx = (i * self.num_chan) + j
-                    if self.arr[j][i] == 1:
-                        writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
-                    else:
-                        writer.writerow([barcode_lis[inx].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
-
-        f.close()
+        filepath = self.folder_selected + "/tissue_positions_list.csv"
+        self.write_positions_file(filepath,barcode_lis, self.coords, self.tixel_status, self.factor)
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
@@ -1476,6 +1438,15 @@ class Gui():
             outfile.close()
         
         mb.showinfo("Congratulations!", "The spatial folder has been updated!")
+    
+    def write_positions_file(self, filepath, barcode_lis, coordinate_lis, tixel_status_list, sf):
+        with open(filepath, 'w', newline='') as f:
+            writer = csv.writer(f)
+            for i in range(50):
+                for j in range(50):
+                    inx = (i * 50) + j
+                    writer.writerow([barcode_lis[inx].strip(), tixel_status_list[j][i], i, j, coordinate_lis[j][i][1]/sf, coordinate_lis[j][i][0]/sf])
+        f.close()
 
     #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
     def count(self,which):
@@ -1505,7 +1476,7 @@ class Gui():
                 rgba = cmap(level)
                 new = [round(i * 255) for i in rgba[:-1]]
                 var = from_rgb(new)
-                if self.arr[j-1][i] == 1:
+                if self.tixel_status[j-1][i] == 1:
                     self.my_canvas.itemconfig(position, fill=var, width="1", state="normal")
                 else:
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")

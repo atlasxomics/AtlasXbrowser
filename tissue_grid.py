@@ -31,7 +31,7 @@ class Tissue():
         self.fud_dia = self.spot_dia*1.6153846
 
         numChannels = num_chan
-        self.arr = [[0 for i in range(numChannels)] for i in range(numChannels)]
+        self.tixel_status = [[0 for i in range(numChannels)] for i in range(numChannels)]
         top = [0,0]
         left = [0,0]
         flag = False
@@ -61,9 +61,9 @@ class Tissue():
 
                 corners.append(tL);corners.append(tR);corners.append(bR);corners.append(bL);
                 if self.calculate_avg(thresh, corners, distance) > 242:
-                    self.arr[j][i] = 0
+                    self.tixel_status[j][i] = 0
                 else:
-                    self.arr[j][i] = 1
+                    self.tixel_status[j][i] = 1
 
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
@@ -112,5 +112,5 @@ class Tissue():
         return math.sqrt(dis)
 
     def theAnswer(self):
-        return self.arr,self.spot_dia,self.fud_dia
+        return self.tixel_status,self.spot_dia,self.fud_dia
     
