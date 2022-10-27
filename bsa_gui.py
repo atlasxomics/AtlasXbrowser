@@ -181,10 +181,10 @@ class Gui():
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
         self.thframe.place(relx=.11, rely= .42)
-        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
+        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.activate_roi_determination, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
-        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm_roi(None), state=tk.DISABLED)
+        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm_roi(), state=tk.DISABLED)
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
@@ -570,7 +570,7 @@ class Gui():
                 self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
                 self.bar["value"] = 20
                 self.pWindow.update()
-                self.second_window()
+                self.spatial_selected()
             except FileNotFoundError:
                 mb.showwarning("Error", "metadata.json file is not present")
                 self.pWindow.destroy()
@@ -583,21 +583,21 @@ class Gui():
     def init_images(self):
 
         #opening images directly from previously stored path
-        a = self.bsa_cropped_pillow
-        b = self.postB_cropped_pillow
+        # a = self.bsa_cropped_pillow
+        # b = self.postB_cropped_pillow
 
-        self.width, self.height = (a.width, a.height)
-        self.rawHeight = self.height
-        newH = self.screen_height - 60
-        self.factor = newH/self.height
+        self.width_post_crop, self.height_post_crop = (self.bsa_cropped_pillow.width, self.bsa_cropped_pillow.height)
+        self.rawHeight = self.height_post_crop
+        self.height_post_crop_resized = self.screen_height - 60
+        self.factor = self.height_post_crop_resized/self.height_post_crop
 
-        newW = int(round(self.width*newH/self.height))
-        floor = a.resize((newW, newH), Image.ANTIALIAS)
-        postB = b.resize((newW, newH), Image.ANTIALIAS)
+        self.width_post_crop_resized = int(round(self.width_post_crop*self.factor))
+        resized_bsa = self.bsa_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        resized_postB = self.postB_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
 
-        self.refactor = b
-        self.newWidth = floor.width 
-        self.newHeight = floor.height 
+        # self.refactor = b
+        # self.newWidth = resized_bsa.width 
+        # self.newHeight = res.height 
 
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
         flippedImage = img
@@ -607,16 +607,16 @@ class Gui():
         except cv2.error:
             self.scale_image = flippedImage  
 
-        self.imgA = ImageTk.PhotoImage(floor)
-        self.imgB = ImageTk.PhotoImage(postB)
-        self.picNames = [self.imgB, self.imgA]
+        self.bsa_post_crop_resized_tk = ImageTk.PhotoImage(resized_bsa)
+        self.postB_post_crop_resized_tk = ImageTk.PhotoImage(resized_postB)
+        self.picNames = [self.postB_post_crop_resized_tk, self.bsa_post_crop_resized_tk]
 
         # my_canvas populated with the BSA stained image instead of the post-B image
         self.lmain.pack()
-        self.my_canvas.config(width = floor.width, height= floor.height)
-        self.lmain.configure(image=self.imgA)
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= self.height)
+        self.my_canvas.config(width = self.width_post_crop_resized, height= self.width_post_crop_resized)
+        self.lmain.configure(image=self.bsa_post_crop_resized_tk)
+        self.newWindow.geometry("{0}x{1}".format(self.width_post_crop_resized + 300, self.screen_height))
+        self.right_canvas.config(width = self.width_post_crop_resized + 300, height= self.height_post_crop)
 
     #Rotate and flip the images
     def rotate_image(self, num):
@@ -712,7 +712,6 @@ class Gui():
         self.init_images()
                         
     def activate_thresh(self):
-
         self.classification_active = False
         #boolean returns true if lmain does not exist
         if self.lmain.winfo_exists() == 0:
@@ -757,19 +756,18 @@ class Gui():
         self.my_canvas.unbind('<ButtonRelease-1>')
         
         #finding the initial bw image from thresholding
-
-
-
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
-        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        print("bw width: {} height: {}".format(bw_image.width, bw_image.height))
+        sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
         self.lmain.configure(image=imgtk)
 
 
     # "Open spatial folder" window
-    def second_window(self):
+    def spatial_selected(self):
         self.sendinfo_flag = False
         for i in self.names:
             if "meta" in i:
@@ -786,46 +784,50 @@ class Gui():
         self.newWindow.title("AtlasXbrowser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
-        a = Image.open(self.postB_Name)
+        hi_res_postB = Image.open(self.postB_Name)
         self.bar["value"] = 30
         self.pWindow.update()
         self.bar["value"] = 40
         self.pWindow.update()
 
-        w, h = (a.width, a.height)
-        self.width, self.height = (a.width, a.height)
+        self.width_hires_postB, self.height_hires_postB = (hi_res_postB.width, hi_res_postB.height)
+        # self.width, self.height = (a.width, a.height)
         resizeNumber = self.screen_height - 60
-        if h > resizeNumber:
-            self.factor = resizeNumber/h
-            newW = int(round(w*resizeNumber/h))
-            floor = a.resize((newW, resizeNumber), Image.ANTIALIAS)
+        if self.height_hires_postB > resizeNumber:
+            self.factor = resizeNumber/self.height_hires_postB
+            newW = int(round(self.width_hires_postB * self.factor))
+            resized_postB = hi_res_postB.resize((newW, resizeNumber), Image.ANTIALIAS)
         else:
-            floor = a
+            # floor = hi_res_postB
+            resized_postB = hi_res_postB
             self.factor = 1
 
-        self.refactor = a
-        self.newWidth = floor.width ; self.newHeight = floor.height
+        # self.refactor = hi_res_postB
+        self.postB_cropped_pillow = hi_res_postB
+        self.resized_width = resized_postB.width
+        self.resized_height = resized_postB.height
         
-        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        # img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        postB_array = np.array(hi_res_postB)
         self.bar["value"] = 50
         self.pWindow.update()
         self.bar["value"] = 60
         self.pWindow.update()
         try:
-            self.scale_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            self.postB_array_scaled = cv2.cvtColor(postB_array, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            self.scale_image = img
+            self.postB_array_scaled = postB_array
         self.bar["value"] = 80
         self.pWindow.update()
-        self.imgA = ImageTk.PhotoImage(floor)
-        self.picNames = [self.imgA, None]  
+        self.resized_hires_postB = ImageTk.PhotoImage(resized_postB)
+        self.picNames = [self.resized_hires_postB, None]  
 
 
         #update canvas and frame
-        self.my_canvas.config(width = floor.width, height= floor.height)
+        self.my_canvas.config(width = self.resized_width, height= self.resized_height)
         self.lmain.destroy()
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
+        self.newWindow.geometry("{0}x{1}".format(self.resized_width + 300, self.screen_height))
+        self.right_canvas.config(width = self.resized_width + 300, height= self.height_hires_postB)
         try:
             newFactor = resizeNumber/self.metadata['rawHeight']
         except KeyError:
@@ -850,11 +852,11 @@ class Gui():
         self.update_file = tk.Button(self.right_canvas, text = "Update the Spatial folder", command = self.update_pos)
         self.update_file.place(relx=.11, rely= .9)
 
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
+        thresh = cv2.adaptiveThreshold(self.postB_array_scaled, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
         self.pWindow.update()
         bw_image = Image.fromarray(thresh)
-        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        sized_bw = bw_image.resize((self.resized_width, self.resized_height), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
@@ -878,7 +880,7 @@ class Gui():
         #re doing the thresholding for the newly set values
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
@@ -896,14 +898,13 @@ class Gui():
             #new threshold created and loaded onto screen
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
 
     #Find Roi coordinates
-    def find_points(self):
-
+    def activate_roi_determination(self):
         #Disable  buttons that should not be activated
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
@@ -915,7 +916,7 @@ class Gui():
         self.onoff_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.bsa_post_crop_resized_tk, state="disabled")
         
         self.draggable_roi = DrawShapes(self.my_canvas, self.quad_coords)
         self.my_canvas.bind('<Button-1>', self.draggable_roi.on_click_quad)
@@ -927,21 +928,20 @@ class Gui():
        
 
     #Confirms coordinates choosen 
-    def confirm_roi(self, none):
+    def confirm_roi(self):
         self.ROILocated = True
         #self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
         
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-
         self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         self.Rpoints = self.my_canvas.coords(self.draggable_roi.current)
         self.quad_coords = self.my_canvas.coords(self.draggable_roi.current)
 
         self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.bsa_post_crop_resized_tk, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
 
@@ -954,7 +954,6 @@ class Gui():
             
 
     def save_thresholded_image(self):
-
         #if ROI is located enable tixel overlays, activate thresh button, and tixel thersholding
         if self.ROILocated:
             self.grid_button['state'] = tk.ACTIVE
@@ -974,13 +973,13 @@ class Gui():
         if tvalue %2 ==0:
             tvalue +=1
 
+        #threshold image at newly specified parameters
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
         bwFile_Name = self.excelName + "BW.png"
         cv2.imwrite(bwFile_Name, thresh)
         bw = Image.open(bwFile_Name)
-        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        sized_bw = bw.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
         bw_Image = ImageTk.PhotoImage(sized_bw)
-
         #checking if there is already a bw_image and replacing it if so
         if (len(self.picNames) >= 3):
             #if it is replaced with the new bw_Image
@@ -988,7 +987,6 @@ class Gui():
         else:
             #otherwise the new image is added to the end, which will be the 2nd index
             self.picNames.append(bw_Image)
-
         return bw_Image
 
     def grid(self,pic):
@@ -1165,7 +1163,8 @@ class Gui():
             self.my_canvas.unbind("<B1-Motion>")
             self.my_canvas.unbind("<ButtonRelease-1>")
             self.my_canvas.bind('<Button-1>',self.on_off)
-
+            
+            ###### FIX I/J
             self.update_file["state"] = tk.ACTIVE
             if self.sendinfo_flag == False:
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
@@ -1354,7 +1353,7 @@ class Gui():
                 for j in range(self.num_chan):
                     if (self.custom_barcode_selected):
                          line = my_file.readline().split('\t')
-
+######### FIX I/J
                     #val to be used when writing whether tixel position is on or off
                     tixel_val = 0
                     if self.arr[j][i] == 1:
@@ -1395,16 +1394,21 @@ class Gui():
         factorHigh = 0
         factorLow = 0
 
-        if self.width > self.height:
-            factorHigh = 2000/self.width
-            factorLow = 600/self.width
-            high_res = self.refactor.resize((2000, int(self.height*factorHigh)), Image.ANTIALIAS)
-            low_res = self.refactor.resize((600, int(self.height*factorLow)), Image.ANTIALIAS)
-        else:
-            factorHigh = 2000/self.height
-            factorLow = 600/self.height
-            high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
-            low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
+        print("width: {} height: {}".format(self.width_post_crop, self.height_post_crop))
+        factorHigh = 2000/self.width_post_crop
+        factorLow = 600/self.width_post_crop
+        high_res = self.postB_cropped_pillow.resize((2000, 2000), Image.ANTIALIAS)
+        low_res = self.postB_cropped_pillow.resize((600, 600), Image.ANTIALIAS)
+        # if self.width_post_crop > self.height_post_crop:
+        #     factorHigh = 2000/self.width_post_crop
+        #     factorLow = 600/self.width_post_crop
+        #     high_res = self.refactor.resize((2000, int(self.height_post_crop*factorHigh)), Image.ANTIALIAS)
+        #     low_res = self.refactor.resize((600, int(self.height_post_crop*factorLow)), Image.ANTIALIAS)
+        # else:
+        #     factorHigh = 2000/self.height
+        #     factorLow = 600/self.height
+        #     high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
+        #     low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
 
         high_res.save(path+"/tissue_hires_image.png")
         low_res.save(path+"/tissue_lowres_image.png")
@@ -1451,7 +1455,7 @@ class Gui():
                 barcode_lis.append(curr_barcode)
             
         csv_file.close()
-            
+            ######## FIX I/J
         with open(self.folder_selected + "/tissue_positions_list.csv", 'w', newline='') as f:
             writer = csv.writer(f)
 
@@ -1488,6 +1492,7 @@ class Gui():
         min_value = my_data.min(axis=0)[which]
         max_value = my_data.max(axis=0)[which]
         CBleft = min_value;
+        ######## FIX I/J
         with open(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
