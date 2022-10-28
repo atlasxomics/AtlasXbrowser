@@ -80,7 +80,7 @@ class Gui():
         self.points = []
         self.Rpoints = []
         self.coords = None
-        self.arr = None
+        self.tixel_status = None
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         self.quad_coords = [0]
@@ -118,20 +118,20 @@ class Gui():
         self.rotate_45_90.set(90)
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
         self.rotateframe.place(relx=.11, rely=.01)
-        self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.image_position, state=tk.DISABLED)
+        self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.confirm_rotation, state=tk.DISABLED)
         self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
         rotateleft = Image.open("rotateleft.png")
         bg = ImageTk.PhotoImage(rotateleft)
-        self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.image_axis(0), state=tk.DISABLED)
+        self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.rotate_image(0), state=tk.DISABLED)
         self.left.image = bg
         self.left.pack(side=tk.LEFT)
         rotateright = Image.open("rotateright.png")
         bg2 = ImageTk.PhotoImage(rotateright)
-        self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.image_axis(1), state=tk.DISABLED)
+        self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.rotate_image(1), state=tk.DISABLED)
         self.right.image = bg2
         self.right.pack(side=tk.LEFT)
         tk.Radiobutton(self.rotateframe, text="90", value=90, variable=self.rotate_45_90).pack(padx=(20, 0))
-        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(padx=(20, 0)), 
+        tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(padx=(20, 0))
         
         self.change_radio_rotationdegree_state(False)
         # rotate_left_small = Image.open("rotateleft2.png")
@@ -145,7 +145,7 @@ class Gui():
         self.cropframe.place(relx=.11, rely=.14)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
         self.activateCrop_button.pack(side=tk.LEFT)
-        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.square_image, state=tk.DISABLED)
+        self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.confirm_cropping, state=tk.DISABLED)
         self.confirmCrop_button.pack()
 
 
@@ -181,10 +181,10 @@ class Gui():
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
         self.thframe.place(relx=.11, rely= .42)
-        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.find_points, state=tk.DISABLED)
+        self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.activate_roi_determination, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
-        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm(None), state=tk.DISABLED)
+        self.confirm_button = tk.Button(self.thframe, text = "Confirm", command = lambda: self.confirm_roi(), state=tk.DISABLED)
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
@@ -272,22 +272,22 @@ class Gui():
         label1a.grid(row = 0, column = 2, sticky = "w")
 
 
-        label2 = tk.Label(self.starting_window, 
-        text = "Select PostB image:", 
-        font = ("Courier", 14),
-        # width = 25,
-        )
-        label2.grid(row = 1, column = 0, sticky = "e")
-        #label to display the name of the selected postB file to user
+        # label2 = tk.Label(self.starting_window, 
+        # text = "Select PostB image:", 
+        # font = ("Courier", 14),
+        # # width = 25,
+        # )
+        # label2.grid(row = 1, column = 0, sticky = "e")
+        # #label to display the name of the selected postB file to user
 
-        label2a = tk.Label(self.starting_window)
-        label2a.grid(row = 1, column =2, sticky = "w")
+        # label2a = tk.Label(self.starting_window)
+        # label2a.grid(row = 1, column =2, sticky = "w")
 
-        #attibute to store postB image file name
-        self.user_selected_postB = ""
-        #button where user can select postB
-        postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
-        postB_button.grid(row = 1, column = 1, sticky = "w")
+        # #attibute to store postB image file name
+        # self.user_selected_postB = ""
+        # #button where user can select postB
+        # postB_button = tk.Button(self.starting_window, text = "File", command = lambda: self.get_image_file(1, label2a))
+        # postB_button.grid(row = 1, column = 1, sticky = "w")
 
 
         #barcode file selection
@@ -426,19 +426,7 @@ class Gui():
 
         #ensuring that the selected file is an image file
         if file.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".tif")):
-            #for BSA
-            if num == 0:
-                self.user_selected_bsa = file
-                if self.user_selected_postB != "":
-                    self.both_images_selected = True
-                   
-            #for postB
-            else:
-                self.user_selected_postB = file
-
-                if self.user_selected_bsa != "":
-                    self.both_images_selected = True
-                        
+            self.user_selected_bsa = file
         else:
             if num == 0:
                 self.user_selected_bsa = ""
@@ -470,48 +458,38 @@ class Gui():
             return False
 
     def configure_metadata(self):
-        same_dir = self.check_dirs(self.user_selected_bsa, self.user_selected_postB)
-        if same_dir:
-            #retrieving variables from stored StringVar variables
-            runID = self.run_identifier.get()
-            if runID != "":
-                if self.both_images_selected:
-                    if self.custom_barcode_valid or self.custom_barcode_selected == False:
-                        val = self.user_selected_bsa.rfind("/")
-                        self.bsa_short = self.user_selected_bsa[val + 1: ]
+        #retrieving variables from stored StringVar variables
+        runID = self.run_identifier.get()
+        if runID != "":
+            if self.custom_barcode_valid or self.custom_barcode_selected == False:
+                val = self.user_selected_bsa.rfind("/")
+                self.bsa_short = self.user_selected_bsa[val + 1: ]
+                self.folder_selected = self.user_selected_bsa[:val]
+                self.postB_short = "{}_postB.tif".format(runID)
+                self.metadata = {
+                "run": runID
+                }
+                #setting excelName var, used later, to equal the user specifed run ID
+                self.excelName = runID
 
-                        val = self.user_selected_postB.rfind("/")
-                        self.postB_short = self.user_selected_postB[val + 1: ]
+                #calling method that puts images on canvas
+                self.configure_images()
 
-                        self.metadata = {
-                        "run": runID
-                        }
-                        #setting excelName var, used later, to equal the user specifed run ID
-                        self.excelName = runID
+                self.starting_window.destroy()
+                # self.activateCrop_button['state'] = tk.ACTIVE
+                self.newWindow.title("AtlasXbrowser (" + runID + ")")
+                self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
+                self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
 
-                        #calling method that puts images on canvas
-                        self.configure_images()
+                self.left['state'] = tk.ACTIVE
+                self.right['state'] = tk.ACTIVE
+                # self.degree_45["state"] = tk.ACTIVE
+                self.image_updated['state'] = tk.ACTIVE
+                self.confirmCrop_button['state'] = tk.DISABLED
 
-                        self.starting_window.destroy()
-                        # self.activateCrop_button['state'] = tk.ACTIVE
-                        self.newWindow.title("AtlasXbrowser (" + runID + ")")
-                        self.filemenu.entryconfig("Begin Image Processing", state = "disabled")
-                        self.filemenu.entryconfig("Open Spatial Folder", state = "disabled")
-
-                        self.left['state'] = tk.ACTIVE
-                        self.right['state'] = tk.ACTIVE
-                        # self.degree_45["state"] = tk.ACTIVE
-                        self.image_updated['state'] = tk.ACTIVE
-                        self.confirmCrop_button['state'] = tk.DISABLED
-
-                        self.change_radio_rotationdegree_state(True)
-                    
-                else:
-                    self.error_label.config(text = "Error! Must select BSA and postB Images!")
-            else:
-                self.error_label.config(text = "Error! Enter a Run Identifier!")
+                self.change_radio_rotationdegree_state(True)
         else:
-         self.error_label.config(text = "Images must be located in the same directory!")
+            self.error_label.config(text = "Error! Enter a Run Identifier!")
     
     def change_radio_rotationdegree_state(self, on):
         for child in self.rotateframe.winfo_children():
@@ -523,25 +501,28 @@ class Gui():
 
     def configure_images(self):
         self.bsa_on_screen = Image.open(self.user_selected_bsa)
+
         w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
         newH = self.screen_height - 60
-
         # self.image_array = cv2.imread(self.user_selected_bsa, 0)
         # self.rotation_matrix = np.identity(len(self.image_array))
 
         #find ratio of 60 less than screenheight to the image height
         self.factor = newH/h
         #use ratio to calcuate the new width
-        newW = int(round(w*newH/h))
+        newW = int(round(w*self.factor))
         #resize the bsa image based on these calculations
         bsa = self.bsa_on_screen.resize((newW, newH), Image.ANTIALIAS)
-        self.imgtk = ImageTk.PhotoImage(bsa)
+        self.bsa_tkinter_image = ImageTk.PhotoImage(bsa)
 
         self.lmain.pack()
-        self.lmain.image = self.imgtk 
-        self.lmain.configure(image = self.imgtk)
+        self.lmain.image = self.bsa_tkinter_image 
+        self.lmain.configure(image = self.bsa_tkinter_image)
 
         self.bsa_resized = np.array(bsa)
+        # print("Original height: {} width: {}".format(self.bsa_on_screen.height, self.bsa_on_screen.width))
+        # print("New height: {} new width: {}".format(newH, newW))
+        # print("Screen Height: {} screen width: {}".format(self.screen_height, self.screen_width))
         # w = self.bsa_on_screen.width()
 
 
@@ -576,7 +557,7 @@ class Gui():
                 self.tissue_hires_scalef = float(self.metadata2['tissue_hires_scalef'])
                 self.bar["value"] = 20
                 self.pWindow.update()
-                self.second_window()
+                self.spatial_selected()
             except FileNotFoundError:
                 mb.showwarning("Error", "metadata.json file is not present")
                 self.pWindow.destroy()
@@ -589,26 +570,19 @@ class Gui():
     def init_images(self):
 
         #opening images directly from previously stored path
-        a = Image.open(self.bsa_figure_path)
-        b = Image.open(self.postB_figure_path)
+        # a = self.bsa_cropped_pillow
+        # b = self.postB_cropped_pillow
 
+        self.width_post_crop, self.height_post_crop = (self.bsa_cropped_pillow.width, self.bsa_cropped_pillow.height)
+        self.rawHeight = self.height_post_crop
+        self.height_post_crop_resized = self.screen_height - 60
+        self.factor = self.height_post_crop_resized/self.height_post_crop
 
-        w, h = (a.width, a.height)
-        self.rawHeight = h
-        self.width, self.height = (a.width, a.height)
-        newH = self.screen_height - 60
-        self.factor = newH/h
-
-        newW = int(round(w*newH/h))
-        floor = a.resize((newW, newH), Image.ANTIALIAS)
-        postB = b.resize((newW, newH), Image.ANTIALIAS)
-
-        self.refactor = b
-        self.newWidth = floor.width 
-        self.newHeight = floor.height 
+        self.width_post_crop_resized = int(round(self.width_post_crop*self.factor))
+        resized_bsa = self.bsa_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        resized_postB = self.postB_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
 
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
-
         flippedImage = img
 
         try:
@@ -616,19 +590,19 @@ class Gui():
         except cv2.error:
             self.scale_image = flippedImage  
 
-        self.imgA = ImageTk.PhotoImage(floor)
-        self.imgB = ImageTk.PhotoImage(postB)
-        self.picNames = [self.imgB, self.imgA]
+        self.bsa_post_crop_resized_tk = ImageTk.PhotoImage(resized_bsa)
+        self.postB_post_crop_resized_tk = ImageTk.PhotoImage(resized_postB)
+        self.picNames = [self.postB_post_crop_resized_tk, self.bsa_post_crop_resized_tk]
 
         # my_canvas populated with the BSA stained image instead of the post-B image
         self.lmain.pack()
-        self.my_canvas.config(width = floor.width, height= floor.height)
-        self.lmain.configure(image=self.imgA)
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
+        self.my_canvas.config(width = self.width_post_crop_resized, height= self.width_post_crop_resized)
+        self.lmain.configure(image=self.bsa_post_crop_resized_tk)
+        self.newWindow.geometry("{0}x{1}".format(self.width_post_crop_resized + 300, self.screen_height))
+        self.right_canvas.config(width = self.width_post_crop_resized + 300, height= self.height_post_crop)
 
     #Rotate and flip the images
-    def image_axis(self, num):
+    def rotate_image(self, num):
         (h,w) = self.bsa_resized.shape[:2]
         cX, cY = (w // 2, h //2)
         degree_rot = self.rotate_45_90.get()
@@ -642,12 +616,12 @@ class Gui():
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
         formatted = Image.fromarray(updated)
         sized = formatted.resize((w, h), Image.ANTIALIAS)
-        self.imgtk = ImageTk.PhotoImage(sized)
-        self.lmain.image = self.imgtk
-        self.lmain.configure(image=self.imgtk)
+        self.bsa_tkinter_image = ImageTk.PhotoImage(sized)
+        self.lmain.image = self.bsa_tkinter_image
+        self.lmain.configure(image=self.bsa_tkinter_image)
 
     #Update postB and BSA images to new image orientation 
-    def image_position(self):
+    def confirm_rotation(self):
         self.create_figure_folder()
         self.left['state'] = tk.DISABLED
         self.right['state'] = tk.DISABLED
@@ -659,10 +633,8 @@ class Gui():
         self.prep_cropping()
 
     def prep_cropping(self):
-        cur_height = self.lmain.winfo_width() * 2
-        cur_width = self.lmain.winfo_height()
         self.lmain.pack_forget()
-        self.my_canvas.create_image(0, 0, image = self.imgtk, anchor="nw", tag = "image")
+        self.my_canvas.create_image(0, 0, image = self.bsa_tkinter_image, anchor="nw", tag = "image")
 
     def cropping(self):
         #creating cropping square on screen, defined as b
@@ -688,7 +660,7 @@ class Gui():
         self.postB_figure_path = self.figure_folder + "/" + self.postB_short
 
     #Confirm cropping and reinitalize images in the containers
-    def square_image(self):
+    def confirm_cropping(self):
         #source is the source folder of the spatial images
         source = self.folder_selected
         coords = self.my_canvas.coords('crop')
@@ -700,20 +672,21 @@ class Gui():
         rot_image1 = cv2.warpAffine(image1, M, (w, h))
         I = cv2.cvtColor(rot_image1, cv2.COLOR_BGR2RGB)
         img1 = Image.fromarray(I)
-        im1 = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
-        bsa = im1.save(self.bsa_figure_path)
+        self.bsa_cropped_pillow = img1.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor)))
+        bsa = self.bsa_cropped_pillow.save(self.bsa_figure_path)
 
         # self.postB_figure_path = self.figure_folder + "/" + self.postB_short
-        image2 = cv2.imread(self.user_selected_postB)
-        rot_image2 = cv2.warpAffine(image2, M, (w,h))
-        img2 = Image.fromarray(rot_image2)
-        im2 = img2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
-        post = im2.save(self.postB_figure_path)
+        image2 = np.asarray(self.bsa_cropped_pillow)
+        postB_cropped = image2[:, :, 2]
+        self.postB_cropped_pillow = Image.fromarray(postB_cropped)
+        # rot_image2 = cv2.warpAffine(image2, M, (w,h))
+        # img2 = Image.fromarray(rot_image2)
+        # im2 = img2.crop((int(coords[0]/self.factor),int(coords[1]/self.factor),int(coords[2]/self.factor),int(coords[3]/self.factor))) 
+        post = self.postB_cropped_pillow.save(self.postB_figure_path)
 
         self.metadata["orientation"] = {"rotation": degrees}
         self.my_canvas.unbind('<Button-1>')
         self.my_canvas.unbind('<Button1-Motion>') 
-        b = im1
 
         self.my_canvas.delete("all")
 
@@ -722,7 +695,6 @@ class Gui():
         self.init_images()
                         
     def activate_thresh(self):
-
         self.classification_active = False
         #boolean returns true if lmain does not exist
         if self.lmain.winfo_exists() == 0:
@@ -767,19 +739,17 @@ class Gui():
         self.my_canvas.unbind('<ButtonRelease-1>')
         
         #finding the initial bw image from thresholding
-
-
-
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
-        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        # print("bw width: {} height: {}".format(bw_image.width, bw_image.height))
+        sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        # print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
         self.lmain.configure(image=imgtk)
 
-
     # "Open spatial folder" window
-    def second_window(self):
+    def spatial_selected(self):
         self.sendinfo_flag = False
         for i in self.names:
             if "meta" in i:
@@ -787,7 +757,6 @@ class Gui():
 
             elif "list" in i:
                 self.position = self.folder_selected + "/" + i
-
         try:
             self.excelName = self.metadata['run']
         except KeyError:
@@ -796,46 +765,50 @@ class Gui():
         self.newWindow.title("AtlasXbrowser (" + self.excelName+")")
 
         self.postB_Name = self.folder_selected + "/tissue_hires_image.png"
-        a = Image.open(self.postB_Name)
+        hi_res_postB = Image.open(self.postB_Name)
         self.bar["value"] = 30
         self.pWindow.update()
         self.bar["value"] = 40
         self.pWindow.update()
 
-        w, h = (a.width, a.height)
-        self.width, self.height = (a.width, a.height)
+        self.width_hires_postB, self.height_hires_postB = (hi_res_postB.width, hi_res_postB.height)
+        # self.width, self.height = (a.width, a.height)
         resizeNumber = self.screen_height - 60
-        if h > resizeNumber:
-            self.factor = resizeNumber/h
-            newW = int(round(w*resizeNumber/h))
-            floor = a.resize((newW, resizeNumber), Image.ANTIALIAS)
+        if self.height_hires_postB > resizeNumber:
+            self.factor = resizeNumber/self.height_hires_postB
+            newW = int(round(self.width_hires_postB * self.factor))
+            resized_postB = hi_res_postB.resize((newW, resizeNumber), Image.ANTIALIAS)
         else:
-            floor = a
+            # floor = hi_res_postB
+            resized_postB = hi_res_postB
             self.factor = 1
 
-        self.refactor = a
-        self.newWidth = floor.width ; self.newHeight = floor.height
+        # self.refactor = hi_res_postB
+        self.postB_cropped_pillow = hi_res_postB
+        self.resized_width = resized_postB.width
+        self.resized_height = resized_postB.height
         
-        img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        # img = cv2.imread(self.postB_Name, cv2.IMREAD_UNCHANGED)
+        postB_array = np.array(hi_res_postB)
         self.bar["value"] = 50
         self.pWindow.update()
         self.bar["value"] = 60
         self.pWindow.update()
         try:
-            self.scale_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            self.postB_array_scaled = cv2.cvtColor(postB_array, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            self.scale_image = img
+            self.postB_array_scaled = postB_array
         self.bar["value"] = 80
         self.pWindow.update()
-        self.imgA = ImageTk.PhotoImage(floor)
-        self.picNames = [self.imgA, None]  
+        self.resized_hires_postB = ImageTk.PhotoImage(resized_postB)
+        self.picNames = [self.resized_hires_postB, None]  
 
 
         #update canvas and frame
-        self.my_canvas.config(width = floor.width, height= floor.height)
+        self.my_canvas.config(width = self.resized_width, height= self.resized_height)
         self.lmain.destroy()
-        self.newWindow.geometry("{0}x{1}".format(floor.width + 300, self.screen_height))
-        self.right_canvas.config(width = floor.width + 300, height= h)
+        self.newWindow.geometry("{0}x{1}".format(self.resized_width + 300, self.screen_height))
+        self.right_canvas.config(width = self.resized_width + 300, height= self.height_hires_postB)
         try:
             newFactor = resizeNumber/self.metadata['rawHeight']
         except KeyError:
@@ -843,7 +816,7 @@ class Gui():
         self.Rpoints = [i*newFactor for i in self.metadata['points']]
 
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-        self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+        self.tixel_status = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
         #Buttons
         self.begin_button['state'] = tk.DISABLED
@@ -860,11 +833,11 @@ class Gui():
         self.update_file = tk.Button(self.right_canvas, text = "Update the Spatial folder", command = self.update_pos)
         self.update_file.place(relx=.11, rely= .9)
 
-        thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
+        thresh = cv2.adaptiveThreshold(self.postB_array_scaled, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
         self.pWindow.update()
         bw_image = Image.fromarray(thresh)
-        sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        sized_bw = bw_image.resize((self.resized_width, self.resized_height), Image.ANTIALIAS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
@@ -888,7 +861,7 @@ class Gui():
         #re doing the thresholding for the newly set values
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
@@ -906,14 +879,13 @@ class Gui():
             #new threshold created and loaded onto screen
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
 
     #Find Roi coordinates
-    def find_points(self):
-
+    def activate_roi_determination(self):
         #Disable  buttons that should not be activated
         self.blockSize_scale['state'] = tk.DISABLED
         self.cMean_scale['state'] = tk.DISABLED
@@ -925,33 +897,32 @@ class Gui():
         self.onoff_button['state'] = tk.DISABLED
 
         self.lmain.destroy()
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="disabled")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.bsa_post_crop_resized_tk, state="disabled")
         
-        self.c = DrawShapes(self.my_canvas, self.quad_coords)
-        self.my_canvas.bind('<Button-1>', self.c.on_click_quad)
+        self.draggable_roi = DrawShapes(self.my_canvas, self.quad_coords)
+        self.my_canvas.bind('<Button-1>', self.draggable_roi.on_click_quad)
         
-        self.my_canvas.bind('<Button1-Motion>', self.c.on_motion)
+        self.my_canvas.bind('<Button1-Motion>', self.draggable_roi.on_motion)
 
         self.confirm_button["state"] = tk.ACTIVE
 
        
 
     #Confirms coordinates choosen 
-    def confirm(self, none):
+    def confirm_roi(self):
         self.ROILocated = True
         #self.fromOverlay = True
         self.activateThresh_button['state'] = tk.ACTIVE
         
         #List of Lists containing a list for every tixel
         self.coords = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
+        self.tixel_status = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
 
-        self.arr = [[[] for i in range(self.num_chan)] for i in range(self.num_chan)]
-
-        self.Rpoints = self.my_canvas.coords(self.c.current)
-        self.quad_coords = self.my_canvas.coords(self.c.current)
+        self.Rpoints = self.my_canvas.coords(self.draggable_roi.current)
+        self.quad_coords = self.my_canvas.coords(self.draggable_roi.current)
 
         self.my_canvas.delete("all")
-        self.my_canvas.create_image(0,0, anchor="nw", image = self.imgA, state="normal")
+        self.my_canvas.create_image(0,0, anchor="nw", image = self.bsa_post_crop_resized_tk, state="normal")
         self.my_canvas.unbind("<B1-Motion>")
         self.my_canvas.unbind("<Button-1>")
 
@@ -964,7 +935,6 @@ class Gui():
             
 
     def save_thresholded_image(self):
-
         #if ROI is located enable tixel overlays, activate thresh button, and tixel thersholding
         if self.ROILocated:
             self.grid_button['state'] = tk.ACTIVE
@@ -984,13 +954,13 @@ class Gui():
         if tvalue %2 ==0:
             tvalue +=1
 
+        #threshold image at newly specified parameters
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, tvalue, svalue)
         bwFile_Name = self.excelName + "BW.png"
         cv2.imwrite(bwFile_Name, thresh)
         bw = Image.open(bwFile_Name)
-        sized_bw = bw.resize((self.newWidth, self.newHeight), Image.ANTIALIAS)
+        sized_bw = bw.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
         bw_Image = ImageTk.PhotoImage(sized_bw)
-
         #checking if there is already a bw_image and replacing it if so
         if (len(self.picNames) >= 3):
             #if it is replaced with the new bw_Image
@@ -998,7 +968,6 @@ class Gui():
         else:
             #otherwise the new image is added to the end, which will be the 2nd index
             self.picNames.append(bw_Image)
-
         return bw_Image
 
     def grid(self,pic):
@@ -1014,11 +983,16 @@ class Gui():
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
         ratioNum = (self.num_chan*2) - 1
+        #leftS: slope defined by the top left corner to the bottom left corner
+        #[dx + point, dy + point]
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
+        #[dx + point, dy + point]
+        #topS slope defined by the top left corner to the top right corner
         topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
+        #slope: [dy, dx] for the slope defined by top left to bottom left
         slope = [round(leftS[1]-self.Rpoints[1], 5), round(leftS[0]-self.Rpoints[0], 5)]
+        #slopeT: [dy, dx] for the slope defined by top left to top right
         slopeT = [round(topS[1]-self.Rpoints[1], 5), round(topS[0]-self.Rpoints[0], 5)]
-
 
         slopeO = [slope[0]*2, slope[1]*2]
         slopeTO = [slopeT[0]*2, slopeT[1]*2]
@@ -1028,11 +1002,13 @@ class Gui():
         flag = False
         prev = [self.Rpoints[0],self.Rpoints[1]]
         excelC = 1
+        #each iteration on i moves the current tixel across a column
         for i in range(self.num_chan):
             top[0] = prev[0]+slopeT[1]
             top[1] = prev[1]+slopeT[0]
             flag = False
             
+            #each iterations of j moves the current tixel down a row 
             for j in range(self.num_chan):
                 if flag == False:
                     left[0] = prev[0]
@@ -1060,9 +1036,8 @@ class Gui():
                 excelC += 1
 
                 #allowing on and off tissues on overlay
-                #if self.classification_active:
                 if self.classification_active:
-                    if self.arr[j][i] == 1:
+                    if self.tixel_status[j][i] == 1:
                         try:
                             tags = self.my_canvas.find_withtag(position)
                             self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
@@ -1152,12 +1127,12 @@ class Gui():
             points_copy = self.Rpoints.copy()
 
             tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan)
-            self.arr,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
-            for i in range(len(self.arr)):
-                for j in range(len(self.arr)):
+            self.tixel_status,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
+            for i in range(len(self.tixel_status)):
+                for j in range(len(self.tixel_status)):
                     position = str(j+1) + "x" + str(i)
 
-                    if self.arr[j][i] == 1:
+                    if self.tixel_status[j][i] == 1:
                         try:
                             tags = self.my_canvas.find_withtag(position)
                             self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
@@ -1175,16 +1150,17 @@ class Gui():
             self.my_canvas.unbind("<B1-Motion>")
             self.my_canvas.unbind("<ButtonRelease-1>")
             self.my_canvas.bind('<Button-1>',self.on_off)
-
+            
+            ###### FIX I/J
             self.update_file["state"] = tk.ACTIVE
             if self.sendinfo_flag == False:
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                     csv_reader = csv.reader(csv_file)
                     for row in csv_reader:
-                        j = int(row[3])+1
-                        i = int(row[2])
+                        j = int(row[2])+1
+                        i = int(row[3])
                         if row[1] == "1":
-                            self.arr[j-1][i] = 1
+                            self.tixel_status[j-1][i] = 1
                             position = str(j)+"x"+str(i)
                             try:
                                 tags = self.my_canvas.find_withtag(position)
@@ -1192,13 +1168,13 @@ class Gui():
                             except IndexError:
                                 pass
                         else:
-                            self.arr[j-1][i] = 0
+                            self.tixel_status[j-1][i] = 0
                 self.sendinfo_flag = True
             else:
-                for i in range(len(self.arr)):
-                    for j in range(len(self.arr)):
+                for i in range(len(self.tixel_status)):
+                    for j in range(len(self.tixel_status)):
                         position = str(j+1) + "x" + str(i)
-                        if self.arr[j][i] == 1:
+                        if self.tixel_status[j][i] == 1:
                             try:
                                 tags = self.my_canvas.find_withtag(position)
                                 self.my_canvas.itemconfig(tags[0], fill='red', state="normal")
@@ -1240,17 +1216,17 @@ class Gui():
                 if self.check_on.get() == 0:
                     if state == "normal":
                         self.my_canvas.itemconfig(k, fill="", state="disabled", width=1)
-                        self.arr[int(i)-1][int(j)] = 0
+                        self.tixel_status[int(i)-1][int(j)] = 0
                     else:
                         self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
-                        self.arr[int(i)-1][int(j)] = 1
+                        self.tixel_status[int(i)-1][int(j)] = 1
                 else:
                     if state == "normal":
                         self.my_canvas.itemconfig(k, state="disabled", outline="")
-                        self.arr[int(i)-1][int(j)] = 0
+                        self.tixel_status[int(i)-1][int(j)] = 0
                     else:
                         self.my_canvas.itemconfig(k, state ="normal", width=1, outline="black")
-                        self.arr[int(i)-1][int(j)] = 1
+                        self.tixel_status[int(i)-1][int(j)] = 1
 
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
@@ -1274,10 +1250,10 @@ class Gui():
                 j = where[1]
                 if self.check_on.get() == 0:
                     self.my_canvas.itemconfig(k, fill="red", state ="normal", width=1)
-                    self.arr[int(i)-1][int(j)] = 1
+                    self.tixel_status[int(i)-1][int(j)] = 1
                 else:
                     self.my_canvas.itemconfig(k, width=1, state ="normal", outline="black")
-                    self.arr[int(i)-1][int(j)] = 1
+                    self.tixel_status[int(i)-1][int(j)] = 1
 
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
@@ -1301,15 +1277,16 @@ class Gui():
                 j = where[1]
                 if self.check_on.get() == 0:
                     self.my_canvas.itemconfig(k, fill="", state="disabled", width=1)
-                    self.arr[int(i)-1][int(j)] = 0
+                    self.tixel_status[int(i)-1][int(j)] = 0
                 else:
                     self.my_canvas.itemconfig(k, state="disabled", outline="")
-                    self.arr[int(i)-1][int(j)] = 0
+                    self.tixel_status[int(i)-1][int(j)] = 0
 
         self.my_canvas.coords("highlight", 0,0,0,0)
         self.my_canvas.unbind("<ButtonRelease-1>")
     def on_off(self, event):
         tag = event.widget.find_closest(event.x,event.y)
+        # print("x: {} y: {} sf: {}".format(event.x, event.y, self.factor))
         position = event.widget.gettags(tag)
         try:
             where = position[0].split("x")
@@ -1321,20 +1298,20 @@ class Gui():
         if self.check_on.get()==0:
             if state == "normal":
                 self.my_canvas.itemconfig(tag, fill="", state="disabled", width=1)
-                self.arr[int(i)-1][int(j)] = 0
+                self.tixel_status[int(i)-1][int(j)] = 0
                 self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, fill="red", state ="normal", width=1)
-                self.arr[int(i)-1][int(j)] = 1
+                self.tixel_status[int(i)-1][int(j)] = 1
                 self.numTixels += 1
         else:
             if state == "normal":
                 self.my_canvas.itemconfig(tag, state="disabled", outline="")
-                self.arr[int(i)-1][int(j)] = 0
+                self.tixel_status[int(i)-1][int(j)] = 0
                 self.numTixels -= 1
             else:
                 self.my_canvas.itemconfig(tag, state ="normal", width=1, outline="black")
-                self.arr[int(i)-1][int(j)] = 1
+                self.tixel_status[int(i)-1][int(j)] = 1
                 self.numTixels += 1
 
         
@@ -1350,38 +1327,28 @@ class Gui():
             path = self.folder_selected + "/spatial"
 
         self.position_file["state"] = tk.DISABLED
-
-        # barcode_file = "bc" + str(self.num_chan) + "v" + self.barcodes + ".txt"
         if self.custom_barcode_selected:
+            barcodes = []
             my_file = open(self.barcode_filename,"r")
-        with open(path + "/tissue_positions_list.csv", 'w') as f:
-            writer = csv.writer(f)
-            self.numTixels = 0
-            if self.custom_barcode_selected == False:
-                 barcode = barcode1_var.split("\n")
-            for i in range(self.num_chan):
-                for j in range(self.num_chan):
-                    if (self.custom_barcode_selected):
-                         line = my_file.readline().split('\t')
-
-                    #val to be used when writing whether tixel position is on or off
-                    tixel_val = 0
-                    if self.arr[j][i] == 1:
-                        self.numTixels+=1
-                        tixel_val = 1
-
-                     #if coming from a file, continue to take from the 0th index
-                    if (self.custom_barcode_selected):
-                        val = line[0].strip()
-                    else:
-                        inx = (i * self.num_chan) + j
-                        val = barcode[inx].strip()
-
-                    writer.writerow([val, tixel_val, i, j, self.coords[j][i][1], self.coords[j][i][0]])
-
-         # if the barcodes being selected are from a custom file, close it
-        if (self.custom_barcode_selected):
+            lines = my_file.readlines()
+            for line in lines:
+                val = line.strip()
+                barcodes.append(val)
             my_file.close()
+        else:
+            barcodes = []
+            vals = barcode1_var.split("\n")
+            for bar in vals:
+                barcodes.append(bar)
+
+        filename = path + "/tissue_positions_list.csv"
+        self.write_positions_file(filename,barcodes, self.coords, self.tixel_status, 1)
+        self.numTixels = 0
+        for row in self.tixel_status:
+            self.numTixels += sum(row)
+
+        # print("on tixels: {}".format(self.numTixels))
+# ######### FIX I/J
 
         # my_file.close()
         self.json_file(path)
@@ -1393,7 +1360,7 @@ class Gui():
         except shutil.Error:
             rmtree(path+"/"+"figure")
             move(self.figure_folder,path)
-        f.close()
+        # f.close()
         bwFile_Name = self.excelName + "BW.png"
         os.remove(bwFile_Name)
         mb.showinfo("Congratulations!", "The spatial folder is created!")
@@ -1404,16 +1371,21 @@ class Gui():
         factorHigh = 0
         factorLow = 0
 
-        if self.width > self.height:
-            factorHigh = 2000/self.width
-            factorLow = 600/self.width
-            high_res = self.refactor.resize((2000, int(self.height*factorHigh)), Image.ANTIALIAS)
-            low_res = self.refactor.resize((600, int(self.height*factorLow)), Image.ANTIALIAS)
-        else:
-            factorHigh = 2000/self.height
-            factorLow = 600/self.height
-            high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
-            low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
+        print("width: {} height: {}".format(self.width_post_crop, self.height_post_crop))
+        factorHigh = 2000/self.width_post_crop
+        factorLow = 600/self.width_post_crop
+        high_res = self.postB_cropped_pillow.resize((2000, 2000), Image.ANTIALIAS)
+        low_res = self.postB_cropped_pillow.resize((600, 600), Image.ANTIALIAS)
+        # if self.width_post_crop > self.height_post_crop:
+        #     factorHigh = 2000/self.width_post_crop
+        #     factorLow = 600/self.width_post_crop
+        #     high_res = self.refactor.resize((2000, int(self.height_post_crop*factorHigh)), Image.ANTIALIAS)
+        #     low_res = self.refactor.resize((600, int(self.height_post_crop*factorLow)), Image.ANTIALIAS)
+        # else:
+        #     factorHigh = 2000/self.height
+        #     factorLow = 600/self.height
+        #     high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
+        #     low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
 
         high_res.save(path+"/tissue_hires_image.png")
         low_res.save(path+"/tissue_lowres_image.png")
@@ -1454,33 +1426,31 @@ class Gui():
         barcode_lis = []
         with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
             reader = csv.reader(csv_file, delimiter=",")
-
             for row in reader:
                 curr_barcode = row[0]
                 barcode_lis.append(curr_barcode)
             
         csv_file.close()
-            
-        with open(self.folder_selected + "/tissue_positions_list.csv", 'w') as f:
-            writer = csv.writer(f)
-
-            for i in range(self.num_chan):
-                for j in range(self.num_chan):
-                    
-                    inx = (i * self.num_chan) + j
-                    if self.arr[j][i] == 1:
-                        writer.writerow([barcode_lis[inx].strip(), 1, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
-                    else:
-                        writer.writerow([barcode_lis[inx].strip(), 0, i, j, self.coords[j][i][1]/self.tissue_hires_scalef, self.coords[j][i][0]/self.tissue_hires_scalef])
-
-        f.close()
+            ######## FIX I/J
+        filepath = self.folder_selected + "/tissue_positions_list.csv"
+        self.write_positions_file(filepath,barcode_lis, self.coords, self.tixel_status, self.tissue_hires_scalef)
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
-        
         mb.showinfo("Congratulations!", "The spatial folder has been updated!")
+    
+    def write_positions_file(self, filepath, barcode_lis, coordinate_lis, tixel_status_list, sf):
+        # print(type(barcode_lis))
+        # print(barcode_lis)
+        with open(filepath, 'w', newline='') as f:
+            writer = csv.writer(f)
+            for i in range(50):
+                for j in range(50):
+                    inx = (i * 50) + j
+                    writer.writerow([barcode_lis[inx].strip(), tixel_status_list[j][i], j, i, round(coordinate_lis[j][i][1] / sf), round(coordinate_lis[j][i][0] / sf)])
+        f.close()
 
     #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
     def count(self,which):
@@ -1497,11 +1467,12 @@ class Gui():
         min_value = my_data.min(axis=0)[which]
         max_value = my_data.max(axis=0)[which]
         CBleft = min_value;
+        ######## FIX I/J
         with open(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
-                j = int(row[3])+1
-                i = int(row[2])
+                j = int(row[2])+1
+                i = int(row[3])
                 count = float(row[which])
                 position = str(j)+"x"+str(i)
                 level = round((count-CBleft)/(max_value-CBleft)*50)
@@ -1509,7 +1480,7 @@ class Gui():
                 rgba = cmap(level)
                 new = [round(i * 255) for i in rgba[:-1]]
                 var = from_rgb(new)
-                if self.arr[j-1][i] == 1:
+                if self.tixel_status[j-1][i] == 1:
                     self.my_canvas.itemconfig(position, fill=var, width="1", state="normal")
                 else:
                     self.my_canvas.itemconfig(position, fill=var, outline="", state="disabled")

@@ -15,7 +15,7 @@ class DrawSquare():
 
         dist = distance([width*.10, height*.10], [width-(width*.10), height*.10])
         #Defining self.points as the four corners of the initial 
-        self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), dist + height*.10, width*.10, dist + height*.10
+        self.points = width*.10, height*.10, width * .9, height*.10, width * .9, dist + height*.10, width*.10, dist + height*.10
         self.rect = [width*.10, height*.10, width-(width*.10), dist + height*.10]
         #outputting square on screen
 
