@@ -520,9 +520,9 @@ class Gui():
         self.lmain.configure(image = self.bsa_tkinter_image)
 
         self.bsa_resized = np.array(bsa)
-        print("Original height: {} width: {}".format(self.bsa_on_screen.height, self.bsa_on_screen.width))
-        print("New height: {} new width: {}".format(newH, newW))
-        print("Screen Height: {} screen width: {}".format(self.screen_height, self.screen_width))
+        # print("Original height: {} width: {}".format(self.bsa_on_screen.height, self.bsa_on_screen.width))
+        # print("New height: {} new width: {}".format(newH, newW))
+        # print("Screen Height: {} screen width: {}".format(self.screen_height, self.screen_width))
         # w = self.bsa_on_screen.width()
 
 
@@ -581,10 +581,6 @@ class Gui():
         self.width_post_crop_resized = int(round(self.width_post_crop*self.factor))
         resized_bsa = self.bsa_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
         resized_postB = self.postB_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
-
-        # self.refactor = b
-        # self.newWidth = resized_bsa.width 
-        # self.newHeight = res.height 
 
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
         flippedImage = img
@@ -745,13 +741,12 @@ class Gui():
         #finding the initial bw image from thresholding
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
-        print("bw width: {} height: {}".format(bw_image.width, bw_image.height))
+        # print("bw width: {} height: {}".format(bw_image.width, bw_image.height))
         sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
-        print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
+        # print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
         self.lmain.configure(image=imgtk)
-
 
     # "Open spatial folder" window
     def spatial_selected(self):
@@ -762,7 +757,6 @@ class Gui():
 
             elif "list" in i:
                 self.position = self.folder_selected + "/" + i
-
         try:
             self.excelName = self.metadata['run']
         except KeyError:
@@ -1163,8 +1157,8 @@ class Gui():
                 with open(self.folder_selected + "/tissue_positions_list.csv") as csv_file:
                     csv_reader = csv.reader(csv_file)
                     for row in csv_reader:
-                        j = int(row[3])+1
-                        i = int(row[2])
+                        j = int(row[2])+1
+                        i = int(row[3])
                         if row[1] == "1":
                             self.tixel_status[j-1][i] = 1
                             position = str(j)+"x"+str(i)
@@ -1292,7 +1286,7 @@ class Gui():
         self.my_canvas.unbind("<ButtonRelease-1>")
     def on_off(self, event):
         tag = event.widget.find_closest(event.x,event.y)
-        print("x: {} y: {} sf: {}".format(event.x, event.y, self.factor))
+        # print("x: {} y: {} sf: {}".format(event.x, event.y, self.factor))
         position = event.widget.gettags(tag)
         try:
             where = position[0].split("x")
@@ -1333,7 +1327,6 @@ class Gui():
             path = self.folder_selected + "/spatial"
 
         self.position_file["state"] = tk.DISABLED
-        barcodes = barcode1_var
         if self.custom_barcode_selected:
             barcodes = []
             my_file = open(self.barcode_filename,"r")
@@ -1342,15 +1335,20 @@ class Gui():
                 val = line.strip()
                 barcodes.append(val)
             my_file.close()
+        else:
+            barcodes = []
+            vals = barcode1_var.split("\n")
+            for bar in vals:
+                barcodes.append(bar)
+
         filename = path + "/tissue_positions_list.csv"
-        self.write_positions_file(filename,barcodes, self.coords, self.tixel_status, self.factor)
+        self.write_positions_file(filename,barcodes, self.coords, self.tixel_status, 1)
         self.numTixels = 0
         for row in self.tixel_status:
             self.numTixels += sum(row)
 
-        print("on tixels: {}".format(self.numTixels))
+        # print("on tixels: {}".format(self.numTixels))
 # ######### FIX I/J
-         # if the barcodes being selected are from a custom file, close it
 
         # my_file.close()
         self.json_file(path)
@@ -1428,7 +1426,6 @@ class Gui():
         barcode_lis = []
         with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
             reader = csv.reader(csv_file, delimiter=",")
-
             for row in reader:
                 curr_barcode = row[0]
                 barcode_lis.append(curr_barcode)
@@ -1436,22 +1433,23 @@ class Gui():
         csv_file.close()
             ######## FIX I/J
         filepath = self.folder_selected + "/tissue_positions_list.csv"
-        self.write_positions_file(filepath,barcode_lis, self.coords, self.tixel_status, self.factor)
+        self.write_positions_file(filepath,barcode_lis, self.coords, self.tixel_status, self.tissue_hires_scalef)
         meta['numTixels'] = self.numTixels
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
             outfile.close()
-        
         mb.showinfo("Congratulations!", "The spatial folder has been updated!")
     
     def write_positions_file(self, filepath, barcode_lis, coordinate_lis, tixel_status_list, sf):
+        # print(type(barcode_lis))
+        # print(barcode_lis)
         with open(filepath, 'w', newline='') as f:
             writer = csv.writer(f)
             for i in range(50):
                 for j in range(50):
                     inx = (i * 50) + j
-                    writer.writerow([barcode_lis[inx].strip(), tixel_status_list[j][i], i, j, coordinate_lis[j][i][1]/sf, coordinate_lis[j][i][0]/sf])
+                    writer.writerow([barcode_lis[inx].strip(), tixel_status_list[j][i], j, i, round(coordinate_lis[j][i][1] / sf), round(coordinate_lis[j][i][0] / sf)])
         f.close()
 
     #Create colorscheme for UMI/Gene count when loading tissue_positions_list_log_UMI_Genes.csv
@@ -1473,8 +1471,8 @@ class Gui():
         with open(self.folder_selected + "/tissue_positions_list_log_UMI_Genes.csv", 'r') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
-                j = int(row[3])+1
-                i = int(row[2])
+                j = int(row[2])+1
+                i = int(row[3])
                 count = float(row[which])
                 position = str(j)+"x"+str(i)
                 level = round((count-CBleft)/(max_value-CBleft)*50)
