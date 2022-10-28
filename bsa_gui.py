@@ -989,11 +989,16 @@ class Gui():
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
         ratioNum = (self.num_chan*2) - 1
+        #leftS: slope defined by the top left corner to the bottom left corner
+        #[dx + point, dy + point]
         leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
+        #[dx + point, dy + point]
+        #topS slope defined by the top left corner to the top right corner
         topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
+        #slope: [dy, dx] for the slope defined by top left to bottom left
         slope = [round(leftS[1]-self.Rpoints[1], 5), round(leftS[0]-self.Rpoints[0], 5)]
+        #slopeT: [dy, dx] for the slope defined by top left to top right
         slopeT = [round(topS[1]-self.Rpoints[1], 5), round(topS[0]-self.Rpoints[0], 5)]
-
 
         slopeO = [slope[0]*2, slope[1]*2]
         slopeTO = [slopeT[0]*2, slopeT[1]*2]
@@ -1003,11 +1008,13 @@ class Gui():
         flag = False
         prev = [self.Rpoints[0],self.Rpoints[1]]
         excelC = 1
+        #each iteration on i moves the current tixel across a column
         for i in range(self.num_chan):
             top[0] = prev[0]+slopeT[1]
             top[1] = prev[1]+slopeT[0]
             flag = False
             
+            #each iterations of j moves the current tixel down a row 
             for j in range(self.num_chan):
                 if flag == False:
                     left[0] = prev[0]
@@ -1035,7 +1042,6 @@ class Gui():
                 excelC += 1
 
                 #allowing on and off tissues on overlay
-                #if self.classification_active:
                 if self.classification_active:
                     if self.tixel_status[j][i] == 1:
                         try:
