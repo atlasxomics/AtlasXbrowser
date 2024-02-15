@@ -1442,13 +1442,11 @@ class Gui():
         mb.showinfo("Congratulations!", "The spatial folder has been updated!")
     
     def write_positions_file(self, filepath, barcode_lis, coordinate_lis, tixel_status_list, sf):
-        # print(type(barcode_lis))
-        # print(barcode_lis)
         with open(filepath, 'w', newline='') as f:
             writer = csv.writer(f)
-            for i in range(50):
-                for j in range(50):
-                    inx = (i * 50) + j
+            for i in range(self.num_chan):
+                for j in range(self.num_chan):
+                    inx = (i * self.num_chan) + j
                     writer.writerow([barcode_lis[inx].strip(), tixel_status_list[j][i], j, i, round(coordinate_lis[j][i][1] / sf), round(coordinate_lis[j][i][0] / sf)])
         f.close()
 
