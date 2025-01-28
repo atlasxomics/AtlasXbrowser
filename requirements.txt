@@ -1,0 +1,6 @@
+tk
+pillow
+opencv-python
+numpy
+matplotlib
+pyinstaller

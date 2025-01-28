@@ -18,11 +18,14 @@ import cv2
 import numpy as np
 import matplotlib
 import matplotlib.cm
+import base64
+from io import BytesIO
 from shutil import copy, move, rmtree, copytree
 from tkinter.filedialog import askopenfile, askopenfilename
 Image.MAX_IMAGE_PIXELS = None
 from barcode_var import barcode1_var
 
+from encoded_images import *
 
 def center(tL,tR,bR,bL):
         top = [(tL[0]+tR[0])/2,(tL[1]+tR[1])/2]
@@ -49,12 +52,15 @@ class Gui():
         self.newWindow.title("AtlasXbrowser")
         self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
 
-        style = ttk.Style(root)
-        root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
-        style.theme_use('azure')
+        # style = ttk.Style(root)
+        # root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
+        # style.theme_use('azure')
 
-        background_image = Image.open("atlasbg.png")
-        resized_image = background_image.resize((int(self.screen_width/1.5), self.screen_height), Image.ANTIALIAS)
+        pic = atlas_logo
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        background_image = Image.open(im_file)
+        resized_image = background_image.resize((int(self.screen_width/1.5), self.screen_height), Image.LANCZOS)
         bg = ImageTk.PhotoImage(resized_image)
 
         menu = tk.Menu(self.newWindow)
@@ -120,12 +126,22 @@ class Gui():
         self.rotateframe.place(relx=.11, rely=0)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.confirm_rotation, state=tk.DISABLED)
         self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
-        rotateleft = Image.open("rotateleft.png")
+
+        pic = left_rotate
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        
+        rotateleft = Image.open(im_file)
         bg = ImageTk.PhotoImage(rotateleft)
         self.left = tk.Button(self.rotateframe, image=bg, command= lambda:self.rotate_image(0), state=tk.DISABLED)
         self.left.image = bg
         self.left.pack(side=tk.LEFT)
-        rotateright = Image.open("rotateright.png")
+        
+        pic = right_rotate
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        rotateright = Image.open(im_file)
+        
         bg2 = ImageTk.PhotoImage(rotateright)
         self.right = tk.Button(self.rotateframe, image=bg2, command= lambda:self.rotate_image(1), state=tk.DISABLED)
         self.right.image = bg2
@@ -134,11 +150,7 @@ class Gui():
         tk.Radiobutton(self.rotateframe, text="45", value=45, variable=self.rotate_45_90).pack(padx=(20, 0))
         
         self.change_radio_rotationdegree_state(False)
-        # rotate_left_small = Image.open("rotateleft2.png")
-        # img3 = ImageTk.PhotoImage(rotate_left_small)
-        # self.degree_45 = tk.Button(self.rotateframe, image = img3, command = lambda:self.image_axis(2), state=tk.DISABLED)
-        # self.degree_45.image = img3
-        # self.degree_45.pack(side=tk.LEFT)
+
         
         #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
@@ -361,13 +373,13 @@ class Gui():
             height = img.height
             quadrants = [
                 img.crop((0, 0, width // 2, height // 2)).resize((self.width_post_crop_resized, 
-                                                                  self.height_post_crop_resized), Image.ANTIALIAS),  # Top-left
+                                                                  self.height_post_crop_resized), Image.LANCZOS),  # Top-left
                 img.crop((width // 2, 0, width, height // 2)).resize((self.width_post_crop_resized,
-                                                                      self.height_post_crop_resized), Image.ANTIALIAS),  # Top-right
+                                                                      self.height_post_crop_resized), Image.LANCZOS),  # Top-right
                 img.crop((0, height // 2, width // 2, height)).resize((self.width_post_crop_resized,
-                                                                       self.height_post_crop_resized), Image.ANTIALIAS),  # Bottom-left
+                                                                       self.height_post_crop_resized), Image.LANCZOS),  # Bottom-left
                 img.crop((width // 2, height // 2, width, height)).resize((self.width_post_crop_resized,
-                                                                           self.height_post_crop_resized), Image.ANTIALIAS),  # Bottom-right
+                                                                           self.height_post_crop_resized), Image.LANCZOS),  # Bottom-right
             ]
             self.split_image_dict[i] = [ImageTk.PhotoImage(q) for q in quadrants]
 
@@ -560,7 +572,7 @@ class Gui():
         #use ratio to calcuate the new width
         newW = int(round(w*self.factor))
         #resize the bsa image based on these calculations
-        bsa = self.bsa_on_screen.resize((newW, newH), Image.ANTIALIAS)
+        bsa = self.bsa_on_screen.resize((newW, newH), Image.LANCZOS)
         self.bsa_tkinter_image = ImageTk.PhotoImage(bsa)
 
         self.lmain.pack()
@@ -627,8 +639,8 @@ class Gui():
         self.factor = self.height_post_crop_resized/self.height_post_crop
 
         self.width_post_crop_resized = int(round(self.width_post_crop*self.factor))
-        resized_bsa = self.bsa_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
-        resized_postB = self.postB_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        resized_bsa = self.bsa_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
+        resized_postB = self.postB_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
         self.postb_resize_current = resized_postB
         self.bsa_resize_current = resized_bsa
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
@@ -664,7 +676,7 @@ class Gui():
         M = cv2.getRotationMatrix2D((cX, cY), self.rotated_degree, 1.0) 
         updated = cv2.warpAffine(self.bsa_resized, M, (w,h))
         formatted = Image.fromarray(updated)
-        sized = formatted.resize((w, h), Image.ANTIALIAS)
+        sized = formatted.resize((w, h), Image.LANCZOS)
         self.bsa_tkinter_image = ImageTk.PhotoImage(sized)
         self.lmain.image = self.bsa_tkinter_image
         self.lmain.configure(image=self.bsa_tkinter_image)
@@ -796,7 +808,7 @@ class Gui():
         thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, self.blockSize_value.get(), self.cMean_value.get())
         bw_image = Image.fromarray(thresh)
         # print("bw width: {} height: {}".format(bw_image.width, bw_image.height))
-        sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
         self.bw_cropped_image = sized_bw
         self.split_image(self.width_post_crop_resized)
         # print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
@@ -833,7 +845,7 @@ class Gui():
         if self.height_hires_postB > resizeNumber:
             self.factor = resizeNumber/self.height_hires_postB
             newW = int(round(self.width_hires_postB * self.factor))
-            resized_postB = hi_res_postB.resize((newW, resizeNumber), Image.ANTIALIAS)
+            resized_postB = hi_res_postB.resize((newW, resizeNumber), Image.LANCZOS)
         else:
             # floor = hi_res_postB
             resized_postB = hi_res_postB
@@ -897,7 +909,7 @@ class Gui():
         self.bar["value"] = 100
         self.pWindow.update()
         bw_image = Image.fromarray(thresh)
-        sized_bw = bw_image.resize((self.resized_width, self.resized_height), Image.ANTIALIAS)
+        sized_bw = bw_image.resize((self.resized_width, self.resized_height), Image.LANCZOS)
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.picNames.append(imgtk)
         self.my_canvas.create_image(0,0, anchor="nw", image = imgtk, state="disabled")
@@ -921,7 +933,7 @@ class Gui():
         #re doing the thresholding for the newly set values
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
@@ -939,7 +951,7 @@ class Gui():
             #new threshold created and loaded onto screen
             thresh = cv2.adaptiveThreshold(self.scale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, sel, sec)
             bw_image = Image.fromarray(thresh)
-            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+            sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
             self.lmain.configure(image=imgtk)
@@ -1023,7 +1035,7 @@ class Gui():
         bwFile_Name = self.excelName + "BW.png"
         cv2.imwrite(bwFile_Name, thresh)
         bw = Image.open(bwFile_Name)
-        sized_bw = bw.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        sized_bw = bw.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
         bw_Image = ImageTk.PhotoImage(sized_bw)
         #checking if there is already a bw_image and replacing it if so
         if (len(self.picNames) >= 3):
@@ -1463,18 +1475,18 @@ class Gui():
         print("width: {} height: {}".format(self.width_post_crop, self.height_post_crop))
         factorHigh = 2000/self.width_post_crop
         factorLow = 600/self.width_post_crop
-        high_res = self.postB_cropped_pillow.resize((2000, 2000), Image.ANTIALIAS)
-        low_res = self.postB_cropped_pillow.resize((600, 600), Image.ANTIALIAS)
+        high_res = self.postB_cropped_pillow.resize((2000, 2000), Image.LANCZOS)
+        low_res = self.postB_cropped_pillow.resize((600, 600), Image.LANCZOS)
         # if self.width_post_crop > self.height_post_crop:
         #     factorHigh = 2000/self.width_post_crop
         #     factorLow = 600/self.width_post_crop
-        #     high_res = self.refactor.resize((2000, int(self.height_post_crop*factorHigh)), Image.ANTIALIAS)
-        #     low_res = self.refactor.resize((600, int(self.height_post_crop*factorLow)), Image.ANTIALIAS)
+        #     high_res = self.refactor.resize((2000, int(self.height_post_crop*factorHigh)), Image.LANCZOS)
+        #     low_res = self.refactor.resize((600, int(self.height_post_crop*factorLow)), Image.LANCZOS)
         # else:
         #     factorHigh = 2000/self.height
         #     factorLow = 600/self.height
-        #     high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.ANTIALIAS)
-        #     low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.ANTIALIAS)
+        #     high_res = self.refactor.resize((int(self.width*factorHigh), 2000), Image.LANCZOS)
+        #     low_res = self.refactor.resize((int(self.width*factorLow), 600), Image.LANCZOS)
 
         high_res.save(path+"/tissue_hires_image.png")
         low_res.save(path+"/tissue_lowres_image.png")
@@ -1591,8 +1603,12 @@ class Gui():
             c.create_text(xvalues[i], yValue, text = str(colorbarNorm[i]), font =("Courier", 14), angle = 70, anchor = "w", tag=name)
 
         # colorBar
-        bar = Image.open("colorbar.png")
-        resized_bar = bar.resize((200, 40), Image.ANTIALIAS)
+        pic = color_bar
+        im_bytes = base64.b64decode(pic)
+        im_file = BytesIO(im_bytes)
+        bar = Image.open(im_file)
+
+        resized_bar = bar.resize((200, 40), Image.LANCZOS)
         color = ImageTk.PhotoImage(resized_bar)
         self.color_bar = tk.Label(self.cbframe, image=color)
         self.color_bar.pack()
