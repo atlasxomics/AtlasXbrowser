@@ -2,9 +2,8 @@
 #################################################################################
 
 This branch is used to create an executable 
-All necessary python packages are in requirements.txt
 
-The Dockerfile is for a linux container
+All necessary python packages are in requirements.txt
 
 Command to run to create the executable on hostmachine. Will only be useable by machine with the same OS
 pyinstaller --onefile ABrowser.py
