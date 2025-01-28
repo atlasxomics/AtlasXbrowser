@@ -6,7 +6,6 @@ from tkinter.constants import DISABLED
 from PIL import Image, ImageTk, ImageGrab
 import os
 import csv
-
 from draggable_quad import DrawShapes
 from draggable_square import DrawSquare
 from tkinter import filedialog
@@ -93,8 +92,9 @@ class Gui():
         self.custom_barcode_selected = False
         self.custom_barcode_valid = True
         self.num_chan = 50
-
+        self.tixel_width = .5
         self.ROILocated = False
+        self.current_image_id = 0
         
         #flag to determine if user is currently in the tixel classification step
         self.classification_active = False
@@ -117,7 +117,7 @@ class Gui():
         self.rotate_45_90 = tk.IntVar()
         self.rotate_45_90.set(90)
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
-        self.rotateframe.place(relx=.11, rely=.01)
+        self.rotateframe.place(relx=.11, rely=0)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.confirm_rotation, state=tk.DISABLED)
         self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
         rotateleft = Image.open("rotateleft.png")
@@ -142,7 +142,7 @@ class Gui():
         
         #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
-        self.cropframe.place(relx=.11, rely=.14)
+        self.cropframe.place(relx=.11, rely=.13)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
         self.activateCrop_button.pack(side=tk.LEFT)
         self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.confirm_cropping, state=tk.DISABLED)
@@ -151,7 +151,7 @@ class Gui():
 
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, rely=.23)
+        self.adframe.place(relx=.11, rely=.21)
 
         #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
@@ -180,7 +180,7 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .42)
+        self.thframe.place(relx=.11, rely= .39)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.activate_roi_determination, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -188,19 +188,34 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.51)
+        self.shframe.place(relx=.11, rely=.48)
 
-        self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2]), state=tk.DISABLED)
+        self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2], 2, 'reg'), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
 
-        self.gridB_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[1]), state=tk.DISABLED)
+        self.gridB_button = tk.Button(self.shframe, text = "BSA", command = lambda: self.grid(self.picNames[1], 1, 'reg'), state=tk.DISABLED)
         self.gridB_button.pack(side=tk.RIGHT)
 
-        self.gridA_button = tk.Button(self.shframe, text = "postB", command = lambda: self.grid(self.picNames[0]), state=tk.DISABLED)
+        self.gridA_button = tk.Button(self.shframe, text = "postB", command = lambda: self.grid(self.picNames[0], 0, 'reg'), state=tk.DISABLED)
         self.gridA_button.pack(side=tk.RIGHT)
 
+        self.quad_frame = tk.LabelFrame(self.right_canvas, text="Quadrants", padx="7px", pady="7px")
+        self.quad_frame.place(relx=.11, rely=.57)
+        
+        self.one_quad = tk.Button(self.quad_frame, text="TL", command= lambda:self.show_quadrant(0), state=tk.DISABLED)
+        self.one_quad.pack(side=tk.LEFT)
+        
+        self.two_quad = tk.Button(self.quad_frame, text="TR", command= lambda:self.show_quadrant(1), state=tk.DISABLED)
+        self.two_quad.pack(side=tk.LEFT)
+        
+        self.four_quad = tk.Button(self.quad_frame, text="BR", command= lambda:self.show_quadrant(3), state=tk.DISABLED)
+        self.four_quad.pack(side=tk.RIGHT)
+
+        self.three_quad = tk.Button(self.quad_frame, text="BL", command= lambda:self.show_quadrant(2), state=tk.DISABLED)
+        self.three_quad.pack(side=tk.RIGHT)
+
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .60)
+        self.labelframe.place(relx=.11, rely= .65)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -216,7 +231,7 @@ class Gui():
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Visualization", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .81)
+        self.sheframe.place(relx=.11, rely= .85)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Feature", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
         tk.Radiobutton(self.sheframe, text="Count", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
@@ -229,10 +244,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .9)
-
-        #A list to store the order in which rotations and reflections are complete
-        # self.rotation_order = []
+        self.position_file.place(relx=.11, rely= .94)        
 
     def restart(self):
         self.newWindow.destroy()
@@ -332,6 +344,40 @@ class Gui():
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
 
+    def split_image(self, og_width):
+        """Split the image into 4 quadrants and return them."""
+        self.split_image_dict = {}
+        crop_size = og_width // 2
+        self.match_tixel_quad = {0: [0,0],
+                                 1: [-og_width, 0],
+                                 2: [0, -og_width],
+                                 3: [-og_width, -og_width]
+                                }
+        original_pillow_images = [self.postb_resize_current.copy(), self.bsa_resize_current.copy(), self.bw_cropped_image.copy()]
+        self.crop_scale_factor = crop_size / self.width_post_crop_resized
+        for i in range(len(original_pillow_images)):
+            img = original_pillow_images[i]
+            width = img.width
+            height = img.height
+            quadrants = [
+                img.crop((0, 0, width // 2, height // 2)).resize((self.width_post_crop_resized, 
+                                                                  self.height_post_crop_resized), Image.ANTIALIAS),  # Top-left
+                img.crop((width // 2, 0, width, height // 2)).resize((self.width_post_crop_resized,
+                                                                      self.height_post_crop_resized), Image.ANTIALIAS),  # Top-right
+                img.crop((0, height // 2, width // 2, height)).resize((self.width_post_crop_resized,
+                                                                       self.height_post_crop_resized), Image.ANTIALIAS),  # Bottom-left
+                img.crop((width // 2, height // 2, width, height)).resize((self.width_post_crop_resized,
+                                                                           self.height_post_crop_resized), Image.ANTIALIAS),  # Bottom-right
+            ]
+            self.split_image_dict[i] = [ImageTk.PhotoImage(q) for q in quadrants]
+
+    def show_quadrant(self, index):
+        """Display the selected quadrant on the canvas."""
+        self.current_quad_id = index
+        quad_image = self.split_image_dict[self.current_image_id][index]
+        self.grid(quad_image, self.current_image_id, 'quad')
+
+
     def use_barcode1(self, remove_button, display_button):
         self.custom_barcode_selected = False
         display_button.config(text = "bc50v1")
@@ -358,6 +404,8 @@ class Gui():
             if barcodes - int(barcodes) == 0:
 
                 self.num_chan = int(barcodes)
+                if int(barcodes) > 180:
+                    self.tixel_width = .1
                 #finding name of file
                 val = file.rfind("/")
                 #slicing string to only be image name, not full path
@@ -581,7 +629,8 @@ class Gui():
         self.width_post_crop_resized = int(round(self.width_post_crop*self.factor))
         resized_bsa = self.bsa_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
         resized_postB = self.postB_cropped_pillow.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
-
+        self.postb_resize_current = resized_postB
+        self.bsa_resize_current = resized_bsa
         img = cv2.imread(self.postB_figure_path, cv2.IMREAD_UNCHANGED)
         flippedImage = img
 
@@ -704,6 +753,11 @@ class Gui():
             self.gridA_button['state'] = tk.DISABLED
             self.gridB_button['state'] = tk.DISABLED
             self.onoff_button['state'] = tk.DISABLED
+            self.one_quad["state"] = tk.DISABLED
+            self.two_quad["state"] = tk.DISABLED
+            self.three_quad["state"] = tk.DISABLED
+            self.four_quad["state"] = tk.DISABLED
+            
             
             #Changing the selected radio button to display the first option of a point flip
             self.value_labelFrame.set(1)
@@ -743,6 +797,8 @@ class Gui():
         bw_image = Image.fromarray(thresh)
         # print("bw width: {} height: {}".format(bw_image.width, bw_image.height))
         sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.ANTIALIAS)
+        self.bw_cropped_image = sized_bw
+        self.split_image(self.width_post_crop_resized)
         # print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
@@ -827,11 +883,15 @@ class Gui():
         self.gridA_button["state"] = tk.ACTIVE
         self.gridB_button['state'] = tk.DISABLED
         self.onoff_button["state"] = tk.DISABLED
+        self.one_quad["state"] = tk.ACTIVE
+        self.two_quad["state"] = tk.ACTIVE
+        self.three_quad["state"] = tk.ACTIVE
+        self.four_quad["state"] = tk.ACTIVE
         self.check_on = tk.IntVar()
         self.check_on.set(0)
         #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.right_canvas, text = "Update the Spatial folder", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .9)
+        self.update_file.place(relx=.11, rely= .94)
 
         thresh = cv2.adaptiveThreshold(self.postB_array_scaled, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -895,6 +955,10 @@ class Gui():
         self.gridA_button['state'] = tk.DISABLED
         self.gridB_button['state'] = tk.DISABLED
         self.onoff_button['state'] = tk.DISABLED
+        self.one_quad["state"] = tk.DISABLED
+        self.two_quad["state"] = tk.DISABLED
+        self.three_quad["state"] = tk.DISABLED
+        self.four_quad["state"] = tk.DISABLED
 
         self.lmain.destroy()
         self.my_canvas.create_image(0,0, anchor="nw", image = self.bsa_post_crop_resized_tk, state="disabled")
@@ -932,7 +996,7 @@ class Gui():
         self.gridA_button["state"] = tk.ACTIVE
         self.gridB_button["state"] = tk.ACTIVE
         self.onoff_button["state"] = tk.ACTIVE
-            
+
 
     def save_thresholded_image(self):
         #if ROI is located enable tixel overlays, activate thresh button, and tixel thersholding
@@ -970,15 +1034,16 @@ class Gui():
             self.picNames.append(bw_Image)
         return bw_Image
 
-    def grid(self,pic):
+    def grid(self, pic, id, type_img):
         #if the lmain label exists, we are coming from thresholding
+        self.current_image_id = id
         if self.lmain.winfo_exists() == 1:
             self.lmain.destroy()
             self.activateThresh_button['state'] = "active"
             self.blockSize_scale['state'] = "disabled"
             self.cMean_scale['state'] = "disabled"
             
-        self.value_sheFrame.set(1) 
+        self.value_sheFrame.set(1)
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
@@ -996,11 +1061,19 @@ class Gui():
 
         slopeO = [slope[0]*2, slope[1]*2]
         slopeTO = [slopeT[0]*2, slopeT[1]*2]
+        prev = [self.Rpoints[0],self.Rpoints[1]]
+        if type_img == 'quad':
+            slopeO = [i/self.crop_scale_factor for i in slopeO]
+            slopeTO = [i/self.crop_scale_factor for i in slopeTO]
+            slope = [i/self.crop_scale_factor for i in slope]
+            slopeT = [i/self.crop_scale_factor for i in slopeT]
+            leftS = [i/self.crop_scale_factor for i in leftS]
+            topS = [i/self.crop_scale_factor for i in topS]
+            prev = [i/self.crop_scale_factor for i in prev]
         
         top = [0,0]
         left = [0,0]
         flag = False
-        prev = [self.Rpoints[0],self.Rpoints[1]]
         excelC = 1
         #each iteration on i moves the current tixel across a column
         for i in range(self.num_chan):
@@ -1026,8 +1099,16 @@ class Gui():
                     bL = [tL[0]+slope[1],tL[1]+slope[0]]
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
                 position = str(j+1) + "x" + str(i)
-                pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
+                if type_img == 'quad':
+                    quad_transform_num = self.match_tixel_quad[self.current_quad_id]
+                    pointer = [tL[0] + quad_transform_num[0], tL[1] + quad_transform_num[1],
+                               tR[0] + quad_transform_num[0], tR[1] + quad_transform_num[1],
+                               bR[0] + quad_transform_num[0], bR[1] + quad_transform_num[1],
+                               bL[0] + quad_transform_num[0], bL[1] + quad_transform_num[1],
+                               tL[0] + quad_transform_num[0], tL[1] + quad_transform_num[1]]
+                else:
+                    pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
+                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=self.tixel_width, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
@@ -1048,6 +1129,10 @@ class Gui():
 
     #Send parameters to tissue_grid.py 
     def sendinfo(self,pic):
+        self.one_quad["state"] = tk.ACTIVE
+        self.two_quad["state"] = tk.ACTIVE
+        self.three_quad["state"] = tk.ACTIVE
+        self.four_quad["state"] = tk.ACTIVE
         self.classification_active = True
 
         #if the lmain label still exists, destroy it
@@ -1099,7 +1184,7 @@ class Gui():
 
                 position = str(j+1) + "x" + str(i)
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
-                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=1, state="disabled")
+                self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=self.tixel_width, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
                 self.coords[j][i].append(centerx/self.factor)
                 self.coords[j][i].append(centery/self.factor)
@@ -1355,6 +1440,10 @@ class Gui():
         self.grid_button["state"] = tk.DISABLED
         self.gridA_button["state"] = tk.DISABLED
         self.gridB_button["state"] = tk.DISABLED
+        self.one_quad["state"] = tk.DISABLED
+        self.two_quad["state"] = tk.DISABLED
+        self.three_quad["state"] = tk.DISABLED
+        self.four_quad["state"] = tk.DISABLED
         try: 
             move(self.figure_folder,path)
         except shutil.Error:
@@ -1491,7 +1580,7 @@ class Gui():
         yValue = 40
 
         self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="14px")
-        self.cbframe.place(relx=.11, rely=.23)
+        self.cbframe.place(relx=.11, rely=.21)
 
         c = tk.Canvas(self.cbframe, width=220, height=50)
         c.pack()
