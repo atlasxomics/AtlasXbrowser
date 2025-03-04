@@ -3,7 +3,7 @@
 
 Interactive browser for AtlasXomics Data
 
-This software is designed as an interactive browser for processing AtlasXomics image Data. To learn more about AtlasXbrowser please visit the documentation, https://docs.atlasxomics.com/projects/AtlasXbrowser/en/latest/.
+This software is designed as an interactive browser for processing AtlasXomics image Data. To learn more about AtlasXbrowser please visit the documentation, [https://docs.atlasxomics.com/projects/AtlasXbrowser/en/latest/](https://atlasxbrowser-docs.readthedocs.io/en/latest/).
 
 ## Download
 
@@ -54,4 +54,4 @@ Run the program with following command:
 
     python ABrowser.py
 
-See the documentation for more details about using AtlasXbrowser, https://docs.atlasxomics.com/projects/AtlasXbrowser/en/latest/.
+See the documentation for more details about using AtlasXbrowser, [https://docs.atlasxomics.com/projects/AtlasXbrowser/en/latest/](https://atlasxbrowser-docs.readthedocs.io/en/latest/).
