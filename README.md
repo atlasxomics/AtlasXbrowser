@@ -11,7 +11,7 @@ This software is designed as an interactive browser for processing AtlasXomics i
     cd AtlasXBrowser
 
 ## Dependencies
-Use pyenv or conda to create a python enviornment with verzion 3.8.8
+Use pyenv or conda to create a python enviornment with version 3.8.8.
 
 To create an environment with pyenv:
 
