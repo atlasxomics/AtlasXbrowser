@@ -2,33 +2,20 @@ from tkinter import *
 from PIL import Image
 import cv2
 import math
+from chip_geometry import ChipGeometry
 
 
 class Tissue():
-    def __init__(self, points, factor, dbit, num_chan):
+    def __init__(self, points, factor, dbit, num_chan, geometry=None):
         thresh = cv2.imread(dbit, cv2.IMREAD_UNCHANGED)
 
 
         for i in range(len(points)):
             points[i] /= factor
 
-        #getting the slope of left * right lines
-        ratioNum = (num_chan*2)-1
-        leftS = self.ratio50l(points[0],points[1],points[6],points[7],ratioNum)
-        topS = self.ratio50l(points[0],points[1],points[2],points[3],ratioNum)
-        slope = [round(leftS[1]-points[1], 5), round(leftS[0]-points[0], 5)]
-        slopeT = [round(topS[1]-points[1], 5), round(topS[0]-points[0], 5)]
-        slopeO = [slope[0]*2, slope[1]*2]
-        slopeTO = [slopeT[0]*2, slopeT[1]*2]
-
-
-        dist= round(self.distance(points[0], points[1], points[2], points[3]), 5)
-        distance = int(dist/99)
-
-        p = round(self.distance(leftS[0], leftS[1], topS[0], topS[1]), 5)
-        q = round(self.distance(points[0], points[1], topS[0]+slope[1], topS[1]+slope[0]), 5)
-        self.spot_dia = math.sqrt(p*q)
-        self.fud_dia = self.spot_dia*1.6153846
+        geometry = geometry or ChipGeometry.preset(25)
+        slope, slopeT, slopeO, slopeTO = geometry.slopes(points, num_chan)
+        self.spot_dia, self.fud_dia = geometry.diameters(points, num_chan)
 
         numChannels = num_chan
         self.tixel_status = [[0 for i in range(numChannels)] for i in range(numChannels)]
@@ -60,7 +47,7 @@ class Tissue():
                     bR = [tR[0]+slope[1],tR[1]+slope[0]]
 
                 corners.append(tL);corners.append(tR);corners.append(bR);corners.append(bL);
-                if self.calculate_avg(thresh, corners, distance) > 242:
+                if self.calculate_avg(thresh, corners) > 242:
                     self.tixel_status[j][i] = 0
                 else:
                     self.tixel_status[j][i] = 1
@@ -72,18 +59,24 @@ class Tissue():
 
         self.theAnswer()
 
-    def calculate_avg(self,pic, points, dist):
-        sum = 0
-        k = 0
-        w = pic.shape[1] - 1
-        h = pic.shape[0] - 1
-        topCoords = self.coords(points[0], points[1], dist)
-        for i in topCoords:
-            downCoords = self.downCoords(i, dist)
-            for j in downCoords:
-                k += 1
-                sum += pic[min(h,round(j[1])), min(w,round(j[0]))]
-        return sum/k
+    def calculate_avg(self, pic, points, dist=None):
+        """Sample inside the capture parallelogram, excluding inter-tixel gaps."""
+        origin, right, _, bottom = points
+        horizontal = [right[i] - origin[i] for i in range(2)]
+        vertical = [bottom[i] - origin[i] for i in range(2)]
+        nx = max(1, math.ceil(math.hypot(*horizontal)))
+        ny = max(1, math.ceil(math.hypot(*vertical)))
+        total = 0.0
+        count = 0
+        height, width = pic.shape[:2]
+        for col in range(nx):
+            for row in range(ny):
+                x, y = [math.floor(origin[i] + (col + .5)/nx * horizontal[i]
+                                   + (row + .5)/ny * vertical[i]) for i in range(2)]
+                if 0 <= x < width and 0 <= y < height:
+                    total += float(pic[y, x])
+                    count += 1
+        return total/count if count else 255
 
     def ratio50l(self,xc,yc,xr,yr,num):
         txp = xc + (1/(num))*(xr-xc)

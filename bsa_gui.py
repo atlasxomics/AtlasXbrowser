@@ -14,6 +14,7 @@ import os
 import math
 import json
 from tissue_grid import Tissue
+from chip_geometry import ChipGeometry, PRESETS
 import cv2
 import numpy as np
 import matplotlib
@@ -92,6 +93,7 @@ class Gui():
         self.custom_barcode_selected = False
         self.custom_barcode_valid = True
         self.num_chan = 50
+        self.chip_geometry = ChipGeometry.preset(25)
         self.tixel_width = .5
         self.ROILocated = False
         self.current_image_id = 0
@@ -343,6 +345,59 @@ class Gui():
         #error button
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
+        self.geometry_submit = button
+        self.configure_geometry()
+
+    def configure_geometry(self):
+        """Inline geometry controls in the Selecting Images window."""
+        frame = ttk.LabelFrame(self.starting_window, text="Tixel geometry", padding=12)
+        frame.grid(row=4, column=0, columnspan=3, sticky="ew", padx=12, pady=12)
+        size = tk.StringVar(value=str(self.chip_geometry.size_um))
+        width = tk.StringVar(value=str(self.chip_geometry.width_um))
+        gap = tk.StringVar(value=str(self.chip_geometry.gap_um))
+        pitch = tk.StringVar()
+        self.geometry_size = size
+        self.geometry_width = width
+        self.geometry_gap = gap
+        ttk.Label(frame, text="Tixel size (µm)").pack(anchor="w")
+        selector = ttk.Combobox(frame, textvariable=size, values=list(PRESETS), state="readonly", width=24)
+        selector.pack(fill=tk.X, pady=(4, 12))
+        expanded = tk.BooleanVar(value=self.chip_geometry != ChipGeometry.preset(self.chip_geometry.size_um))
+        override = ttk.Frame(frame)
+        def toggle():
+            if expanded.get():
+                override.pack(fill=tk.X, before=pitch_label, pady=8)
+            else:
+                override.pack_forget()
+            self.starting_window.update_idletasks()
+            self.starting_window_height = max(400, self.starting_window.winfo_reqheight() + 20)
+            self.starting_window.geometry("{}x{}".format(self.starting_window_width, self.starting_window_height))
+        ttk.Checkbutton(frame, text="Override tixel geometry", variable=expanded, command=toggle).pack(anchor="w")
+        for label, variable in [("Capture width (µm)", width), ("Gap (µm)", gap)]:
+            ttk.Label(override, text=label).pack(anchor="w")
+            ttk.Entry(override, textvariable=variable).pack(fill=tk.X, pady=(4, 8))
+        def defaults(event=None):
+            preset = ChipGeometry.preset(int(size.get()))
+            width.set(str(preset.width_um))
+            gap.set(str(preset.gap_um))
+        selector.bind("<<ComboboxSelected>>", defaults)
+        ttk.Button(override, text="Restore defaults", command=defaults).pack(anchor="w")
+        pitch_label = ttk.Label(frame, textvariable=pitch)
+        pitch_label.pack(anchor="w", pady=12)
+        def current():
+            return ChipGeometry(int(size.get()), float(width.get()), float(gap.get()))
+        def preview(*args):
+            try:
+                geometry = current()
+                pitch.set("Center-to-center pitch: {:g} µm".format(geometry.width_um + geometry.gap_um))
+                self.geometry_submit.configure(state=tk.NORMAL)
+            except ValueError:
+                pitch.set("Enter a positive width and a nonnegative gap.")
+                self.geometry_submit.configure(state=tk.DISABLED)
+        width.trace_add("write", preview)
+        gap.trace_add("write", preview)
+        preview()
+        toggle()
 
     def split_image(self, og_width):
         """Split the image into 4 quadrants and return them."""
@@ -506,6 +561,13 @@ class Gui():
             return False
 
     def configure_metadata(self):
+        try:
+            self.chip_geometry = ChipGeometry(int(self.geometry_size.get()),
+                                              float(self.geometry_width.get()),
+                                              float(self.geometry_gap.get()))
+        except ValueError as error:
+            self.error_label.config(text="Invalid tixel geometry: {}".format(error))
+            return
         #retrieving variables from stored StringVar variables
         runID = self.run_identifier.get()
         if runID != "":
@@ -517,6 +579,7 @@ class Gui():
                 self.metadata = {
                 "run": runID
                 }
+                self.metadata.update(self.chip_geometry.metadata())
                 #setting excelName var, used later, to equal the user specifed run ID
                 self.excelName = runID
 
@@ -598,6 +661,7 @@ class Gui():
                 # self.barcode_file_spatial = open(self.folder_selected + "/barcode_file.txt")
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
+                self.chip_geometry = ChipGeometry.from_metadata(self.metadata)
                 self.num_chan = int(self.metadata['numChannels'])
                 self.numTixels = int(self.metadata['numTixels'])
                 f2 = open(self.folder_selected + "/scalefactors_json.json")
@@ -1047,28 +1111,14 @@ class Gui():
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
-        ratioNum = (self.num_chan*2) - 1
-        #leftS: slope defined by the top left corner to the bottom left corner
-        #[dx + point, dy + point]
-        leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
-        #[dx + point, dy + point]
-        #topS slope defined by the top left corner to the top right corner
-        topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
-        #slope: [dy, dx] for the slope defined by top left to bottom left
-        slope = [round(leftS[1]-self.Rpoints[1], 5), round(leftS[0]-self.Rpoints[0], 5)]
-        #slopeT: [dy, dx] for the slope defined by top left to top right
-        slopeT = [round(topS[1]-self.Rpoints[1], 5), round(topS[0]-self.Rpoints[0], 5)]
-
-        slopeO = [slope[0]*2, slope[1]*2]
-        slopeTO = [slopeT[0]*2, slopeT[1]*2]
+        slope, slopeT, slopeO, slopeTO = self.chip_geometry.slopes(self.Rpoints, self.num_chan)
+        self.spot_dia, self.fud_dia = self.chip_geometry.diameters([p/self.factor for p in self.Rpoints], self.num_chan)
         prev = [self.Rpoints[0],self.Rpoints[1]]
         if type_img == 'quad':
             slopeO = [i/self.crop_scale_factor for i in slopeO]
             slopeTO = [i/self.crop_scale_factor for i in slopeTO]
             slope = [i/self.crop_scale_factor for i in slope]
             slopeT = [i/self.crop_scale_factor for i in slopeT]
-            leftS = [i/self.crop_scale_factor for i in leftS]
-            topS = [i/self.crop_scale_factor for i in topS]
             prev = [i/self.crop_scale_factor for i in prev]
         
         top = [0,0]
@@ -1110,8 +1160,8 @@ class Gui():
                     pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=self.tixel_width, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
-                self.coords[j][i].append(centerx/self.factor)
-                self.coords[j][i].append(centery/self.factor)
+                coord_scale = self.crop_scale_factor if type_img == "quad" else 1
+                self.coords[j][i] = [centerx*coord_scale/self.factor, centery*coord_scale/self.factor]
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
@@ -1145,16 +1195,9 @@ class Gui():
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
 
-        ratioNum = (self.num_chan*2) - 1
-        leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
-        topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
-        slope = [round(leftS[1]-self.Rpoints[1], 5), round(leftS[0]-self.Rpoints[0], 5)]
-        slopeT = [round(topS[1]-self.Rpoints[1], 5), round(topS[0]-self.Rpoints[0], 5)]
+        slope, slopeT, slopeO, slopeTO = self.chip_geometry.slopes(self.Rpoints, self.num_chan)
+        self.spot_dia, self.fud_dia = self.chip_geometry.diameters([p/self.factor for p in self.Rpoints], self.num_chan)
 
-
-        slopeO = [slope[0]*2, slope[1]*2]
-        slopeTO = [slopeT[0]*2, slopeT[1]*2]
-        
         top = [0,0]
         left = [0,0]
         flag = False
@@ -1186,8 +1229,7 @@ class Gui():
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=self.tixel_width, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
-                self.coords[j][i].append(centerx/self.factor)
-                self.coords[j][i].append(centery/self.factor)
+                self.coords[j][i] = [centerx/self.factor, centery/self.factor]
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
@@ -1211,7 +1253,7 @@ class Gui():
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
 
-            tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan)
+            tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan, self.chip_geometry)
             self.tixel_status,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
             for i in range(len(self.tixel_status)):
                 for j in range(len(self.tixel_status)):
@@ -1496,6 +1538,7 @@ class Gui():
                     "numChannels": self.num_chan
                     }
         metaDict.update(self.metadata)
+        metaDict.update(self.chip_geometry.metadata())
         
         json_object = json.dumps(dictionary, indent = 4)
         with open(path+"/scalefactors_json.json", "w") as outfile:
@@ -1509,8 +1552,8 @@ class Gui():
     
     #Update changes to tissue_positions_list.csv
     def update_pos(self):
-        p = open(self.folder_selected + "/metadata.json")
-        meta = json.load(p)
+        with open(self.folder_selected + "/metadata.json") as metadata_file:
+            meta = json.load(metadata_file)
 
         barcode_lis = []
         with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
@@ -1524,6 +1567,14 @@ class Gui():
         filepath = self.folder_selected + "/tissue_positions_list.csv"
         self.write_positions_file(filepath,barcode_lis, self.coords, self.tixel_status, self.tissue_hires_scalef)
         meta['numTixels'] = self.numTixels
+        meta.update(self.chip_geometry.metadata())
+        scale_path = os.path.join(self.folder_selected, 'scalefactors_json.json')
+        with open(scale_path) as scale_file:
+            scales = json.load(scale_file)
+        scales.update(spot_diameter_fullres=self.spot_dia / self.tissue_hires_scalef,
+                      fiducial_diameter_fullres=self.fud_dia / self.tissue_hires_scalef)
+        with open(scale_path, 'w') as scale_file:
+            json.dump(scales, scale_file, indent=4)
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)

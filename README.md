@@ -1,4 +1,27 @@
 # AtlasXBrowser
+
+Tixel geometry is configured directly in the **Selecting Images** window.
+Select 10, 15, 25 or 50 µm and expand
+**Override tixel geometry** to enter a custom capture width and gap. The dialog
+shows the resulting center-to-center pitch; selecting a preset or choosing
+**Restore defaults** resets the overrides.
+
+| Tixel size (µm) | Capture width (µm) | Gap (µm) | Pitch (µm) |
+| --- | --- | --- | --- |
+| 10 | 10 | 15 | 25 |
+| 15 | 15 | 10 | 25 |
+| 25 | 25 | 25 | 50 |
+| 50 | 50 | 50 | 100 |
+
+ROI corners mark the outer edges of the capture array. Grid drawing, exported
+coordinates and tissue classification share this geometry. Automatic classification samples within capture regions and excludes the gaps.
+Save or update the spatial folder to persist the selected `chip_resolution`
+and `tixel_geometry` (`width_um`, `gap_um`) in `metadata.json`.
+Older metadata without these fields defaults to 25 µm with an equal-width gap,
+which retains the original relative grid geometry.
+
+Headless geometry and export checks: `python -m unittest discover -s tests -v`.
+
 #################################################################################
 
 Interactive browser for AtlasXomics Data
