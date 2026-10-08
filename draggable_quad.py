@@ -7,8 +7,8 @@ def distance(p1, p2):
 class DrawShapes():
     def __init__(self, my_canvas,coords):
         self.my_canvas = my_canvas
-        width = self.my_canvas.winfo_width()
-        height = self.my_canvas.winfo_height()
+        width, height = getattr(self.my_canvas, "image_size",
+                                (self.my_canvas.winfo_width(), self.my_canvas.winfo_height()))
         if coords[0] == 0:
             self.points = width*.10, height*.10, width-(width*.10), height*.10, width-(width*.10), height-(height*.10), width*.10, height-(height*.10)
             self.current = self.my_canvas.create_polygon(*self.points, outline="red", fill="", width=1)

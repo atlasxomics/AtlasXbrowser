@@ -20,7 +20,25 @@ and `tixel_geometry` (`width_um`, `gap_um`) in `metadata.json`.
 Older metadata without these fields defaults to 25 µm with an equal-width gap,
 which retains the original relative grid geometry.
 
-Headless geometry and export checks: `python -m unittest discover -s tests -v`.
+The **Zoom** slider at the top of the side toolbar appears once an image is loaded.
+It scales the image and its overlays from 25% to 400% of the initial display size.
+Use the image scrollbars to move around an enlarged image and **Reset** to return
+to 100%. The side toolbar stays visible and scrolls vertically when needed.
+Cropping, ROI editing and tixel selection work at any zoom level; zoom does not
+change exported coordinates.
+
+Run headless checks with `python -m unittest discover -s tests -v`.
+To include viewport checks, use the application's Python environment with Tk,
+Pillow and a display:
+
+```sh
+ATLAS_TEST_GUI=1 python - <<'PY'
+import unittest
+suite = unittest.defaultTestLoader.discover('tests')
+result = unittest.TextTestRunner(verbosity=2).run(suite)
+raise SystemExit(not result.wasSuccessful())
+PY
+```
 
 #################################################################################
 

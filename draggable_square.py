@@ -10,8 +10,8 @@ class DrawSquare():
     def __init__(self, my_canvas):
         self.my_canvas = my_canvas
         #obtaining size of canvas
-        width = self.my_canvas.winfo_width()
-        height = self.my_canvas.winfo_height()
+        width, height = getattr(self.my_canvas, "image_size",
+                                (self.my_canvas.winfo_width(), self.my_canvas.winfo_height()))
 
         dist = distance([width*.10, height*.10], [width-(width*.10), height*.10])
         #Defining self.points as the four corners of the initial 
