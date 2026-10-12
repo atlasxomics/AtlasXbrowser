@@ -8,12 +8,14 @@ import os
 import csv
 from draggable_quad import DrawShapes
 from draggable_square import DrawSquare
+from zoom_canvas import ZoomCanvas
 from tkinter import filedialog
 from tkinter import messagebox as mb
 import os
 import math
 import json
 from tissue_grid import Tissue
+from chip_geometry import ChipGeometry, PRESETS
 import cv2
 import numpy as np
 import matplotlib
@@ -47,7 +49,7 @@ class Gui():
         self.screen_width = self.newWindow.winfo_screenwidth()
         self.screen_height = self.newWindow.winfo_screenheight()
         self.newWindow.title("AtlasXbrowser")
-        self.newWindow.geometry("{0}x{1}".format(int(self.screen_width/1.5+290), self.screen_height))
+        self.fit_window(int(self.screen_width / 1.5))
 
         style = ttk.Style(root)
         root.tk.call('source', 'Azure-ttk-theme/azure/azure.tcl')
@@ -92,6 +94,7 @@ class Gui():
         self.custom_barcode_selected = False
         self.custom_barcode_valid = True
         self.num_chan = 50
+        self.chip_geometry = ChipGeometry.preset(25)
         self.tixel_width = .5
         self.ROILocated = False
         self.current_image_id = 0
@@ -99,25 +102,18 @@ class Gui():
         #flag to determine if user is currently in the tixel classification step
         self.classification_active = False
 
-        #containers
-        self.my_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3), height= self.screen_height, highlightthickness = 0, bd=0)
-        self.my_canvas.pack(side=tk.LEFT, anchor=tk.NW) 
-        self.my_canvas.old_coords = None
-        self.right_canvas = tk.Canvas(self.newWindow, width = int(self.screen_width/3) - self.screen_width, height= self.screen_height, highlightbackground="lightgray", highlightthickness=1)
-        self.right_canvas.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-        button_frame = tk.Frame(self.right_canvas)
-        button_frame.pack(side=tk.RIGHT, fill=tk.BOTH)
+        self.build_viewport()
 
         self.lmain = tk.Label(self.my_canvas)
         self.lmain.pack()
         self.lmain.image = bg
-        self.lmain.configure(image=bg)
+        self.show_preview_image(bg)
 
         #Rotation Panel
         self.rotate_45_90 = tk.IntVar()
         self.rotate_45_90.set(90)
         self.rotateframe = tk.LabelFrame(self.right_canvas, text="Rotation", padx=10, pady=10)
-        self.rotateframe.place(relx=.11, rely=0)
+        self.rotateframe.pack(anchor='w', padx=12, pady=5)
         self.image_updated = tk.Button(self.rotateframe, text = "Confirm", command = self.confirm_rotation, state=tk.DISABLED)
         self.image_updated.pack(side = tk.BOTTOM, anchor=tk.W)
         rotateleft = Image.open("rotateleft.png")
@@ -142,7 +138,7 @@ class Gui():
         
         #f/crop
         self.cropframe = tk.LabelFrame(self.right_canvas, text="Cropping", padx="10px", pady="10px")
-        self.cropframe.place(relx=.11, rely=.13)
+        self.cropframe.pack(anchor='w', padx=12, pady=5)
         self.activateCrop_button = tk.Button(self.cropframe, text = "Activate", command = self.cropping, state=tk.DISABLED)
         self.activateCrop_button.pack(side=tk.LEFT)
         self.confirmCrop_button = tk.Button(self.cropframe, text = "Confirm", command = self.confirm_cropping, state=tk.DISABLED)
@@ -151,7 +147,7 @@ class Gui():
 
         #create Scales
         self.adframe = tk.LabelFrame(self.right_canvas, text="Adaptive Thresholding", padx="10px", pady="10px")
-        self.adframe.place(relx=.11, rely=.21)
+        self.adframe.pack(anchor='w', padx=12, pady=5)
 
         #blocksize label
         self.blockSize_label = tk.Label(self.adframe, text="blockSize", font =("Courier", 14))
@@ -180,7 +176,7 @@ class Gui():
 
         #buttons
         self.thframe = tk.LabelFrame(self.right_canvas, text="Locating ROI", padx="10px", pady="10px")
-        self.thframe.place(relx=.11, rely= .39)
+        self.thframe.pack(anchor='w', padx=12, pady=5)
         self.begin_button = tk.Button(self.thframe, text = "Activate", command = self.activate_roi_determination, state=tk.DISABLED)
         self.begin_button.pack(side=tk.LEFT)
 
@@ -188,7 +184,7 @@ class Gui():
         self.confirm_button.pack()
 
         self.shframe = tk.LabelFrame(self.right_canvas, text="Overlay", padx="10px", pady="10px")
-        self.shframe.place(relx=.11, rely=.48)
+        self.shframe.pack(anchor='w', padx=12, pady=5)
 
         self.grid_button = tk.Button(self.shframe, text = "BW", command = lambda: self.grid(self.picNames[2], 2, 'reg'), state=tk.DISABLED)
         self.grid_button.pack(side=tk.LEFT)
@@ -200,7 +196,7 @@ class Gui():
         self.gridA_button.pack(side=tk.RIGHT)
 
         self.quad_frame = tk.LabelFrame(self.right_canvas, text="Quadrants", padx="7px", pady="7px")
-        self.quad_frame.place(relx=.11, rely=.57)
+        self.quad_frame.pack(anchor='w', padx=12, pady=5)
         
         self.one_quad = tk.Button(self.quad_frame, text="TL", command= lambda:self.show_quadrant(0), state=tk.DISABLED)
         self.one_quad.pack(side=tk.LEFT)
@@ -215,7 +211,7 @@ class Gui():
         self.three_quad.pack(side=tk.RIGHT)
 
         self.labelframe = tk.LabelFrame(self.right_canvas, text="On/Off Tissue", padx="10px", pady="10px")
-        self.labelframe.place(relx=.11, rely= .65)
+        self.labelframe.pack(anchor='w', padx=12, pady=5)
         self.value_labelFrame = tk.IntVar()
         self.value_labelFrame.set(1)
         self.onoff_button = tk.Button(self.labelframe, text="Activate", command=lambda: self.sendinfo(self.picNames[2]),
@@ -231,7 +227,7 @@ class Gui():
         self.value_sheFrame = tk.IntVar()
         self.value_sheFrame.set(1)
         self.sheframe = tk.LabelFrame(self.right_canvas, text="Visualization", padx="10px", pady="10px",width=100)
-        self.sheframe.place(relx=.11, rely= .85)
+        self.sheframe.pack(anchor='w', padx=12, pady=5)
         tk.Radiobutton(self.sheframe, text="Tixel", variable=self.value_sheFrame, value=1, command= lambda:self.sendinfo(self.picNames[2])).grid(row=0,column=0)
         tk.Radiobutton(self.sheframe, text="Feature", variable=self.value_sheFrame, value=2, command= lambda: self.count(7)).grid(row=0,column=1)
         tk.Radiobutton(self.sheframe, text="Count", variable=self.value_sheFrame, value=3, command= lambda: self.count(6)).grid(row=0,column=2)
@@ -244,7 +240,7 @@ class Gui():
                 child['state'] = 'disabled'
 
         self.position_file = tk.Button(self.right_canvas, text = "Create the Spatial Folder", command = self.create_files, state=tk.DISABLED)
-        self.position_file.place(relx=.11, rely= .94)        
+        self.position_file.pack(anchor='w', padx=12, pady=5)
 
     def restart(self):
         self.newWindow.destroy()
@@ -343,6 +339,59 @@ class Gui():
         #error button
         self.error_label = tk.Label(self.starting_window)
         self.error_label.grid(row = 6, column = 1, sticky = "w")
+        self.geometry_submit = button
+        self.configure_geometry()
+
+    def configure_geometry(self):
+        """Inline geometry controls in the Selecting Images window."""
+        frame = ttk.LabelFrame(self.starting_window, text="Tixel geometry", padding=12)
+        frame.grid(row=4, column=0, columnspan=3, sticky="ew", padx=12, pady=12)
+        size = tk.StringVar(value=str(self.chip_geometry.size_um))
+        width = tk.StringVar(value=str(self.chip_geometry.width_um))
+        gap = tk.StringVar(value=str(self.chip_geometry.gap_um))
+        pitch = tk.StringVar()
+        self.geometry_size = size
+        self.geometry_width = width
+        self.geometry_gap = gap
+        ttk.Label(frame, text="Tixel size (µm)").pack(anchor="w")
+        selector = ttk.Combobox(frame, textvariable=size, values=list(PRESETS), state="readonly", width=24)
+        selector.pack(fill=tk.X, pady=(4, 12))
+        expanded = tk.BooleanVar(value=self.chip_geometry != ChipGeometry.preset(self.chip_geometry.size_um))
+        override = ttk.Frame(frame)
+        def toggle():
+            if expanded.get():
+                override.pack(fill=tk.X, before=pitch_label, pady=8)
+            else:
+                override.pack_forget()
+            self.starting_window.update_idletasks()
+            self.starting_window_height = max(400, self.starting_window.winfo_reqheight() + 20)
+            self.starting_window.geometry("{}x{}".format(self.starting_window_width, self.starting_window_height))
+        ttk.Checkbutton(frame, text="Override tixel geometry", variable=expanded, command=toggle).pack(anchor="w")
+        for label, variable in [("Capture width (µm)", width), ("Gap (µm)", gap)]:
+            ttk.Label(override, text=label).pack(anchor="w")
+            ttk.Entry(override, textvariable=variable).pack(fill=tk.X, pady=(4, 8))
+        def defaults(event=None):
+            preset = ChipGeometry.preset(int(size.get()))
+            width.set(str(preset.width_um))
+            gap.set(str(preset.gap_um))
+        selector.bind("<<ComboboxSelected>>", defaults)
+        ttk.Button(override, text="Restore defaults", command=defaults).pack(anchor="w")
+        pitch_label = ttk.Label(frame, textvariable=pitch)
+        pitch_label.pack(anchor="w", pady=12)
+        def current():
+            return ChipGeometry(int(size.get()), float(width.get()), float(gap.get()))
+        def preview(*args):
+            try:
+                geometry = current()
+                pitch.set("Center-to-center pitch: {:g} µm".format(geometry.width_um + geometry.gap_um))
+                self.geometry_submit.configure(state=tk.NORMAL)
+            except ValueError:
+                pitch.set("Enter a positive width and a nonnegative gap.")
+                self.geometry_submit.configure(state=tk.DISABLED)
+        width.trace_add("write", preview)
+        gap.trace_add("write", preview)
+        preview()
+        toggle()
 
     def split_image(self, og_width):
         """Split the image into 4 quadrants and return them."""
@@ -506,6 +555,13 @@ class Gui():
             return False
 
     def configure_metadata(self):
+        try:
+            self.chip_geometry = ChipGeometry(int(self.geometry_size.get()),
+                                              float(self.geometry_width.get()),
+                                              float(self.geometry_gap.get()))
+        except ValueError as error:
+            self.error_label.config(text="Invalid tixel geometry: {}".format(error))
+            return
         #retrieving variables from stored StringVar variables
         runID = self.run_identifier.get()
         if runID != "":
@@ -517,6 +573,7 @@ class Gui():
                 self.metadata = {
                 "run": runID
                 }
+                self.metadata.update(self.chip_geometry.metadata())
                 #setting excelName var, used later, to equal the user specifed run ID
                 self.excelName = runID
 
@@ -547,8 +604,104 @@ class Gui():
                     state = "active"
                 child['state'] = state 
 
+    def fit_window(self, image_width):
+        # Large images scroll inside the viewport; keep the sidebar on screen.
+        width = min(self.screen_width, max(640, image_width + 340))
+        height = max(400, self.screen_height - 80)
+        self.newWindow.geometry("{}x{}".format(width, height))
+
+    def build_viewport(self):
+        self.newWindow.columnconfigure(0, weight=1)
+        self.newWindow.columnconfigure(1, weight=0, minsize=340)
+        self.newWindow.rowconfigure(0, weight=1)
+        self.newWindow.minsize(640, 400)
+        self.image_frame = ttk.Frame(self.newWindow)
+        self.image_frame.grid(row=0, column=0, sticky="nsew")
+        self.image_frame.rowconfigure(0, weight=1)
+        self.image_frame.columnconfigure(0, weight=1)
+        self.my_canvas = ZoomCanvas(self.image_frame, width=int(self.screen_width / 1.5),
+                                    height=self.screen_height - 90, highlightthickness=0, bd=0)
+        self.my_canvas.grid(row=0, column=0, sticky="nsew")
+        hscroll = ttk.Scrollbar(self.image_frame, orient=tk.HORIZONTAL, command=self.my_canvas.xview)
+        vscroll = ttk.Scrollbar(self.image_frame, orient=tk.VERTICAL, command=self.my_canvas.yview)
+        hscroll.grid(row=1, column=0, sticky="ew")
+        vscroll.grid(row=0, column=1, sticky="ns")
+        self.my_canvas.configure(xscrollcommand=hscroll.set, yscrollcommand=vscroll.set)
+        self.my_canvas.old_coords = None
+
+        self.sidebar = ttk.Frame(self.newWindow, width=340)
+        self.sidebar.grid(row=0, column=1, sticky="nsew")
+        self.sidebar.grid_propagate(False)
+        self.sidebar.columnconfigure(0, weight=1)
+        self.sidebar.rowconfigure(1, weight=1)
+        self.zoom_frame = ttk.Frame(self.sidebar, padding=10)
+        self.zoom_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.zoom_frame.columnconfigure(0, weight=1)
+        ttk.Label(self.zoom_frame, text="Zoom").grid(row=0, column=0, sticky="w")
+        self.zoom_value = tk.DoubleVar(value=1.0)
+        self.zoom_label = ttk.Label(self.zoom_frame, text="100%", width=6)
+        self.zoom_label.grid(row=0, column=1)
+        self._zoom_pending = None
+        self.zoom_slider = ttk.Scale(self.zoom_frame, from_=0.25, to=4.0,
+                                     variable=self.zoom_value, command=self.change_zoom)
+        self.zoom_slider.grid(row=1, column=0, sticky="ew", padx=(0, 8))
+        ttk.Button(self.zoom_frame, text="Reset", command=self.reset_zoom).grid(row=1, column=1)
+        self.image_loaded = False
+        self.zoom_frame.grid_remove()
+
+        self.tool_view = tk.Canvas(self.sidebar, highlightthickness=0, bd=0)
+        self.tool_view.grid(row=1, column=0, sticky="nsew")
+        tool_scroll = ttk.Scrollbar(self.sidebar, orient=tk.VERTICAL, command=self.tool_view.yview)
+        tool_scroll.grid(row=1, column=1, sticky="ns")
+        self.tool_view.configure(yscrollcommand=tool_scroll.set)
+        # Retain a Canvas for existing colorbar tag operations; its children
+        # determine the content height, independently of the visible viewport.
+        self.right_canvas = tk.Canvas(self.tool_view, highlightthickness=0, bd=0)
+        self._tool_window = self.tool_view.create_window(0, 0, window=self.right_canvas, anchor="nw")
+        self.right_canvas.bind('<Configure>', self.update_tool_scrollregion)
+        self.tool_view.bind('<Configure>', self.resize_tool_view)
+
+    def update_tool_scrollregion(self, event=None):
+        self.tool_view.configure(scrollregion=self.tool_view.bbox('all'))
+
+    def resize_tool_view(self, event):
+        self.tool_view.itemconfigure(self._tool_window, width=event.width)
+
+    def show_loaded_controls(self):
+        if not self.image_loaded:
+            self.reset_zoom()
+            self.image_loaded = True
+        self.zoom_frame.grid()
+
+    def change_zoom(self, value):
+        self.zoom_label.configure(text="{:.0f}%".format(float(value) * 100))
+        if self._zoom_pending is not None:
+            self.newWindow.after_cancel(self._zoom_pending)
+        self._zoom_pending = self.newWindow.after(40, self.apply_zoom)
+
+    def apply_zoom(self):
+        self._zoom_pending = None
+        self.my_canvas.set_zoom(self.zoom_value.get())
+
+    def reset_zoom(self):
+        if self._zoom_pending is not None:
+            self.newWindow.after_cancel(self._zoom_pending)
+            self._zoom_pending = None
+        self.zoom_value.set(1.0)
+        self.zoom_label.configure(text="100%")
+        self.my_canvas.set_zoom(1.0)
+        self.my_canvas.xview_moveto(0)
+        self.my_canvas.yview_moveto(0)
+
+    def show_preview_image(self, image):
+        if self.lmain.winfo_exists():
+            self.lmain.pack_forget()
+        self.my_canvas.delete('all')
+        self.my_canvas.create_image(0, 0, image=image, anchor="nw", tag="image")
+
     def configure_images(self):
         self.bsa_on_screen = Image.open(self.user_selected_bsa)
+        self.show_loaded_controls()
 
         w, h = (self.bsa_on_screen.width, self.bsa_on_screen.height)
         newH = self.screen_height - 60
@@ -565,7 +718,7 @@ class Gui():
 
         self.lmain.pack()
         self.lmain.image = self.bsa_tkinter_image 
-        self.lmain.configure(image = self.bsa_tkinter_image)
+        self.show_preview_image(self.bsa_tkinter_image)
 
         self.bsa_resized = np.array(bsa)
         # print("Original height: {} width: {}".format(self.bsa_on_screen.height, self.bsa_on_screen.width))
@@ -598,6 +751,7 @@ class Gui():
                 # self.barcode_file_spatial = open(self.folder_selected + "/barcode_file.txt")
                 f = open(self.folder_selected + "/metadata.json")
                 self.metadata = json.load(f)
+                self.chip_geometry = ChipGeometry.from_metadata(self.metadata)
                 self.num_chan = int(self.metadata['numChannels'])
                 self.numTixels = int(self.metadata['numTixels'])
                 f2 = open(self.folder_selected + "/scalefactors_json.json")
@@ -646,9 +800,8 @@ class Gui():
         # my_canvas populated with the BSA stained image instead of the post-B image
         self.lmain.pack()
         self.my_canvas.config(width = self.width_post_crop_resized, height= self.width_post_crop_resized)
-        self.lmain.configure(image=self.bsa_post_crop_resized_tk)
-        self.newWindow.geometry("{0}x{1}".format(self.width_post_crop_resized + 300, self.screen_height))
-        self.right_canvas.config(width = self.width_post_crop_resized + 300, height= self.height_post_crop)
+        self.show_preview_image(self.bsa_post_crop_resized_tk)
+        self.fit_window(self.width_post_crop_resized)
 
     #Rotate and flip the images
     def rotate_image(self, num):
@@ -667,7 +820,7 @@ class Gui():
         sized = formatted.resize((w, h), Image.LANCZOS)
         self.bsa_tkinter_image = ImageTk.PhotoImage(sized)
         self.lmain.image = self.bsa_tkinter_image
-        self.lmain.configure(image=self.bsa_tkinter_image)
+        self.show_preview_image(self.bsa_tkinter_image)
 
     #Update postB and BSA images to new image orientation 
     def confirm_rotation(self):
@@ -683,6 +836,7 @@ class Gui():
 
     def prep_cropping(self):
         self.lmain.pack_forget()
+        self.my_canvas.delete('all')
         self.my_canvas.create_image(0, 0, image = self.bsa_tkinter_image, anchor="nw", tag = "image")
 
     def cropping(self):
@@ -802,7 +956,7 @@ class Gui():
         # print("bw width: {} height: {}".format(sized_bw.width, sized_bw.height))
         imgtk = ImageTk.PhotoImage(sized_bw)
         self.lmain.image = imgtk
-        self.lmain.configure(image=imgtk)
+        self.show_preview_image(imgtk)
 
     # "Open spatial folder" window
     def spatial_selected(self):
@@ -857,14 +1011,14 @@ class Gui():
         self.bar["value"] = 80
         self.pWindow.update()
         self.resized_hires_postB = ImageTk.PhotoImage(resized_postB)
+        self.show_loaded_controls()
         self.picNames = [self.resized_hires_postB, None]  
 
 
         #update canvas and frame
         self.my_canvas.config(width = self.resized_width, height= self.resized_height)
         self.lmain.destroy()
-        self.newWindow.geometry("{0}x{1}".format(self.resized_width + 300, self.screen_height))
-        self.right_canvas.config(width = self.resized_width + 300, height= self.height_hires_postB)
+        self.fit_window(self.resized_width)
         try:
             newFactor = resizeNumber/self.metadata['rawHeight']
         except KeyError:
@@ -891,7 +1045,7 @@ class Gui():
         self.check_on.set(0)
         #tk.Radiobutton(self.right_canvas, text="Count On", variable=self.check_on, value=1, state=tk.DISABLED).place(relx=.5, rely=.68)
         self.update_file = tk.Button(self.right_canvas, text = "Update the Spatial folder", command = self.update_pos)
-        self.update_file.place(relx=.11, rely= .94)
+        self.update_file.pack(anchor='w', padx=12, pady=5)
 
         thresh = cv2.adaptiveThreshold(self.postB_array_scaled, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, int(self.metadata['blockSize']), int(self.metadata['threshold']))
         self.bar["value"] = 100
@@ -924,7 +1078,7 @@ class Gui():
             sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
+            self.show_preview_image(imgtk)
             
         else:
             self.my_canvas.delete("all")
@@ -942,7 +1096,7 @@ class Gui():
             sized_bw = bw_image.resize((self.width_post_crop_resized, self.height_post_crop_resized), Image.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=sized_bw) 
             self.lmain.image = imgtk
-            self.lmain.configure(image=imgtk)
+            self.show_preview_image(imgtk)
 
     #Find Roi coordinates
     def activate_roi_determination(self):
@@ -1047,28 +1201,14 @@ class Gui():
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
     
-        ratioNum = (self.num_chan*2) - 1
-        #leftS: slope defined by the top left corner to the bottom left corner
-        #[dx + point, dy + point]
-        leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
-        #[dx + point, dy + point]
-        #topS slope defined by the top left corner to the top right corner
-        topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
-        #slope: [dy, dx] for the slope defined by top left to bottom left
-        slope = [round(leftS[1]-self.Rpoints[1], 5), round(leftS[0]-self.Rpoints[0], 5)]
-        #slopeT: [dy, dx] for the slope defined by top left to top right
-        slopeT = [round(topS[1]-self.Rpoints[1], 5), round(topS[0]-self.Rpoints[0], 5)]
-
-        slopeO = [slope[0]*2, slope[1]*2]
-        slopeTO = [slopeT[0]*2, slopeT[1]*2]
+        slope, slopeT, slopeO, slopeTO = self.chip_geometry.slopes(self.Rpoints, self.num_chan)
+        self.spot_dia, self.fud_dia = self.chip_geometry.diameters([p/self.factor for p in self.Rpoints], self.num_chan)
         prev = [self.Rpoints[0],self.Rpoints[1]]
         if type_img == 'quad':
             slopeO = [i/self.crop_scale_factor for i in slopeO]
             slopeTO = [i/self.crop_scale_factor for i in slopeTO]
             slope = [i/self.crop_scale_factor for i in slope]
             slopeT = [i/self.crop_scale_factor for i in slopeT]
-            leftS = [i/self.crop_scale_factor for i in leftS]
-            topS = [i/self.crop_scale_factor for i in topS]
             prev = [i/self.crop_scale_factor for i in prev]
         
         top = [0,0]
@@ -1110,8 +1250,8 @@ class Gui():
                     pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=self.tixel_width, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
-                self.coords[j][i].append(centerx/self.factor)
-                self.coords[j][i].append(centery/self.factor)
+                coord_scale = self.crop_scale_factor if type_img == "quad" else 1
+                self.coords[j][i] = [centerx*coord_scale/self.factor, centery*coord_scale/self.factor]
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
@@ -1145,16 +1285,9 @@ class Gui():
         self.my_canvas.delete("all")
         self.my_canvas.create_image(0,0, anchor="nw", image = pic, state="disabled")
 
-        ratioNum = (self.num_chan*2) - 1
-        leftS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[6],self.Rpoints[7],ratioNum)
-        topS = ratio50l(self.Rpoints[0],self.Rpoints[1],self.Rpoints[2],self.Rpoints[3],ratioNum)
-        slope = [round(leftS[1]-self.Rpoints[1], 5), round(leftS[0]-self.Rpoints[0], 5)]
-        slopeT = [round(topS[1]-self.Rpoints[1], 5), round(topS[0]-self.Rpoints[0], 5)]
+        slope, slopeT, slopeO, slopeTO = self.chip_geometry.slopes(self.Rpoints, self.num_chan)
+        self.spot_dia, self.fud_dia = self.chip_geometry.diameters([p/self.factor for p in self.Rpoints], self.num_chan)
 
-
-        slopeO = [slope[0]*2, slope[1]*2]
-        slopeTO = [slopeT[0]*2, slopeT[1]*2]
-        
         top = [0,0]
         left = [0,0]
         flag = False
@@ -1186,8 +1319,7 @@ class Gui():
                 pointer = [tL[0],tL[1],    tR[0],tR[1],     bR[0],bR[1],   bL[0],bL[1],    tL[0],tL[1]]
                 self.my_canvas.create_polygon(pointer, fill='', outline="black", tag = position, width=self.tixel_width, state="disabled")
                 centerx, centery = center(tL,tR,bR,bL)
-                self.coords[j][i].append(centerx/self.factor)
-                self.coords[j][i].append(centery/self.factor)
+                self.coords[j][i] = [centerx/self.factor, centery/self.factor]
                 top[0] += slopeO[1]
                 top[1] += slopeO[0]
                 excelC += 1
@@ -1211,7 +1343,7 @@ class Gui():
             dbit = self.excelName + "BW.png"
             points_copy = self.Rpoints.copy()
 
-            tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan)
+            tissue_information = Tissue(points_copy, self.factor, dbit, self.num_chan, self.chip_geometry)
             self.tixel_status,self.spot_dia, self.fud_dia = tissue_information.theAnswer()
             for i in range(len(self.tixel_status)):
                 for j in range(len(self.tixel_status)):
@@ -1496,6 +1628,7 @@ class Gui():
                     "numChannels": self.num_chan
                     }
         metaDict.update(self.metadata)
+        metaDict.update(self.chip_geometry.metadata())
         
         json_object = json.dumps(dictionary, indent = 4)
         with open(path+"/scalefactors_json.json", "w") as outfile:
@@ -1509,8 +1642,8 @@ class Gui():
     
     #Update changes to tissue_positions_list.csv
     def update_pos(self):
-        p = open(self.folder_selected + "/metadata.json")
-        meta = json.load(p)
+        with open(self.folder_selected + "/metadata.json") as metadata_file:
+            meta = json.load(metadata_file)
 
         barcode_lis = []
         with open(self.folder_selected + "/tissue_positions_list.csv", "r") as csv_file:
@@ -1524,6 +1657,14 @@ class Gui():
         filepath = self.folder_selected + "/tissue_positions_list.csv"
         self.write_positions_file(filepath,barcode_lis, self.coords, self.tixel_status, self.tissue_hires_scalef)
         meta['numTixels'] = self.numTixels
+        meta.update(self.chip_geometry.metadata())
+        scale_path = os.path.join(self.folder_selected, 'scalefactors_json.json')
+        with open(scale_path) as scale_file:
+            scales = json.load(scale_file)
+        scales.update(spot_diameter_fullres=self.spot_dia / self.tissue_hires_scalef,
+                      fiducial_diameter_fullres=self.fud_dia / self.tissue_hires_scalef)
+        with open(scale_path, 'w') as scale_file:
+            json.dump(scales, scale_file, indent=4)
         meta_json_object = json.dumps(meta, indent = 4)
         with open(self.folder_selected+ "/metadata.json", "w") as outfile:
             outfile.write(meta_json_object)
@@ -1579,8 +1720,10 @@ class Gui():
         xvalues = np.linspace(15, 205, numsteps)
         yValue = 40
 
+        if hasattr(self, "cbframe") and self.cbframe.winfo_exists():
+            self.cbframe.destroy()
         self.cbframe = tk.LabelFrame(self.right_canvas, text="Colorbar", padx="5px", pady="14px")
-        self.cbframe.place(relx=.11, rely=.21)
+        self.cbframe.pack(anchor='w', padx=12, pady=5, before=self.sheframe)
 
         c = tk.Canvas(self.cbframe, width=220, height=50)
         c.pack()
