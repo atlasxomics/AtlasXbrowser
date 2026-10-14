@@ -94,7 +94,7 @@ class Gui():
         self.custom_barcode_selected = False
         self.custom_barcode_valid = True
         self.num_chan = 50
-        self.chip_geometry = ChipGeometry.preset(25)
+        self.chip_geometry = ChipGeometry()
         self.tixel_width = .5
         self.ROILocated = False
         self.current_image_id = 0

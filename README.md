@@ -1,6 +1,7 @@
 # AtlasXBrowser
 
 Tixel geometry is configured directly in the **Selecting Images** window.
+New sessions default to 10 µm (10 µm capture width and 15 µm gap).
 Select 10, 15, 25 or 50 µm and expand
 **Override tixel geometry** to enter a custom capture width and gap. The dialog
 shows the resulting center-to-center pitch; selecting a preset or choosing

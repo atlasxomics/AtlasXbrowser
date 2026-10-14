@@ -7,9 +7,9 @@ PRESETS = {10: (10, 15), 15: (15, 10), 25: (25, 25), 50: (50, 50)}
 
 @dataclass(frozen=True)
 class ChipGeometry:
-    size_um: int = 25
-    width_um: float = 25
-    gap_um: float = 25
+    size_um: int = 10
+    width_um: float = 10
+    gap_um: float = 15
 
     def __post_init__(self):
         if self.size_um not in PRESETS:

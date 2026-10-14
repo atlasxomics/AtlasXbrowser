@@ -13,7 +13,7 @@ class Tissue():
         for i in range(len(points)):
             points[i] /= factor
 
-        geometry = geometry or ChipGeometry.preset(25)
+        geometry = geometry or ChipGeometry()
         slope, slopeT, slopeO, slopeTO = geometry.slopes(points, num_chan)
         self.spot_dia, self.fud_dia = geometry.diameters(points, num_chan)
 
